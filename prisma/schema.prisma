@@ -1,0 +1,473 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id             String          @id @default(cuid())
+  name           String
+  domain         String?         @unique
+  description    String?
+  logo           String?         // URL or path to logo
+  emailLogAddress String?        @unique // Unique email address for logging activities via email
+  plan           OrganizationPlan @default(FREE)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relations
+  members        OrgMember[]
+  contacts       Contact[]
+  companies      Company[]
+  pipelines      Pipeline[]
+  deals          Deal[]
+  activities     Activity[]
+  webhooks       Webhook[]
+  apiKeys        ApiKey[]
+  eventsAudit    EventAudit[]
+  importTemplates ImportTemplate[]
+  importHistory   ImportHistory[]
+  savedViews     SavedView[]
+
+  @@map("organizations")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  memberships OrgMember[]
+  accounts     Account[]
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model OrgMember {
+  id             String            @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgMemberRole     @default(MEMBER)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  // Relations
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Owned resources
+  contacts       Contact[]
+  companies      Company[]
+  pipelines      Pipeline[]
+  deals          Deal[]
+  activities     Activity[]
+  webhooks       Webhook[]
+  apiKeys        ApiKey[]
+  importTemplates ImportTemplate[]
+  importHistory   ImportHistory[]
+  savedViews     SavedView[]
+
+  @@unique([organizationId, userId])
+  @@map("org_members")
+}
+
+model Contact {
+  id             String    @id @default(cuid())
+  organizationId String
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  companyId      String?
+  ownerId        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company        Company?     @relation(fields: [companyId], references: [id])
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  deals          Deal[]
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([organizationId, email])
+  @@index([organizationId, firstName, lastName])
+  @@map("contacts")
+}
+
+model Company {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  website        String?
+  industry       String?
+  description    String?
+  domain         String?
+  ownerId        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  contacts       Contact[]
+  deals          Deal[]
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([organizationId, name])
+  @@index([organizationId, domain])
+  @@map("companies")
+}
+
+model Pipeline {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  isDefault      Boolean   @default(false)
+  ownerId        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  stages         Stage[]
+  deals          Deal[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("pipelines")
+}
+
+model Stage {
+  id         String    @id @default(cuid())
+  pipelineId String
+  name       String
+  order      Int
+  color      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  pipeline   Pipeline  @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deals      Deal[]
+
+  @@index([pipelineId])
+  @@map("stages")
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  organizationId String
+  title          String
+  value          Float?
+  probability    Float?    @default(0) // Probability of closing (0-100)
+  stageId        String?
+  pipelineId     String
+  contactId      String?
+  companyId      String?
+  ownerId        String
+  expectedClose  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stage          Stage?       @relation(fields: [stageId], references: [id])
+  pipeline       Pipeline     @relation(fields: [pipelineId], references: [id])
+  contact        Contact?     @relation(fields: [contactId], references: [id])
+  company        Company?     @relation(fields: [companyId], references: [id])
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([pipelineId])
+  @@index([stageId])
+  @@index([organizationId, title])
+  @@map("deals")
+}
+
+model Activity {
+  id             String        @id @default(cuid())
+  organizationId String
+  type           ActivityType
+  description    String
+  subject        String?       // For emails
+  body           String?       // For emails and detailed notes
+  dueDate        DateTime?     // For tasks
+  isCompleted    Boolean       @default(false) // For tasks
+  contactId      String?
+  dealId         String?
+  companyId      String?       // Link to company
+  ownerId        String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact        Contact?     @relation(fields: [contactId], references: [id])
+  deal           Deal?        @relation(fields: [dealId], references: [id])
+  company        Company?     @relation(fields: [companyId], references: [id])
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([contactId])
+  @@index([dealId])
+  @@index([companyId])
+  @@index([dueDate])
+  @@index([isCompleted])
+  @@map("activities")
+}
+
+model Webhook {
+  id             String        @id @default(cuid())
+  organizationId String
+  url            String
+  secret         String
+  events         String[]      // JSON array of event types
+  isActive       Boolean       @default(true)
+  ownerId        String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember     @relation(fields: [ownerId], references: [id])
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("webhooks")
+}
+
+model EventAudit {
+  id             String      @id @default(cuid())
+  organizationId String
+  eventType      String
+  eventData      Json        // Store event payload
+  userId         String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("events_audit")
+}
+
+model ApiKey {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String      // Descriptive name for the key
+  key            String      @unique // The actual API key (hashed)
+  keyPrefix      String      // First 8 chars for display
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  ownerId        String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([key])
+  @@map("api_keys")
+}
+
+enum OrganizationPlan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum OrgMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+  TASK
+}
+
+enum EntityType {
+  CONTACT
+  COMPANY
+  DEAL
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+enum RollbackAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model ImportTemplate {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  entityType     EntityType  // contacts, companies, deals
+  mappings       Json        // Column mapping configuration
+  isDefault      Boolean     @default(false)
+  ownerId        String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  imports        ImportHistory[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([organizationId, entityType])
+  @@map("import_templates")
+}
+
+model ImportHistory {
+  id             String         @id @default(cuid())
+  organizationId String
+  entityType     EntityType
+  filename       String
+  status         ImportStatus
+  totalRows      Int
+  processedRows  Int
+  skippedRows    Int
+  errorRows      Int
+  templateId     String?        // Template used for import
+  mappings       Json           // Column mappings used
+  affectedIds    String[]       // IDs of created/updated records
+  errors         Json?          // Import errors
+  ownerId        String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember      @relation(fields: [ownerId], references: [id])
+  template       ImportTemplate? @relation(fields: [templateId], references: [id])
+  rollbacks      ImportRollback[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([organizationId, status])
+  @@map("import_history")
+}
+
+model ImportRollback {
+  id             String      @id @default(cuid())
+  importId       String      // Reference to ImportHistory
+  entityType     EntityType
+  entityId       String      // ID of the record
+  action         RollbackAction // create, update, delete
+  previousData   Json?       // Data before import (for updates)
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  importHistory  ImportHistory @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([importId])
+  @@index([entityId])
+  @@map("import_rollback")
+}
+
+model SavedView {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  entityType     EntityType  // contacts, companies, deals
+  filters        Json        // Filter criteria
+  sortBy         String?     // Field to sort by
+  sortOrder      String?     // 'asc' or 'desc'
+  isPublic       Boolean     @default(false) // Can be shared via URL
+  isStarred      Boolean     @default(false) // Favorite views
+  viewUrl        String?     @unique // Unique URL for sharing
+  ownerId        String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([organizationId, entityType])
+  @@index([organizationId, isPublic])
+  @@index([viewUrl])
+  @@map("saved_views")
+}
