@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { makeSEO } from '@/lib/seo'
+import { getBaseUrl } from '@/lib/utils'
 
 export const metadata = makeSEO({
   title: 'Quarry CRM - Modern CRM for the Browser Era',
@@ -16,8 +17,31 @@ export const metadata = makeSEO({
 })
 
 export default function MarketingPage() {
+  const baseUrl = getBaseUrl()
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    applicationCategory: 'BusinessApplication',
+    name: 'Quarry CRM',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      description: 'Free trial available'
+    },
+    operatingSystem: 'Web',
+    url: baseUrl,
+    logo: `${baseUrl}/logo.png` // Placeholder - replace with actual logo URL
+  }
+
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd),
+        }}
+      />
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto max-w-[1200px] px-4 py-4">
