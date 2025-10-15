@@ -5,6 +5,7 @@ import './globals.css'
 import { TRPCProvider } from '@/components/providers/trpc-provider'
 import { ThemeProvider } from 'next-themes'
 import { SessionProvider } from '@/components/providers/session-provider'
+import { ToastProvider } from '@/components/ui/ToastProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -32,7 +37,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <TRPCProvider>{children}</TRPCProvider>
+            <TRPCProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </TRPCProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

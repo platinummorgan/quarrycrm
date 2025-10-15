@@ -6,6 +6,10 @@ export const metadata = makeSEO({
   path: '/privacy',
 })
 
+export async function generateStaticParams() {
+  return []
+}
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background py-20">
@@ -13,7 +17,7 @@ export default function PrivacyPage() {
         <div className="mb-16">
           <h1 className="text-4xl font-bold mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground">
-            Last updated: {new Date().toLocaleDateString()}
+            Last updated: October 15, 2025
           </p>
         </div>
 

@@ -6,6 +6,10 @@ export const metadata = makeSEO({
   path: '/terms',
 })
 
+export async function generateStaticParams() {
+  return []
+}
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background py-20">
@@ -13,7 +17,7 @@ export default function TermsPage() {
         <div className="mb-16">
           <h1 className="text-4xl font-bold mb-4">Terms of Service</h1>
           <p className="text-muted-foreground">
-            Last updated: {new Date().toLocaleDateString()}
+            Last updated: October 15, 2025
           </p>
         </div>
 

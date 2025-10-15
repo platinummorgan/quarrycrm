@@ -6,6 +6,10 @@ export const metadata = makeSEO({
   path: '/pricing',
 })
 
+export async function generateStaticParams() {
+  return []
+}
+
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background py-20">
