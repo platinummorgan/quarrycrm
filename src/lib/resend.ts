@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import MagicLinkEmail from '@/emails/MagicLinkEmail'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export async function sendMagicLinkEmail({
   to,
@@ -12,6 +12,11 @@ export async function sendMagicLinkEmail({
   url: string
   host: string
 }) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not configured, skipping email send')
+    return { success: false, error: 'Email service not configured' }
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: 'login@mail.quarrycrm.com',
