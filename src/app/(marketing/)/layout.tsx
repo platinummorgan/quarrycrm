@@ -13,9 +13,15 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   const showBanner = process.env.NEXT_PUBLIC_APP_ENV !== 'prod';
+  const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'prod';
 
   return (
     <>
+      <head>
+        {!isProduction && (
+          <meta name="robots" content="noindex,nofollow" />
+        )}
+      </head>
       {showBanner && <BetaBanner />}
       <div className={showBanner ? 'pt-8' : ''}>
         {children}
