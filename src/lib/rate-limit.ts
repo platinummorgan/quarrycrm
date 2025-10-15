@@ -31,7 +31,7 @@ class RateLimiter {
     const now = Date.now()
     const cutoff = now - this.config.windowMs
 
-    for (const [ip, entry] of this.store.entries()) {
+    for (const [ip, entry] of Array.from(this.store.entries())) {
       entry.requests = entry.requests.filter(timestamp => timestamp > cutoff)
       entry.writes = entry.writes.filter(timestamp => timestamp > cutoff)
 
