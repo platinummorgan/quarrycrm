@@ -75,18 +75,17 @@ export default function MarketingPage() {
       <section className="py-20">
         <div className="container mx-auto max-w-[1200px] px-4 text-center">
           <h2 className="mb-6 text-5xl font-bold">
-            Modern CRM for the Browser Era
+            Blazing Fast CRM
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-xl text-muted-foreground">
-            Manage your contacts, companies, and deals with a fast,
-            offline-capable CRM that works seamlessly across all your devices.
+            Lightning-quick lists, one-click imports, and offline reliability for modern sales teams.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button size="lg" asChild>
               <Link href="/app">Get Started</Link>
             </Button>
-            <Button size="lg" variant="outline">
-              Learn More
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/app/deals">See the board</Link>
             </Button>
           </div>
         </div>
@@ -99,26 +98,25 @@ export default function MarketingPage() {
           <div className="grid gap-8 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle>Offline First</CardTitle>
+                <CardTitle>Blazing lists</CardTitle>
                 <CardDescription>
-                  Works without internet connection. Your data is always
-                  available.
+                  Lightning-fast contact and company lists that load instantly, no matter the size.
                 </CardDescription>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Progressive Web App</CardTitle>
+                <CardTitle>One-click import</CardTitle>
                 <CardDescription>
-                  Install on any device. Native app experience in your browser.
+                  Import contacts and companies from CSV with zero configuration. Just works.
                 </CardDescription>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Real-time Sync</CardTitle>
+                <CardTitle>Offline outbox</CardTitle>
                 <CardDescription>
-                  Automatic synchronization when online. Never lose your work.
+                  Create and edit deals offline. Everything syncs automatically when you're back online.
                 </CardDescription>
               </CardHeader>
             </Card>
