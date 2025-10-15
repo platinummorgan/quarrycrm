@@ -33,7 +33,8 @@ const navigation = [
 
 function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
 
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
 
