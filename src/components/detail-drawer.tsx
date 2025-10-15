@@ -62,7 +62,8 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
   onOpenChange,
 }: DetailDrawerProps<T>) {
   const { toast } = useToast()
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [editingField, setEditingField] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})

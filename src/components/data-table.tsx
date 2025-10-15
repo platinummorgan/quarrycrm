@@ -100,7 +100,8 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   onImport,
   className,
 }: DataTableProps<T>) {
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const tableRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')

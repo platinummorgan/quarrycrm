@@ -8,7 +8,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function OrgSwitcher() {
-  const { data: session, update } = useSession()
+  const sessionResult = useSession()
+  const { data: session, update } = sessionResult
   const [isOpen, setIsOpen] = useState(false)
 
   if (!session?.user?.organizations || session.user.organizations.length <= 1) {

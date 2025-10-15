@@ -368,7 +368,8 @@ export function Board({
   initialDeals: DealsListResponse
   initialPipelines: PipelinesListResponse
 }) {
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [selectedPipeline, setSelectedPipeline] = useState<string>('')
   const [dealsData, setDealsData] = useState<DealsListResponse>(initialDeals)

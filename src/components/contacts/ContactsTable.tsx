@@ -37,7 +37,8 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [searchQuery, setSearchQuery] = useState(initialQuery || '')
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery || '')

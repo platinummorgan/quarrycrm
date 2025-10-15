@@ -7,7 +7,8 @@ import { useSession } from 'next-auth/react'
 export function DemoBanner() {
   const [isVisible, setIsVisible] = useState(true)
   const [isDemo, setIsDemo] = useState(false)
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult
 
   useEffect(() => {
     if (status === 'loading') return
