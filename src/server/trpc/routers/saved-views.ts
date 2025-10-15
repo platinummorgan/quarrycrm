@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { TRPCError } from '@trpc/server'
 import { nanoid } from 'nanoid'
@@ -128,7 +128,7 @@ export const savedViewsRouter = createTRPCRouter({
     }),
 
   // Create a new saved view
-  create: orgProcedure
+  create: demoProcedure
     .input(createSavedViewSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -156,7 +156,7 @@ export const savedViewsRouter = createTRPCRouter({
     }),
 
   // Update an existing saved view
-  update: orgProcedure
+  update: demoProcedure
     .input(updateSavedViewSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -204,7 +204,7 @@ export const savedViewsRouter = createTRPCRouter({
     }),
 
   // Delete a saved view
-  delete: orgProcedure
+  delete: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -233,7 +233,7 @@ export const savedViewsRouter = createTRPCRouter({
     }),
 
   // Duplicate a saved view
-  duplicate: orgProcedure
+  duplicate: demoProcedure
     .input(z.object({ id: z.string(), name: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -287,7 +287,7 @@ export const savedViewsRouter = createTRPCRouter({
     }),
 
   // Toggle star status
-  toggleStar: orgProcedure
+  toggleStar: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx

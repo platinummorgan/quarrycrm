@@ -1,5 +1,6 @@
 'use client'
 
+import { BetaBanner } from '@/components/site/BetaBanner'
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -11,6 +12,7 @@ import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { OutboxBanner } from '@/components/offline/outbox-banner'
 import { CommandKProvider } from '@/components/CommandK'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'
+import { useSession } from 'next-auth/react'
 import {
   Users,
   Building2,
@@ -31,18 +33,29 @@ const navigation = [
 
 function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
+
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
 
   return (
     <div className="min-h-screen bg-background">
+      <BetaBanner />
       <SkipLink href="#main-content">Skip to main content</SkipLink>
       
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto max-w-[1200px] px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/app" className="text-xl font-bold">
-              Quarry-CRM
-            </Link>
+            <div className="flex items-center space-x-4">
+              <Link href="/app" className="text-xl font-bold">
+                Quarry-CRM
+              </Link>
+              {isDemo && (
+                <div className="rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white">
+                  Read-only demo
+                </div>
+              )}
+            </div>
             <div className="flex items-center space-x-4">
               {/* Search trigger button */}
               <Button

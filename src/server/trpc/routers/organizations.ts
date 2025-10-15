@@ -1,4 +1,4 @@
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -29,7 +29,7 @@ export const organizationsRouter = createTRPCRouter({
   }),
 
   // Update organization
-  update: orgProcedure
+  update: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -58,4 +58,21 @@ export const organizationsRouter = createTRPCRouter({
         } as any,
       })
     }),
+
+  // Get organization members
+  getMembers: orgProcedure.query(async ({ ctx }) => {
+    return await prisma.orgMember.findMany({
+      where: { organizationId: ctx.orgId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+  }),
 })

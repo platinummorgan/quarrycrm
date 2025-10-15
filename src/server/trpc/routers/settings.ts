@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { TRPCError } from '@trpc/server'
 import { randomBytes, createHmac } from 'crypto'
@@ -95,7 +95,7 @@ export const settingsRouter = createTRPCRouter({
   }),
 
   // Update workspace settings
-  updateWorkspace: orgProcedure
+  updateWorkspace: demoProcedure
     .input(updateWorkspaceSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -145,7 +145,7 @@ export const settingsRouter = createTRPCRouter({
   }),
 
   // Generate magic link for invitation
-  inviteMember: orgProcedure
+  inviteMember: demoProcedure
     .input(inviteMemberSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -241,7 +241,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   // Update member role
-  updateMemberRole: orgProcedure
+  updateMemberRole: demoProcedure
     .input(updateMemberRoleSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -301,7 +301,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   // Remove member
-  removeMember: orgProcedure
+  removeMember: demoProcedure
     .input(z.object({ memberId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -376,7 +376,7 @@ export const settingsRouter = createTRPCRouter({
   }),
 
   // Create API key
-  createApiKey: orgProcedure
+  createApiKey: demoProcedure
     .input(createApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -459,7 +459,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   // Revoke API key
-  revokeApiKey: orgProcedure
+  revokeApiKey: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -535,7 +535,7 @@ export const settingsRouter = createTRPCRouter({
   }),
 
   // Create webhook
-  createWebhook: orgProcedure
+  createWebhook: demoProcedure
     .input(createWebhookSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -609,7 +609,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   // Update webhook
-  updateWebhook: orgProcedure
+  updateWebhook: demoProcedure
     .input(updateWebhookSchema)
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
@@ -672,7 +672,7 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   // Delete webhook
-  deleteWebhook: orgProcedure
+  deleteWebhook: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx

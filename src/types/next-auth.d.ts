@@ -17,11 +17,14 @@ declare module 'next-auth' {
         domain: string | null
         role: string
       }
+      isDemo?: boolean
     } & DefaultSession['user']
   }
 
   interface User extends DefaultUser {
     id: string
+    isDemo?: boolean
+    demoOrgId?: string
   }
 }
 

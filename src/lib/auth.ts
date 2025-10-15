@@ -1,44 +1,102 @@
 import { NextAuthOptions } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import EmailProvider from 'next-auth/providers/email'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
+import { getBaseUrl } from '@/lib/baseUrl'
+import { verifyDemoToken } from '@/lib/demo-auth'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-        secure: process.env.EMAIL_SERVER_SECURE === 'true',
+    // Demo provider for read-only access
+    CredentialsProvider({
+      id: 'demo',
+      name: 'Demo',
+      credentials: {
+        token: { label: 'Demo Token', type: 'text' },
       },
-      from: process.env.EMAIL_FROM,
-      sendVerificationRequest: async ({ identifier: email, url, provider }) => {
-        const { createTransport } = await import('nodemailer')
-        const transporter = createTransport({
-          host: process.env.EMAIL_SERVER_HOST,
-          port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-          auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-          },
-          secure: process.env.EMAIL_SERVER_SECURE === 'true',
-        })
+      async authorize(credentials) {
+        if (!credentials?.token) {
+          return null
+        }
 
-        const { host } = new URL(url)
-        await transporter.sendMail({
-          to: email,
-          from: provider.from,
-          subject: `Sign in to ${host}`,
-          text: text({ url, host }),
-          html: html({ url, host }),
-        })
+        try {
+          // Verify the demo token
+          const payload = await verifyDemoToken(credentials.token)
+
+          // Find the demo user
+          const demoUser = await prisma.user.findFirst({
+            where: { email: 'demo@demo.example' },
+          })
+
+          if (!demoUser) {
+            throw new Error('Demo user not found')
+          }
+
+          // Verify the user has access to the demo org
+          const membership = await prisma.orgMember.findFirst({
+            where: {
+              userId: demoUser.id,
+              organizationId: payload.orgId,
+              role: 'DEMO',
+            },
+            include: {
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  domain: true,
+                },
+              },
+            },
+          })
+
+          if (!membership) {
+            throw new Error('Demo user does not have access to this organization')
+          }
+
+          // Return user object with demo context
+          return {
+            id: demoUser.id,
+            email: demoUser.email,
+            name: demoUser.name,
+            // Add demo-specific context
+            isDemo: true,
+            demoOrgId: payload.orgId,
+          }
+        } catch (error) {
+          console.error('Demo auth error:', error)
+          return null
+        }
       },
     }),
+    // Only include EmailProvider if email server is configured
+    ...(process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_FROM
+      ? [
+          EmailProvider({
+            server: {
+              host: process.env.EMAIL_SERVER_HOST,
+              port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
+              auth: {
+                user: process.env.EMAIL_SERVER_USER,
+                pass: process.env.EMAIL_SERVER_PASSWORD,
+              },
+              secure: process.env.EMAIL_SERVER_SECURE === 'true',
+            },
+            from: 'login@mail.quarrycrm.com',
+            sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+              const { sendMagicLinkEmail } = await import('@/lib/resend')
+              const { host } = new URL(url)
+              const baseUrl = getBaseUrl()
+              if (process.env.NODE_ENV === 'development' && !url.startsWith(baseUrl)) {
+                console.warn(`NEXTAUTH_URL mismatch detected: expected ${baseUrl}, got ${url}`)
+              }
+              await sendMagicLinkEmail({ to: email, url, host })
+            },
+          }),
+        ]
+      : []),
   ],
   session: {
     strategy: 'database',
@@ -48,58 +106,91 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = user.id
 
-        // Get user's organizations and current org context
-        const memberships = await prisma.orgMember.findMany({
-          where: { userId: user.id },
-          include: {
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                domain: true,
-              },
+        // Handle demo sessions differently
+        if ((user as any).isDemo) {
+          const demoOrgId = (user as any).demoOrgId
+
+          // Get demo organization details
+          const demoOrg = await prisma.organization.findUnique({
+            where: { id: demoOrgId },
+            select: {
+              id: true,
+              name: true,
+              domain: true,
             },
-          },
-        })
+          })
 
-        // For now, default to first org or create one if none exist
-        let currentOrg = memberships[0]?.organization
+          if (demoOrg) {
+            session.user.organizations = [{
+              id: demoOrg.id,
+              name: demoOrg.name,
+              domain: demoOrg.domain,
+              role: 'DEMO',
+            }]
 
-        if (!currentOrg) {
-          // Create default organization for new users
-          const defaultOrg = await prisma.organization.create({
-            data: {
-              name: `${session.user.name || session.user.email}'s Organization`,
-              members: {
-                create: {
-                  userId: user.id,
-                  role: 'OWNER',
+            session.user.currentOrg = {
+              id: demoOrg.id,
+              name: demoOrg.name,
+              domain: demoOrg.domain,
+              role: 'DEMO',
+            }
+
+            session.user.isDemo = true
+          }
+        } else {
+          // Get user's organizations and current org context
+          const memberships = await prisma.orgMember.findMany({
+            where: { userId: user.id },
+            include: {
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  domain: true,
                 },
               },
             },
           })
-          currentOrg = {
-            id: defaultOrg.id,
-            name: defaultOrg.name,
-            domain: defaultOrg.domain,
+
+          // For now, default to first org or create one if none exist
+          let currentOrg = memberships[0]?.organization
+
+          if (!currentOrg) {
+            // Create default organization for new users
+            const defaultOrg = await prisma.organization.create({
+              data: {
+                name: `${session.user.name || session.user.email}'s Organization`,
+                members: {
+                  create: {
+                    userId: user.id,
+                    role: 'OWNER',
+                  },
+                },
+              },
+            })
+            currentOrg = {
+              id: defaultOrg.id,
+              name: defaultOrg.name,
+              domain: defaultOrg.domain,
+            }
           }
-        }
 
-        // Add org context to session
-        session.user.organizations = memberships.map((m) => ({
-          id: m.organization.id,
-          name: m.organization.name,
-          domain: m.organization.domain,
-          role: m.role,
-        }))
+          // Add org context to session
+          session.user.organizations = memberships.map((m) => ({
+            id: m.organization.id,
+            name: m.organization.name,
+            domain: m.organization.domain,
+            role: m.role,
+          }))
 
-        session.user.currentOrg = {
-          id: currentOrg.id,
-          name: currentOrg.name,
-          domain: currentOrg.domain,
-          role:
-            memberships.find((m) => m.organizationId === currentOrg.id)?.role ||
-            'MEMBER',
+          session.user.currentOrg = {
+            id: currentOrg.id,
+            name: currentOrg.name,
+            domain: currentOrg.domain,
+            role:
+              memberships.find((m) => m.organizationId === currentOrg.id)?.role ||
+              'MEMBER',
+          }
         }
       }
       return session

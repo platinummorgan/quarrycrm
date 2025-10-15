@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { trpc } from '@/lib/trpc'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -77,6 +78,8 @@ export function ContactsToolbar({
   className,
 }: ContactsToolbarProps) {
   const { toast } = useToast()
+  const { data: session } = useSession()
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null)
@@ -423,13 +426,24 @@ export function ContactsToolbar({
         </DropdownMenu>
 
         {/* Action buttons */}
-        <Button onClick={onCreateContact} size="sm">
+        <Button 
+          onClick={onCreateContact} 
+          size="sm"
+          disabled={isDemo}
+          title={isDemo ? 'Demo is read-only' : undefined}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Contact
         </Button>
 
         {onImportContacts && (
-          <Button variant="outline" size="sm" onClick={onImportContacts}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onImportContacts}
+            disabled={isDemo}
+            title={isDemo ? 'Demo is read-only' : undefined}
+          >
             <Eye className="h-4 w-4 mr-2" />
             Import
           </Button>

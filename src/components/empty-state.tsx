@@ -11,6 +11,8 @@ interface EmptyStateAction {
   onClick: () => void
   variant?: 'default' | 'outline' | 'ghost'
   icon?: LucideIcon
+  disabled?: boolean
+  tooltip?: string
 }
 
 interface EmptyStateProps {
@@ -80,6 +82,8 @@ export function EmptyState({
                   variant={action.variant || 'default'}
                   className="flex items-center gap-2"
                   style={{ minHeight: designTokens.accessibility.touchTargetMin }}
+                  disabled={action.disabled}
+                  title={action.tooltip}
                 >
                   {ActionIcon && <ActionIcon className="h-4 w-4" aria-hidden="true" />}
                   {action.label}

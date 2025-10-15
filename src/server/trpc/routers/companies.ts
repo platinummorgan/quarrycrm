@@ -1,4 +1,4 @@
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -247,7 +247,7 @@ export const companiesRouter = createTRPCRouter({
     }),
 
   // Create company
-  create: orgProcedure
+  create: demoProcedure
     .input(companyCreateSchema)
     .mutation(async ({ ctx, input }) => {
       return await prisma.company.create({
@@ -282,7 +282,7 @@ export const companiesRouter = createTRPCRouter({
     }),
 
   // Update company (partial)
-  update: orgProcedure
+  update: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -303,7 +303,7 @@ export const companiesRouter = createTRPCRouter({
     }),
 
   // Soft delete company
-  delete: orgProcedure
+  delete: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.company.updateMany({
@@ -319,7 +319,7 @@ export const companiesRouter = createTRPCRouter({
     }),
 
   // Restore company
-  restore: orgProcedure
+  restore: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.company.updateMany({

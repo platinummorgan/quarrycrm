@@ -7,6 +7,27 @@ export default withAuth(
     const isAuth = !!token
     const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
     const isApiAuthRoute = req.nextUrl.pathname.startsWith('/api/auth')
+    const isDemoRoute = req.nextUrl.pathname === '/demo'
+
+    // Check if this is a demo subdomain
+    const hostname = req.headers.get('host') || ''
+    const isDemoSubdomain = hostname.startsWith('demo.')
+
+    // Block POST requests on demo subdomain (belt-and-suspenders)
+    if (isDemoSubdomain && req.method === 'POST') {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'POST requests are not allowed on demo environment',
+          code: 'DEMO_READONLY'
+        }),
+        {
+          status: 403,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+    }
 
     // Add X-Robots-Tag header for non-production environments
     const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'prod'
@@ -14,13 +35,19 @@ export default withAuth(
       req.headers.set('X-Robots-Tag', 'noindex, nofollow')
     }
 
+    // Force demo auto-login flow for demo subdomain
+    if (isDemoSubdomain && !isAuth && !isAuthPage && !isApiAuthRoute && !isDemoRoute) {
+      // Redirect to /demo for auto-login
+      return NextResponse.redirect(new URL('/demo', req.url))
+    }
+
     // Redirect authenticated users away from auth pages
     if (isAuthPage && isAuth) {
       return NextResponse.redirect(new URL('/app', req.url))
     }
 
-    // Allow access to auth routes
-    if (isApiAuthRoute || isAuthPage) {
+    // Allow access to auth routes and demo route
+    if (isApiAuthRoute || isAuthPage || isDemoRoute) {
       return NextResponse.next()
     }
 

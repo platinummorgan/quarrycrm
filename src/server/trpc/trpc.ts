@@ -77,3 +77,14 @@ export const adminProcedure = orgProcedure.use(async ({ ctx, next }) => {
   }
   return next()
 })
+
+// Demo users can only read, not write
+export const demoProcedure = orgProcedure.use(async ({ ctx, next }) => {
+  if (ctx.orgRole === 'DEMO') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Demo accounts are read-only. Contact your administrator to upgrade.',
+    })
+  }
+  return next()
+})

@@ -1,7 +1,8 @@
 import { Column } from '@/components/data-table'
+import { maskPII } from '@/lib/mask-pii'
 
 // Contact columns configuration
-export const useContactColumns = () => {
+export const useContactColumns = (isDemo: boolean = false) => {
   const columns: Column<any>[] = [
     {
       id: 'firstName',
@@ -49,7 +50,7 @@ export const useContactColumns = () => {
       filterable: true,
       editable: true,
       width: 200,
-      render: (value) => value || '-',
+      render: (value) => isDemo ? maskPII(value) : (value || '-'),
       editRender: (value, item, onChange) => (
         <input
           type="email"
@@ -66,7 +67,7 @@ export const useContactColumns = () => {
       accessor: 'phone',
       editable: true,
       width: 150,
-      render: (value) => value || '-',
+      render: (value) => isDemo ? maskPII(value) : (value || '-'),
       editRender: (value, item, onChange) => (
         <input
           type="tel"
@@ -101,7 +102,7 @@ export const useContactColumns = () => {
 }
 
 // Company columns configuration
-export const useCompanyColumns = () => {
+export const useCompanyColumns = (isDemo: boolean = false) => {
   const columns: Column<any>[] = [
     {
       id: 'name',

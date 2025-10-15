@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { ContactsTable } from '@/components/contacts/ContactsTable'
+import { ContactDrawer } from '@/components/contacts/ContactDrawer'
 import { getContacts } from '@/server/contacts'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -78,6 +79,8 @@ export default function ContactsPage({ searchParams }: ContactsPageProps) {
       <Suspense fallback={<ContactsTableSkeleton />}>
         <ContactsTableWrapper searchParams={searchParams} />
       </Suspense>
+
+      <ContactDrawer />
     </div>
   )
 }

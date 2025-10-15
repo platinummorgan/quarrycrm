@@ -133,18 +133,31 @@ NEXT_PUBLIC_ANALYTICS_DOMAIN=your_domain.com
    DATABASE_URL="postgresql://username:password@localhost:5432/quarry_crm"
    ```
 
-4. **Set up the database**
+4. **Configure email for magic link authentication**
 
-   ```bash
-   # Generate Prisma client
-   npm run db:generate
+   For local development, you can use a service like [Mailtrap](https://mailtrap.io) or [Ethereal Email](https://ethereal.email):
 
-   # Push schema to database
-   npm run db:push
+   **Using Mailtrap (Recommended):**
+   1. Sign up for a free Mailtrap account
+   2. Create an inbox and get your SMTP credentials
+   3. Update `.env.local`:
 
-   # (Optional) Open Prisma Studio
-   npm run db:studio
+   ```env
+   EMAIL_SERVER_HOST="smtp.mailtrap.io"
+   EMAIL_SERVER_PORT="2525"
+   EMAIL_SERVER_USER="your-mailtrap-username"
+   EMAIL_SERVER_PASSWORD="your-mailtrap-password"
+   EMAIL_SERVER_SECURE="false"
+   EMAIL_FROM="noreply@yourdomain.com"
    ```
+
+   **Using Ethereal Email (Free):**
+   1. Visit [ethereal.email](https://ethereal.email)
+   2. Create an account and get SMTP credentials
+   3. Use the provided credentials in your `.env.local`
+
+   **Production:**
+   Use your email provider's SMTP settings (Gmail, SendGrid, etc.)
 
 5. **Start the development server**
 

@@ -1,4 +1,4 @@
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkPlanLimit } from '@/lib/plans'
@@ -152,7 +152,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Create pipeline
-  create: orgProcedure
+  create: demoProcedure
     .input(pipelineCreateSchema)
     .mutation(async ({ ctx, input }) => {
       // Check plan limits
@@ -190,7 +190,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Update pipeline
-  update: orgProcedure
+  update: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -211,7 +211,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Delete pipeline
-  delete: orgProcedure
+  delete: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.pipeline.updateMany({
@@ -227,7 +227,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Create stage
-  createStage: orgProcedure
+  createStage: demoProcedure
     .input(stageCreateSchema)
     .mutation(async ({ ctx, input }) => {
       // Verify pipeline belongs to organization
@@ -256,7 +256,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Update stage
-  updateStage: orgProcedure
+  updateStage: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -295,7 +295,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Delete stage
-  deleteStage: orgProcedure
+  deleteStage: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // Verify stage belongs to organization's pipeline
@@ -339,7 +339,7 @@ export const pipelinesRouter = createTRPCRouter({
     }),
 
   // Reorder stages
-  reorderStages: orgProcedure
+  reorderStages: demoProcedure
     .input(
       z.object({
         pipelineId: z.string(),

@@ -153,15 +153,15 @@ export async function createContact(data: {
   lastName: string
   email?: string
   phone?: string
+  ownerId: string
 }) {
-  const { orgId, userId } = await requireOrg()
+  const { orgId } = await requireOrg()
   const validatedData = createContactSchema.parse(data)
 
   const contact = await prisma.contact.create({
     data: {
       ...validatedData,
       organizationId: orgId,
-      ownerId: userId,
     },
     select: {
       id: true,

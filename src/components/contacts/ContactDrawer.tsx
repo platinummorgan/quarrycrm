@@ -15,9 +15,17 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Loader2, User, Mail, Phone } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { useRouter } from 'next/navigation'
+import { trpc } from '@/lib/trpc'
 
 interface ContactDrawerProps {
   open?: boolean
@@ -43,7 +51,13 @@ export function ContactDrawer({
       lastName: '',
       email: '',
       phone: '',
+      ownerId: '',
     },
+  })
+
+  // Fetch owners for select input
+  const { data: orgMembers } = trpc.organizations.getMembers.useQuery(undefined, {
+    enabled: isOpen,
   })
 
   // Handle custom events
@@ -57,6 +71,7 @@ export function ContactDrawer({
         lastName: '',
         email: '',
         phone: '',
+        ownerId: '',
       })
     }
 
@@ -75,6 +90,7 @@ export function ContactDrawer({
             lastName: contact.lastName,
             email: contact.email || '',
             phone: contact.phone || '',
+            ownerId: contact.owner.id,
           })
         })
         .catch((error) => {
@@ -102,6 +118,18 @@ export function ContactDrawer({
       setIsOpen(controlledOpen)
     }
   }, [controlledOpen])
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleOpenChange(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen])
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open)
@@ -240,15 +268,34 @@ export function ContactDrawer({
               )}
             </div>
 
-            {/* Owner info */}
+            {/* Owner */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="ownerId" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Owner
+                <span className="text-destructive">*</span>
               </Label>
-              <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-                Contacts will be assigned to you as the owner.
-              </div>
+              <Select
+                value={form.watch('ownerId')}
+                onValueChange={(value) => form.setValue('ownerId', value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgMembers?.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.user.name || member.user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.ownerId && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.ownerId.message}
+                </p>
+              )}
             </div>
 
             {/* Actions */}

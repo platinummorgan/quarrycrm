@@ -6,16 +6,52 @@ import { TRPCProvider } from '@/components/providers/trpc-provider'
 import { ThemeProvider } from 'next-themes'
 import { SessionProvider } from '@/components/providers/session-provider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
+import { PreviewBanner } from '@/components/PreviewBanner'
+import dynamic from 'next/dynamic'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: 'Quarry-CRM',
-  description: 'A modern, browser-first CRM application',
-  manifest: '/manifest.json',
-  themeColor: '#000000',
-  viewport: 'width=device-width, initial-scale=1',
-  robots: 'noindex, nofollow',
+// Dynamically import DemoBanner to avoid SSR issues
+const DemoBanner = dynamic(() => import('@/components/DemoBanner').then(mod => ({ default: mod.DemoBanner })), {
+  ssr: false,
+})
+
+export async function generateMetadata(): Promise<Metadata> {
+  const isPreview = process.env.NEXT_PUBLIC_APP_ENV === 'preview'
+  
+  return {
+    title: 'Quarry CRM - Modern CRM for the Browser Era',
+    description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+    manifest: '/manifest.json',
+    keywords: 'CRM,customer relationship management,contacts,companies,deals,sales,business,offline,PWA,progressive web app',
+    robots: isPreview ? 'noindex, nofollow' : 'index, follow',
+    openGraph: {
+      title: 'Quarry CRM - Modern CRM for the Browser Era',
+      description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      url: 'http://localhost:3000',
+      siteName: 'Quarry CRM',
+      locale: 'en_US',
+      images: [
+        {
+          url: 'http://localhost:3000/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'Quarry CRM - Modern CRM for the Browser Era - Quarry CRM',
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      creator: '@quarrycrm',
+      title: 'Quarry CRM - Modern CRM for the Browser Era',
+      description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      images: ['http://localhost:3000/og-image.png'],
+    },
+    alternates: {
+      canonical: 'http://localhost:3000',
+    },
+  }
 }
 
 export default function RootLayout({
@@ -30,6 +66,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       </head>
       <body className={inter.className}>
+        <PreviewBanner />
+        <DemoBanner />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

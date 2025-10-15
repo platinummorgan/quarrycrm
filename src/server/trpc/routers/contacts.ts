@@ -1,4 +1,4 @@
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkPlanLimit } from '@/lib/plans'
@@ -212,7 +212,7 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Create contact
-  create: orgProcedure
+  create: demoProcedure
     .input(contactCreateSchema)
     .mutation(async ({ ctx, input }) => {
       // Check plan limits
@@ -252,7 +252,7 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Update contact (partial)
-  update: orgProcedure
+  update: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -273,7 +273,7 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Soft delete contact
-  delete: orgProcedure
+  delete: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.contact.updateMany({
@@ -289,7 +289,7 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Restore contact
-  restore: orgProcedure
+  restore: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.contact.updateMany({

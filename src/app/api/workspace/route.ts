@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { checkDemoRateLimit } from '@/lib/rate-limit'
 
 // GET /api/workspace - Get current workspace
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -13,6 +14,14 @@ export async function GET() {
         { error: 'Unauthorized' },
         { status: 401 }
       )
+    }
+
+    // Apply rate limiting for demo users
+    if (session.user.isDemo || session.user.currentOrg?.role === 'DEMO') {
+      const rateLimitResponse = checkDemoRateLimit(request, false)
+      if (rateLimitResponse) {
+        return rateLimitResponse
+      }
     }
 
     // Get user's organization
@@ -61,6 +70,14 @@ export async function PUT(request: NextRequest) {
         { error: 'Unauthorized' },
         { status: 401 }
       )
+    }
+
+    // Apply rate limiting for demo users
+    if (session.user.isDemo || session.user.currentOrg?.role === 'DEMO') {
+      const rateLimitResponse = checkDemoRateLimit(request, true)
+      if (rateLimitResponse) {
+        return rateLimitResponse
+      }
     }
 
     // Get user's organization

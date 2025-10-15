@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { trpc } from '@/lib/trpc'
 import { useLoadingState } from '@/hooks/use-loading-state'
+import { useSession } from 'next-auth/react'
 import {
   Table,
   TableBody,
@@ -57,6 +58,7 @@ import { cn } from '@/lib/utils'
 // Components
 import { DetailDrawer } from './detail-drawer'
 import { EmptyState } from './empty-state'
+import { maskPII } from '@/lib/mask-pii'
 
 // Types
 export interface Column<T = any> {
@@ -98,6 +100,8 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   onImport,
   className,
 }: DataTableProps<T>) {
+  const { data: session } = useSession()
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const tableRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
@@ -533,7 +537,12 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
           </DropdownMenu>
 
           {/* Actions */}
-          <Button onClick={onCreate} size="sm">
+          <Button 
+            onClick={onCreate} 
+            size="sm"
+            disabled={isDemo}
+            title={isDemo ? 'Demo is read-only' : undefined}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add {entity.slice(0, -1)}
           </Button>
@@ -566,12 +575,16 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                   label: `Add ${entity.slice(0, -1)}`,
                   onClick: onCreate || (() => {}),
                   icon: Plus,
+                  disabled: isDemo,
+                  tooltip: isDemo ? 'Demo is read-only' : undefined,
                 },
                 {
                   label: 'Import CSV',
                   onClick: onImport || (() => {}),
                   variant: 'outline' as const,
                   icon: Upload,
+                  disabled: isDemo,
+                  tooltip: isDemo ? 'Demo is read-only' : undefined,
                 },
               ]}
             />
@@ -743,12 +756,16 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                   label: `Add ${entity.slice(0, -1)}`,
                   onClick: onCreate || (() => {}),
                   icon: Plus,
+                  disabled: isDemo,
+                  tooltip: isDemo ? 'Demo is read-only' : undefined,
                 },
                 {
                   label: 'Import CSV',
                   onClick: onImport || (() => {}),
                   variant: 'outline' as const,
                   icon: Upload,
+                  disabled: isDemo,
+                  tooltip: isDemo ? 'Demo is read-only' : undefined,
                 },
               ]}
             />

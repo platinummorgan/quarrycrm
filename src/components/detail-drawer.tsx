@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import { trpc } from '@/lib/trpc'
 import { useToast } from '@/hooks/use-toast'
+import { useSession } from 'next-auth/react'
 import {
   Sheet,
   SheetContent,
@@ -45,6 +46,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { maskPII } from '@/lib/mask-pii'
 
 interface DetailDrawerProps<T = any> {
   entity: 'contacts' | 'companies'
@@ -60,6 +62,8 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
   onOpenChange,
 }: DetailDrawerProps<T>) {
   const { toast } = useToast()
+  const { data: session } = useSession()
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [editingField, setEditingField] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
 
@@ -143,6 +147,11 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
     const isEditing = editingField === field
     const currentValue = fieldValues[field] ?? value
 
+    // Apply PII masking for demo users
+    const displayValue = isDemo && (field === 'email' || field === 'phone') 
+      ? maskPII(currentValue) 
+      : currentValue
+
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -194,7 +203,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {value || 'Not set'}
+            {displayValue || 'Not set'}
           </p>
         )}
       </div>
@@ -217,7 +226,9 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
             <h2 className="text-2xl font-bold">
               {detail.firstName} {detail.lastName}
             </h2>
-            <p className="text-muted-foreground">{detail.email}</p>
+            <p className="text-muted-foreground">
+              {isDemo ? maskPII(detail.email) : detail.email}
+            </p>
             {detail.company && (
               <Badge variant="secondary" className="mt-1">
                 {detail.company.name}

@@ -16,6 +16,7 @@ export const contactFormSchema = z.object({
     .optional()
     .or(z.literal('')),
   phone: z.string().optional(),
+  ownerId: z.string().min(1, 'Owner is required'),
 })
 
 export type ContactFormData = z.infer<typeof contactFormSchema>
@@ -63,6 +64,7 @@ export const createContactSchema = z.object({
   lastName: z.string().min(1).max(100),
   email: z.string().email().optional(),
   phone: z.string().optional(),
+  ownerId: z.string().min(1),
 })
 
 export const updateContactSchema = z.object({

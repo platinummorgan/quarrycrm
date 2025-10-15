@@ -1,4 +1,4 @@
-import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -326,7 +326,7 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Create deal
-  create: orgProcedure
+  create: demoProcedure
     .input(dealCreateSchema)
     .mutation(async ({ ctx, input }) => {
       return await prisma.deal.create({
@@ -387,7 +387,7 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Update deal (partial)
-  update: orgProcedure
+  update: demoProcedure
     .input(
       z.object({
         id: z.string(),
@@ -408,7 +408,7 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Soft delete deal
-  delete: orgProcedure
+  delete: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.deal.updateMany({
@@ -424,7 +424,7 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Restore deal
-  restore: orgProcedure
+  restore: demoProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.deal.updateMany({
@@ -442,7 +442,7 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Move deal to a different stage (optimized for board operations)
-  moveToStage: orgProcedure
+  moveToStage: demoProcedure
     .input(
       z.object({
         dealId: z.string(),

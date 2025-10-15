@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
+import { checkDemoRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   try {
-    const { orgId } = await requireOrg()
+    const { session, orgId } = await requireOrg()
+
+    // Apply rate limiting for demo users
+    if (session.user.isDemo || session.user.currentOrg?.role === 'DEMO') {
+      const rateLimitResponse = checkDemoRateLimit(request, false)
+      if (rateLimitResponse) {
+        return rateLimitResponse
+      }
+    }
 
     const organization = await prisma.organization.findUnique({
       where: { id: orgId },

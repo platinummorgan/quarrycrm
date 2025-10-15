@@ -1,19 +1,20 @@
 /**
  * Demo Data Seeder
  * 
- * Generates realistic demo data for performance testing:
- * - 10,000 contacts
- * - 2,000 companies
- * - 800 deals
+ * Generates realistic demo data for Quarry CRM:
+ * - 3,000 contacts
+ * - 500 companies
+ * - 200 deals
+ * - 300 activities
  * 
  * Usage:
  *   npm run seed:demo           # Generate all demo data
  *   npm run seed:demo -- --clean # Clean existing data first
  * 
- * Performance targets:
- * - Seed 10k records in <60 seconds
- * - Batched inserts (100 records per batch)
- * - Progress indicators for monitoring
+ * Features:
+ * - Masked PII data (emails: first.last@demo.example, phones: ***-***-1234)
+ * - Realistic sales pipeline with proper stage distribution
+ * - Quarry Demo organization with DEMO role user
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -23,10 +24,11 @@ const prisma = new PrismaClient()
 
 // Configuration
 const CONFIG = {
-  CONTACTS: 10_000,
-  COMPANIES: 2_000,
-  DEALS: 800,
-  BATCH_SIZE: 100,
+  CONTACTS: 3_000,
+  COMPANIES: 500,
+  DEALS: 200,
+  ACTIVITIES: 300,
+  BATCH_SIZE: 500,
   // Ensure reproducible data for benchmarks
   SEED: 12345,
 }
@@ -45,14 +47,23 @@ const INDUSTRIES = [
   'Transportation',
 ]
 
-// Deal stages with realistic conversion funnel
+// Deal stages with realistic conversion funnel for Quarry Demo
 const DEAL_STAGES = [
   { name: 'Lead', weight: 40 },
-  { name: 'Qualified', weight: 25 },
+  { name: 'Discovery', weight: 25 },
   { name: 'Proposal', weight: 15 },
   { name: 'Negotiation', weight: 10 },
   { name: 'Closed Won', weight: 5 },
   { name: 'Closed Lost', weight: 5 },
+]
+
+// Activity types with realistic distribution
+const ACTIVITY_TYPES = [
+  { type: 'CALL', weight: 30, descriptions: ['Called prospect', 'Follow-up call', 'Discovery call', 'Demo call', 'Negotiation call'] },
+  { type: 'EMAIL', weight: 40, descriptions: ['Sent proposal', 'Follow-up email', 'Introduction email', 'Thank you email', 'Meeting confirmation'] },
+  { type: 'MEETING', weight: 15, descriptions: ['Product demo', 'Discovery meeting', 'Negotiation meeting', 'Contract review', 'Onboarding call'] },
+  { type: 'NOTE', weight: 10, descriptions: ['Added contact notes', 'Meeting summary', 'Deal update', 'Research findings', 'Internal notes'] },
+  { type: 'TASK', weight: 5, descriptions: ['Follow up next week', 'Send contract', 'Schedule demo', 'Prepare proposal', 'Review documents'] },
 ]
 
 // Contact titles
@@ -73,6 +84,7 @@ interface SeedStats {
   companies: number
   contacts: number
   deals: number
+  activities: number
   duration: number
 }
 
@@ -87,6 +99,9 @@ async function cleanDatabase() {
   // Delete in correct order (respect foreign key constraints)
   await prisma.deal.deleteMany({})
   console.log('  ✓ Deleted all deals')
+
+  await prisma.activity.deleteMany({})
+  console.log('  ✓ Deleted all activities')
 
   await prisma.contact.deleteMany({})
   console.log('  ✓ Deleted all contacts')
@@ -168,8 +183,8 @@ async function seedContacts(orgId: string, companyIds: string[], ownerId: string
       contacts.push({
         firstName,
         lastName,
-        email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-        phone: faker.phone.number(),
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@demo.example`,
+        phone: '***-***-1234',
         companyId,
         organizationId: orgId,
         ownerId,
@@ -255,6 +270,70 @@ async function seedDeals(orgId: string, companyIds: string[], contactIds: string
 }
 
 /**
+ * Generate activities in batches
+ */
+async function seedActivities(orgId: string, companyIds: string[], contactIds: string[], dealIds: string[], ownerId: string): Promise<void> {
+  console.log(`� Seeding ${CONFIG.ACTIVITIES.toLocaleString()} activities...\n`)
+
+  let activitiesCreated = 0
+  const totalBatches = Math.ceil(CONFIG.ACTIVITIES / CONFIG.BATCH_SIZE)
+
+  for (let batch = 0; batch < totalBatches; batch++) {
+    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.ACTIVITIES - batch * CONFIG.BATCH_SIZE)
+    const activities = []
+
+    for (let i = 0; i < batchSize; i++) {
+      // Select activity type based on weighted distribution
+      const rand = Math.random() * 100
+      let cumulativeWeight = 0
+      let activityType = ACTIVITY_TYPES[0]
+
+      for (const type of ACTIVITY_TYPES) {
+        cumulativeWeight += type.weight
+        if (rand <= cumulativeWeight) {
+          activityType = type
+          break
+        }
+      }
+
+      // Randomly link to contact, deal, or company (or combination)
+      const contactId = Math.random() > 0.3 ? faker.helpers.arrayElement(contactIds) : null
+      const dealId = Math.random() > 0.6 ? faker.helpers.arrayElement(dealIds) : null
+      const companyId = Math.random() > 0.7 ? faker.helpers.arrayElement(companyIds) : null
+
+      const description = faker.helpers.arrayElement(activityType.descriptions)
+      const isTask = activityType.type === 'TASK'
+      const isCompleted = isTask ? Math.random() > 0.4 : undefined // 60% of tasks are completed
+
+      activities.push({
+        type: activityType.type as any,
+        description,
+        subject: activityType.type === 'EMAIL' ? faker.lorem.sentence() : null,
+        body: activityType.type === 'EMAIL' || activityType.type === 'NOTE' ? faker.lorem.paragraphs(2) : null,
+        dueDate: isTask ? faker.date.future() : null,
+        isCompleted,
+        contactId,
+        dealId,
+        companyId,
+        organizationId: orgId,
+        ownerId,
+      })
+    }
+
+    await prisma.activity.createMany({
+      data: activities,
+    })
+
+    activitiesCreated += batchSize
+
+    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
+    process.stdout.write(`  Progress: ${progress}% (${activitiesCreated.toLocaleString()} / ${CONFIG.ACTIVITIES.toLocaleString()})\r`)
+  }
+
+  console.log(`\n✅ Created ${activitiesCreated.toLocaleString()} activities\n`)
+}
+
+/**
  * Print summary statistics
  */
 async function printStats(stats: SeedStats) {
@@ -264,8 +343,9 @@ async function printStats(stats: SeedStats) {
   console.log(`  Companies: ${stats.companies.toLocaleString()}`)
   console.log(`  Contacts:  ${stats.contacts.toLocaleString()}`)
   console.log(`  Deals:     ${stats.deals.toLocaleString()}`)
+  console.log(`  Activities: ${stats.activities.toLocaleString()}`)
   console.log(`  Duration:  ${(stats.duration / 1000).toFixed(2)}s`)
-  console.log(`  Rate:      ${Math.round((stats.companies + stats.contacts + stats.deals) / (stats.duration / 1000)).toLocaleString()} records/sec`)
+  console.log(`  Rate:      ${Math.round((stats.companies + stats.contacts + stats.deals + stats.activities) / (stats.duration / 1000)).toLocaleString()} records/sec`)
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
   console.log('🚀 Ready for performance testing!')
   console.log('   Visit /speed to run benchmarks\n')
@@ -293,31 +373,33 @@ async function main() {
       await cleanDatabase()
     }
 
-    // Get or create demo organization
+    // Get or create Quarry Demo organization
     let org = await prisma.organization.findFirst({
-      where: { name: 'Demo Organization' },
+      where: { name: 'Quarry Demo' },
     })
 
     if (!org) {
       org = await prisma.organization.create({
         data: {
-          name: 'Demo Organization',
+          name: 'Quarry Demo',
+          domain: 'demo.example',
+          description: 'Demo organization for Quarry CRM showcasing all features',
         },
       })
-      console.log('✓ Created demo organization\n')
+      console.log('✓ Created Quarry Demo organization\n')
     } else {
-      console.log('✓ Using existing demo organization\n')
+      console.log('✓ Using existing Quarry Demo organization\n')
     }
 
     // Get or create demo user
     let user = await prisma.user.findFirst({
-      where: { email: 'demo@example.com' },
+      where: { email: 'demo@demo.example' },
     })
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: 'demo@example.com',
+          email: 'demo@demo.example',
           name: 'Demo User',
         },
       })
@@ -326,7 +408,7 @@ async function main() {
       console.log('✓ Using existing demo user\n')
     }
 
-    // Get or create org member
+    // Get or create org member with DEMO role
     let orgMember = await prisma.orgMember.findFirst({
       where: {
         organizationId: org.id,
@@ -339,10 +421,10 @@ async function main() {
         data: {
           organizationId: org.id,
           userId: user.id,
-          role: 'OWNER',
+          role: 'DEMO',
         },
       })
-      console.log('✓ Created org member\n')
+      console.log('✓ Created org member with DEMO role\n')
     } else {
       console.log('✓ Using existing org member\n')
     }
@@ -364,8 +446,8 @@ async function main() {
       pipeline = await prisma.pipeline.create({
         data: {
           organizationId: org.id,
-          name: 'Default Sales Pipeline',
-          description: 'Standard B2B sales process',
+          name: 'Quarry Sales Pipeline',
+          description: 'Standard sales process for Quarry CRM demo',
           isDefault: true,
           ownerId: orgMember.id,
           stages: {
@@ -382,7 +464,7 @@ async function main() {
           },
         },
       })
-      console.log('✓ Created pipeline with stages\n')
+      console.log('✓ Created Quarry Sales Pipeline with stages\n')
     } else {
       console.log('✓ Using existing pipeline\n')
     }
@@ -394,6 +476,15 @@ async function main() {
     const contactIds = await seedContacts(org.id, companyIds, orgMember.id)
     await seedDeals(org.id, companyIds, contactIds, pipeline.id, stageIds, orgMember.id)
 
+    // Get deal IDs for linking activities
+    const deals = await prisma.deal.findMany({
+      where: { organizationId: org.id },
+      select: { id: true },
+    })
+    const dealIds = deals.map(d => d.id)
+
+    await seedActivities(org.id, companyIds, contactIds, dealIds, orgMember.id)
+
     const duration = Date.now() - startTime
 
     // Print summary
@@ -401,6 +492,7 @@ async function main() {
       companies: companyIds.length,
       contacts: contactIds.length,
       deals: CONFIG.DEALS,
+      activities: CONFIG.ACTIVITIES,
       duration,
     })
   } catch (error) {

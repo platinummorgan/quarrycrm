@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   DndContext,
   DragEndEvent,
@@ -322,7 +323,7 @@ function EmptyBoardState({ onCreateDeal }: { onCreateDeal: () => void }) {
   )
 }
 
-function EmptyPipelineState({ onCreateDeal }: { onCreateDeal: () => void }) {
+function EmptyPipelineState({ onCreateDeal, isDemo }: { onCreateDeal: () => void; isDemo?: boolean }) {
   return (
     <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
       <div className="text-center">
@@ -330,7 +331,11 @@ function EmptyPipelineState({ onCreateDeal }: { onCreateDeal: () => void }) {
         <p className="mb-4 text-sm text-muted-foreground">
           Get started by creating your first deal
         </p>
-        <Button onClick={onCreateDeal}>
+        <Button 
+          onClick={onCreateDeal}
+          disabled={isDemo}
+          title={isDemo ? 'Demo is read-only' : undefined}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create first deal
         </Button>
@@ -363,6 +368,8 @@ export function Board({
   initialDeals: DealsListResponse
   initialPipelines: PipelinesListResponse
 }) {
+  const { data: session } = useSession()
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [selectedPipeline, setSelectedPipeline] = useState<string>('')
   const [dealsData, setDealsData] = useState<DealsListResponse>(initialDeals)
   const [pipelinesData, setPipelinesData] = useState<PipelinesListResponse>(initialPipelines)
@@ -390,6 +397,18 @@ export function Board({
     if (!selectedPipeline) return []
     return dealsData.items.filter((deal) => deal.pipeline.id === selectedPipeline)
   }, [dealsData.items, selectedPipeline])
+
+  // Default stages for when no pipeline is selected
+  const defaultStages = [
+    { id: 'lead', name: 'Lead', order: 0, color: '#3b82f6', _count: { deals: 0 } },
+    { id: 'qualified', name: 'Qualified', order: 1, color: '#10b981', _count: { deals: 0 } },
+    { id: 'proposal', name: 'Proposal', order: 2, color: '#f59e0b', _count: { deals: 0 } },
+    { id: 'negotiation', name: 'Negotiation', order: 3, color: '#8b5cf6', _count: { deals: 0 } },
+    { id: 'closed-won', name: 'Closed Won', order: 4, color: '#22c55e', _count: { deals: 0 } },
+    { id: 'closed-lost', name: 'Closed Lost', order: 5, color: '#ef4444', _count: { deals: 0 } },
+  ]
+
+  const displayStages = selectedPipelineData ? stages : defaultStages
 
   // Function to refetch deals
   const refetchDeals = useCallback(async () => {
@@ -465,29 +484,27 @@ export function Board({
 
   // Group deals by stage
   const dealsByStage = useMemo(() => {
-    if (!stages) return {}
-
     const grouped: Record<string, Deal[]> = {}
-    stages.forEach((stage) => {
+    displayStages.forEach((stage) => {
       grouped[stage.id] = []
     })
 
-    pipelineDeals.forEach((deal) => {
-      if (deal.stage?.id && grouped[deal.stage.id]) {
-        grouped[deal.stage.id].push(deal)
-      }
-    })
+    if (selectedPipeline) {
+      pipelineDeals.forEach((deal) => {
+        if (deal.stage?.id && grouped[deal.stage.id]) {
+          grouped[deal.stage.id].push(deal)
+        }
+      })
+    }
 
     return grouped
-  }, [pipelineDeals, stages])
+  }, [pipelineDeals, displayStages, selectedPipeline])
 
   // Calculate weighted totals for each stage
   const stageTotals = useMemo(() => {
     const totals: Record<string, { count: number; weightedTotal: number }> = {}
 
-    if (!stages) return totals
-
-    stages.forEach((stage) => {
+    displayStages.forEach((stage) => {
       const stageDeals = dealsByStage[stage.id] || []
       const count = stageDeals.length
       const weightedTotal = stageDeals.reduce((sum, deal) => {
@@ -498,7 +515,7 @@ export function Board({
     })
 
     return totals
-  }, [dealsByStage, stages])
+  }, [dealsByStage, displayStages])
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
@@ -645,7 +662,12 @@ export function Board({
             <Settings className="mr-2 h-4 w-4" />
             View Options
           </Button>
-          <Button size="sm" onClick={handleCreateDeal}>
+          <Button 
+            size="sm" 
+            onClick={handleCreateDeal}
+            disabled={isDemo}
+            title={isDemo ? 'Demo is read-only' : undefined}
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Deal
           </Button>
@@ -653,12 +675,56 @@ export function Board({
       </div>
 
       {/* Board */}
-      {!selectedPipeline || pipelines.length === 0 ? (
+      {pipelines.length === 0 ? (
         <EmptyBoardState onCreateDeal={handleCreateDeal} />
       ) : showSkeleton ? (
         <BoardSkeleton />
+      ) : !selectedPipeline ? (
+        // Show columns with CTA when no pipeline selected
+        <div className="flex gap-6 overflow-x-auto pb-6">
+          {displayStages.map((stage) => (
+            <div key={stage.id} className="flex w-80 flex-shrink-0 flex-col">
+              <div className="mb-4 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: stage.color || '#6b7280' }}
+                    />
+                    <h3 className="text-sm font-medium">{stage.name}</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      0
+                    </Badge>
+                  </div>
+                </div>
+                <div className="mt-2 text-sm font-semibold text-muted-foreground">
+                  $0
+                </div>
+              </div>
+              <div className="flex-1 space-y-3 rounded-lg border-2 border-dashed p-4" style={{ minHeight: '200px' }}>
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <h4 className="mb-2 text-sm font-medium">No deals yet</h4>
+                    <p className="mb-4 text-xs text-muted-foreground">
+                      Select a pipeline or create your first deal
+                    </p>
+                    <Button 
+                      size="sm" 
+                      onClick={handleCreateDeal}
+                      disabled={isDemo}
+                      title={isDemo ? 'Demo is read-only' : undefined}
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Create first deal
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : pipelineDeals.length === 0 ? (
-        <EmptyPipelineState onCreateDeal={handleCreateDeal} />
+        <EmptyPipelineState onCreateDeal={handleCreateDeal} isDemo={isDemo} />
       ) : (
         <DndContext
           sensors={sensors}
@@ -667,7 +733,7 @@ export function Board({
           collisionDetection={closestCorners}
         >
           <div className="flex gap-6 overflow-x-auto pb-6">
-            {stages.map((stage) => (
+            {displayStages.map((stage) => (
               <StageColumn
                 key={stage.id}
                 stage={stage}

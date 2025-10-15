@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { getContacts } from '@/server/contacts'
 import { contactListResponseSchema, type ContactListResponse } from '@/lib/zod/contacts'
 import {
@@ -21,6 +22,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { EmptyState } from '@/components/empty-state'
 import { ContactsToolbar, type ViewConfig } from './ContactsToolbar'
 import { trpc } from '@/lib/trpc'
+import { maskPII } from '@/lib/mask-pii'
 
 interface ContactsTableProps {
   initialData?: ContactListResponse
@@ -35,6 +37,8 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [searchQuery, setSearchQuery] = useState(initialQuery || '')
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery || '')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -363,7 +367,7 @@ export function ContactsTable({
                       {contact.firstName} {contact.lastName}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {contact.email || '—'}
+                      {isDemo ? maskPII(contact.email) : (contact.email || '—')}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {contact.owner.user.name ||
