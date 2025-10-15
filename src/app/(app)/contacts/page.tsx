@@ -1,45 +1,83 @@
-'use client'
+import { Suspense } from 'react'
+import { ContactsTable } from '@/components/contacts/ContactsTable'
+import { getContacts } from '@/server/contacts'
+import { Skeleton } from '@/components/ui/skeleton'
 
-import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/data-table'
-import { useContactColumns } from '@/hooks/use-table-columns'
-import { Plus } from 'lucide-react'
+interface ContactsPageProps {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
 
-export default function ContactsPage() {
-  const columns = useContactColumns()
+async function ContactsTableWrapper({ searchParams }: ContactsPageProps) {
+  const q = typeof searchParams.q === 'string' ? searchParams.q : undefined
+  const cursor = typeof searchParams.cursor === 'string' ? searchParams.cursor : undefined
 
-  const handleCreate = () => {
-    // TODO: Open create contact dialog
-    console.log('Create contact')
-  }
-
-  const handleImport = () => {
-    // TODO: Open CSV import dialog
-    console.log('Import contacts')
-  }
+  const contactsData = await getContacts({ q, cursor })
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Contacts</h1>
-          <p className="text-muted-foreground">
-            Manage your customer and prospect contacts
-          </p>
+    <ContactsTable
+      initialData={contactsData}
+      initialQuery={q}
+      initialCursor={cursor}
+    />
+  )
+}
+
+function ContactsTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Search and Actions Skeleton */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Skeleton className="h-10 w-full" />
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Contact
-        </Button>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-28" />
+        </div>
       </div>
 
-      <DataTable
-        entity="contacts"
-        columns={columns}
-        searchPlaceholder="Search contacts..."
-        onCreate={handleCreate}
-        onImport={handleImport}
-      />
+      {/* Table Skeleton */}
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-auto max-h-[calc(100vh-300px)]">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background border-b shadow-sm">
+              <tr>
+                <th className="h-12 px-4 text-left align-middle font-medium">Name</th>
+                <th className="h-12 px-4 text-left align-middle font-medium">Email</th>
+                <th className="h-12 px-4 text-left align-middle font-medium">Owner</th>
+                <th className="h-12 px-4 text-left align-middle font-medium">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                  <td className="p-4"><Skeleton className="h-4 w-40" /></td>
+                  <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                  <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function ContactsPage({ searchParams }: ContactsPageProps) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
+        <p className="text-muted-foreground">
+          Manage your contacts and relationships
+        </p>
+      </div>
+
+      <Suspense fallback={<ContactsTableSkeleton />}>
+        <ContactsTableWrapper searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }

@@ -2,17 +2,6 @@ import { NextAuthOptions } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import EmailProvider from 'next-auth/providers/email'
 import { prisma } from '@/lib/prisma'
-import { createTransport } from 'nodemailer'
-
-const transporter = createTransport({
-  host: process.env.EMAIL_SERVER_HOST,
-  port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-  auth: {
-    user: process.env.EMAIL_SERVER_USER,
-    pass: process.env.EMAIL_SERVER_PASSWORD,
-  },
-  secure: process.env.EMAIL_SERVER_SECURE === 'true',
-})
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -29,6 +18,17 @@ export const authOptions: NextAuthOptions = {
       },
       from: process.env.EMAIL_FROM,
       sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+        const { createTransport } = await import('nodemailer')
+        const transporter = createTransport({
+          host: process.env.EMAIL_SERVER_HOST,
+          port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
+          auth: {
+            user: process.env.EMAIL_SERVER_USER,
+            pass: process.env.EMAIL_SERVER_PASSWORD,
+          },
+          secure: process.env.EMAIL_SERVER_SECURE === 'true',
+        })
+
         const { host } = new URL(url)
         await transporter.sendMail({
           to: email,

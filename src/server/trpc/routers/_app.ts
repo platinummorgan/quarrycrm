@@ -9,6 +9,7 @@ import { organizationsRouter } from './organizations'
 import { searchRouter } from './search'
 import { savedViewsRouter } from './saved-views'
 import { settingsRouter } from './settings'
+import { dashboardRouter } from './dashboard'
 
 export const appRouter = createTRPCRouter({
   example: exampleRouter,
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   search: searchRouter,
   savedViews: savedViewsRouter,
   settings: settingsRouter,
+  dashboard: dashboardRouter,
 })
 
 export type AppRouter = typeof appRouter

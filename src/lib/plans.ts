@@ -9,18 +9,20 @@ export interface PlanLimits {
   webhooks: number
   storageGB: number
   apiCallsPerDay: number
+  pipelines: number
 }
 
 export const PLAN_LIMITS: Record<OrganizationPlan, PlanLimits> = {
   FREE: {
-    contacts: 100,
-    companies: 50,
-    deals: 25,
+    contacts: 2000,
+    companies: 500,
+    deals: 100,
     users: 2,
     apiKeys: 1,
     webhooks: 2,
     storageGB: 1,
     apiCallsPerDay: 1000,
+    pipelines: 2,
   },
   PRO: {
     contacts: 10000,
@@ -31,6 +33,7 @@ export const PLAN_LIMITS: Record<OrganizationPlan, PlanLimits> = {
     webhooks: 10,
     storageGB: 50,
     apiCallsPerDay: 10000,
+    pipelines: 10,
   },
   TEAM: {
     contacts: -1, // unlimited
@@ -41,6 +44,7 @@ export const PLAN_LIMITS: Record<OrganizationPlan, PlanLimits> = {
     webhooks: 50,
     storageGB: 500,
     apiCallsPerDay: 100000,
+    pipelines: -1, // unlimited
   },
 }
 
@@ -81,4 +85,78 @@ export function getUpgradeMessage(
   }
   
   return `You've reached your plan limit.`
+}
+
+export async function getOrganizationPlan(orgId: string): Promise<OrganizationPlan> {
+  const { prisma } = await import('@/lib/prisma')
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { plan: true },
+  })
+  return org?.plan || 'FREE'
+}
+
+export async function checkPlanLimit(
+  orgId: string,
+  resourceType: keyof PlanLimits,
+  currentCount?: number
+): Promise<{ allowed: boolean; message?: string }> {
+  const plan = await getOrganizationPlan(orgId)
+  const limit = PLAN_LIMITS[plan][resourceType]
+
+  // Unlimited
+  if (limit === -1) {
+    return { allowed: true }
+  }
+
+  // Get current count if not provided
+  let count = currentCount
+  if (count === undefined) {
+    const { prisma } = await import('@/lib/prisma')
+    
+    switch (resourceType) {
+      case 'contacts':
+        count = await prisma.contact.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      case 'pipelines':
+        count = await prisma.pipeline.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      case 'companies':
+        count = await prisma.company.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      case 'deals':
+        count = await prisma.deal.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      case 'users':
+        count = await prisma.orgMember.count({
+          where: { organizationId: orgId },
+        })
+        break
+      case 'webhooks':
+        count = await prisma.webhook.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      case 'apiKeys':
+        count = await prisma.apiKey.count({
+          where: { organizationId: orgId, deletedAt: null },
+        })
+        break
+      default:
+        count = 0
+    }
+  }
+
+  const allowed = count < limit
+  const message = allowed ? undefined : 'Limit reached. Upgrade in Settings.'
+
+  return { allowed, message }
 }

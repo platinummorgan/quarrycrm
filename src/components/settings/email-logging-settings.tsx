@@ -31,7 +31,7 @@ export function EmailLoggingSettings() {
   const form = useForm<EmailSettingsForm>({
     resolver: zodResolver(emailSettingsSchema),
     defaultValues: {
-      emailLogAddress: organization?.emailLogAddress || '',
+      emailLogAddress: (organization as any)?.emailLogAddress || '',
     },
   })
 
@@ -39,7 +39,7 @@ export function EmailLoggingSettings() {
   React.useEffect(() => {
     if (organization) {
       form.reset({
-        emailLogAddress: organization.emailLogAddress || '',
+        emailLogAddress: (organization as any).emailLogAddress || '',
       })
     }
   }, [organization, form])
@@ -48,7 +48,7 @@ export function EmailLoggingSettings() {
     if (!organization) return
 
     updateOrganizationMutation.mutate({
-      id: organization.id,
+      id: (organization as any).id,
       data: {
         emailLogAddress: data.emailLogAddress || null,
       },
@@ -96,7 +96,7 @@ export function EmailLoggingSettings() {
             <Label>Email Log Address</Label>
             <div className="flex items-center space-x-2">
               <Input
-                value={organization?.emailLogAddress || 'Not configured'}
+                value={(organization as any)?.emailLogAddress || 'Not configured'}
                 readOnly
                 className="flex-1"
               />
@@ -145,13 +145,13 @@ export function EmailLoggingSettings() {
           </form>
         )}
 
-        {organization?.emailLogAddress && (
+        {(organization as any)?.emailLogAddress && (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
               <strong>Setup Instructions:</strong> Configure your email server to forward emails
-              sent to <code>{organization.emailLogAddress}</code> to{' '}
-              <code>{process.env.NEXT_PUBLIC_APP_URL || 'your-app-url'}/api/email-log/{organization.emailLogAddress}</code>
+              sent to <code>{(organization as any).emailLogAddress}</code> to{' '}
+              <code>{process.env.NEXT_PUBLIC_APP_URL || 'your-app-url'}/api/email-log/{(organization as any).emailLogAddress}</code>
             </AlertDescription>
           </Alert>
         )}

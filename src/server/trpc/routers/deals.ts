@@ -441,6 +441,101 @@ export const dealsRouter = createTRPCRouter({
       })
     }),
 
+  // Move deal to a different stage (optimized for board operations)
+  moveToStage: orgProcedure
+    .input(
+      z.object({
+        dealId: z.string(),
+        stageId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { dealId, stageId } = input
+
+      // Verify deal belongs to organization
+      const deal = await prisma.deal.findFirst({
+        where: {
+          id: dealId,
+          organizationId: ctx.orgId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          pipelineId: true,
+        },
+      })
+
+      if (!deal) {
+        throw new Error('Deal not found')
+      }
+
+      // Verify stage belongs to same pipeline
+      const stage = await prisma.stage.findFirst({
+        where: {
+          id: stageId,
+          pipelineId: deal.pipelineId,
+        },
+      })
+
+      if (!stage) {
+        throw new Error('Stage not found or does not belong to the same pipeline')
+      }
+
+      // Update deal's stage
+      return await prisma.deal.update({
+        where: { id: dealId },
+        data: { stageId },
+        select: {
+          id: true,
+          title: true,
+          value: true,
+          probability: true,
+          expectedClose: true,
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+          pipeline: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          contact: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          owner: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          updatedAt: true,
+          createdAt: true,
+        },
+      })
+    }),
+
   // Get deals at risk (closing soon with low probability or no recent activity)
   atRisk: orgProcedure
     .input(

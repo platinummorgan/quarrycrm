@@ -1,6 +1,7 @@
 import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { checkPlanLimit } from '@/lib/plans'
 
 // Input/Output schemas
 const contactFiltersSchema = z.object({
@@ -8,8 +9,8 @@ const contactFiltersSchema = z.object({
   owner: z.string().optional(), // Filter by owner ID
   company: z.string().optional(), // Filter by company ID
   updatedSince: z.date().optional(), // Filter by updated date
-  limit: z.number().min(1).max(100).default(50),
-  cursor: z.string().optional(), // For keyset pagination
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().optional(), // For keyset pagination (format: "updatedAt_id")
 })
 
 const contactCreateSchema = z.object({
@@ -17,7 +18,6 @@ const contactCreateSchema = z.object({
   lastName: z.string().min(1).max(100),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  companyId: z.string().optional(),
 })
 
 const contactUpdateSchema = z.object({
@@ -25,7 +25,6 @@ const contactUpdateSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  companyId: z.string().nullable().optional(),
 })
 
 const contactListResponseSchema = z.object({
@@ -36,12 +35,6 @@ const contactListResponseSchema = z.object({
       lastName: z.string(),
       email: z.string().nullable(),
       phone: z.string().nullable(),
-      company: z
-        .object({
-          id: z.string(),
-          name: z.string(),
-        })
-        .nullable(),
       owner: z.object({
         id: z.string(),
         user: z.object({
@@ -111,12 +104,22 @@ export const contactsRouter = createTRPCRouter({
         }
       }
 
-      // Keyset pagination using updatedAt as cursor
+      // Keyset pagination using updatedAt + id as cursor
       if (cursor) {
-        const cursorDate = new Date(cursor)
-        where.updatedAt = {
-          ...where.updatedAt,
-          lt: cursorDate,
+        try {
+          const [updatedAtStr, cursorId] = cursor.split('_')
+          const cursorDate = new Date(updatedAtStr)
+          where.OR = [
+            {
+              updatedAt: { lt: cursorDate },
+            },
+            {
+              updatedAt: cursorDate,
+              id: { lt: cursorId },
+            },
+          ]
+        } catch (e) {
+          // Invalid cursor, ignore
         }
       }
 
@@ -132,12 +135,6 @@ export const contactsRouter = createTRPCRouter({
           lastName: true,
           email: true,
           phone: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
           owner: {
             select: {
               id: true,
@@ -153,16 +150,17 @@ export const contactsRouter = createTRPCRouter({
           updatedAt: true,
           createdAt: true,
         },
-        orderBy: {
-          updatedAt: 'desc',
-        },
+        orderBy: [
+          { updatedAt: 'desc' },
+          { id: 'desc' }, // Secondary sort for stable pagination
+        ],
         take: limit + 1, // Take one extra to check if there are more
       })
 
       const hasMore = items.length > limit
       const actualItems = hasMore ? items.slice(0, limit) : items
-      const nextCursor = hasMore
-        ? items[limit - 1].updatedAt.toISOString()
+      const nextCursor = hasMore && actualItems.length > 0
+        ? `${actualItems[actualItems.length - 1].updatedAt.toISOString()}_${actualItems[actualItems.length - 1].id}`
         : null
 
       return {
@@ -189,14 +187,6 @@ export const contactsRouter = createTRPCRouter({
           lastName: true,
           email: true,
           phone: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-              website: true,
-              domain: true,
-            },
-          },
           owner: {
             select: {
               id: true,
@@ -208,41 +198,6 @@ export const contactsRouter = createTRPCRouter({
                 },
               },
             },
-          },
-          deals: {
-            select: {
-              id: true,
-              title: true,
-              value: true,
-              stage: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-              pipeline: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: {
-              updatedAt: 'desc',
-            },
-            take: 5,
-          },
-          activities: {
-            select: {
-              id: true,
-              type: true,
-              description: true,
-              createdAt: true,
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-            take: 10,
           },
           updatedAt: true,
           createdAt: true,
@@ -260,6 +215,12 @@ export const contactsRouter = createTRPCRouter({
   create: orgProcedure
     .input(contactCreateSchema)
     .mutation(async ({ ctx, input }) => {
+      // Check plan limits
+      const limitCheck = await checkPlanLimit(ctx.orgId, 'contacts')
+      if (!limitCheck.allowed) {
+        throw new Error(limitCheck.message || 'Plan limit reached')
+      }
+
       return await prisma.contact.create({
         data: {
           ...input,
@@ -272,12 +233,6 @@ export const contactsRouter = createTRPCRouter({
           lastName: true,
           email: true,
           phone: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
           owner: {
             select: {
               id: true,

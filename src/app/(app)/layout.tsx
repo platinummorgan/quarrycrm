@@ -6,9 +6,11 @@ import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { SkipLink } from '@/components/skip-link'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { RouteErrorBoundary } from '@/components/route-error-boundary'
 import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { OutboxBanner } from '@/components/offline/outbox-banner'
-import { SpotlightSearch } from '@/components/spotlight/spotlight-search'
+import { CommandKProvider } from '@/components/CommandK'
+import { ContactDrawer } from '@/components/contacts/ContactDrawer'
 import {
   Users,
   Building2,
@@ -34,9 +36,6 @@ function AppLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       <SkipLink href="#main-content">Skip to main content</SkipLink>
       
-      {/* Global Spotlight Search */}
-      <SpotlightSearch />
-
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto max-w-[1200px] px-4 py-4">
@@ -51,7 +50,7 @@ function AppLayout({ children }: { children: ReactNode }) {
                 size="sm"
                 className="gap-2 text-muted-foreground"
                 onClick={() => {
-                  // Trigger spotlight with Cmd/Ctrl+K
+                  // Trigger command palette with Cmd/Ctrl+K
                   const event = new KeyboardEvent('keydown', {
                     key: 'k',
                     metaKey: true,
@@ -61,7 +60,7 @@ function AppLayout({ children }: { children: ReactNode }) {
                 }}
               >
                 <Search className="h-4 w-4" />
-                <span className="hidden md:inline">Search...</span>
+                <span className="hidden md:inline">Command...</span>
                 <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex">
                   ⌘K
                 </kbd>
@@ -106,12 +105,19 @@ function AppLayout({ children }: { children: ReactNode }) {
         id="main-content"
         className="container mx-auto max-w-[1200px] px-4 py-8"
       >
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <RouteErrorBoundary routeName="App Dashboard">
+          {children}
+        </RouteErrorBoundary>
       </main>
     </div>
   )
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <AppLayout>{children}</AppLayout>
+  return (
+    <CommandKProvider>
+      <AppLayout>{children}</AppLayout>
+      <ContactDrawer />
+    </CommandKProvider>
+  )
 }

@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { trpc } from '@/lib/trpc'
-import { useToast } from '@/hooks/use-toast'
+import { useLoadingState } from '@/hooks/use-loading-state'
 import {
   Table,
   TableBody,
@@ -98,7 +98,6 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   onImport,
   className,
 }: DataTableProps<T>) {
-  const { toast } = useToast()
   const tableRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
@@ -145,19 +144,23 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
 
   const updateMutation = (trpc as any)[entity].update.useMutation({
     onSuccess: () => {
-      toast({
-        title: 'Updated successfully',
-        description: 'Your changes have been saved.',
-      })
+      // Refetch data after successful update
+      listQuery.refetch()
     },
     onError: (error: any) => {
-      toast({
-        title: 'Update failed',
-        description: error.message,
-        variant: 'destructive',
-      })
+      console.error('Update failed:', error)
       // Rollback optimistic update
       listQuery.refetch()
+    },
+  })
+
+  // Use loading state hook for skeleton → empty UI pattern
+  const { showSkeleton, showEmptyState } = useLoadingState(listQuery.isLoading && data.length === 0, {
+    timeout: 400,
+    showToast: true,
+    toastMessage: `Loading ${entity} is taking longer than expected...`,
+    onTimeout: () => {
+      console.error(`Failed to load ${entity} within timeout`)
     },
   })
 
@@ -415,10 +418,27 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
     )
   }
 
-  if (listQuery.isLoading && data.length === 0) {
+  // Show skeleton for initial loading
+  if (showSkeleton) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-pulse">
+          <div className="h-8 w-8 bg-muted rounded-full"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show empty state after timeout
+  if (showEmptyState) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-2">Loading is taking longer than expected</p>
+          <Button onClick={() => listQuery.refetch()} variant="outline">
+            Try again
+          </Button>
+        </div>
       </div>
     )
   }

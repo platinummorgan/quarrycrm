@@ -1,4 +1,5 @@
 import { BetaBanner } from '@/components/site/BetaBanner'
+import { Analytics } from '@/components/analytics/Analytics'
 import { makeSEO } from '@/lib/seo'
 
 export const metadata = makeSEO({
@@ -22,6 +23,11 @@ export default function MarketingLayout({
           <meta name="robots" content="noindex,nofollow" />
         )}
       </head>
+      <Analytics
+        provider={process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER as 'posthog' | 'plausible' | 'none' | undefined}
+        apiKey={process.env.NEXT_PUBLIC_ANALYTICS_API_KEY}
+        domain={process.env.NEXT_PUBLIC_ANALYTICS_DOMAIN}
+      />
       {showBanner && <BetaBanner />}
       <div className={showBanner ? 'pt-8' : ''}>
         {children}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLoadingState } from '@/hooks/use-loading-state'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -11,11 +12,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Save, Trash2, Edit, Plus, FileText } from 'lucide-react'
-import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
+import { toast } from '@/lib/toast'
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Template name is required'),
@@ -44,9 +46,13 @@ interface CsvImportTemplatesProps {
 
 export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvImportTemplatesProps) {
   const [templates, setTemplates] = useState<ImportTemplate[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<ImportTemplate | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const { showSkeleton, showEmptyState } = useLoadingState(isLoading, {
+    toastMessage: 'Loading templates is taking longer than expected...',
+  })
 
   const form = useForm<TemplateForm>({
     resolver: zodResolver(templateSchema),
@@ -139,6 +145,47 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
   // Handle template selection
   const handleSelect = (template: ImportTemplate) => {
     onTemplateSelect?.(template)
+  }
+
+  if (showSkeleton) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="border rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-64" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <div className="flex space-x-1">
+                    <Skeleton className="h-8 w-12" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (showEmptyState) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Still loading templates...</p>
+            <p className="text-sm">Please wait a moment longer.</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (isLoading) {

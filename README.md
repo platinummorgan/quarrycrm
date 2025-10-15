@@ -33,7 +33,57 @@ A modern, browser-first CRM application built with Next.js 14, TypeScript, and c
 - **PWA**: next-pwa
 - **Linting**: ESLint + Prettier
 
-## 🚀 Deployment
+## � Analytics Configuration
+
+Quarry CRM includes privacy-compliant analytics for marketing routes. The analytics component respects Do Not Track settings and collects no personally identifiable information.
+
+### Supported Providers
+
+- **PostHog** - Full-featured analytics with privacy controls
+- **Plausible** - Privacy-focused, lightweight analytics
+- **None** - Disable analytics entirely
+
+### Environment Variables
+
+Add these to your `.env.local` file:
+
+```bash
+# Analytics Configuration
+NEXT_PUBLIC_ANALYTICS_PROVIDER=posthog|plausible|none
+NEXT_PUBLIC_ANALYTICS_API_KEY=your_api_key_here
+NEXT_PUBLIC_ANALYTICS_DOMAIN=your_domain.com
+```
+
+### PostHog Setup
+
+1. Create a PostHog account at [posthog.com](https://posthog.com)
+2. Get your Project API Key and Host from the PostHog dashboard
+3. Set environment variables:
+   ```bash
+   NEXT_PUBLIC_ANALYTICS_PROVIDER=posthog
+   NEXT_PUBLIC_ANALYTICS_API_KEY=your_posthog_api_key
+   NEXT_PUBLIC_ANALYTICS_DOMAIN=your_posthog_host
+   ```
+
+### Plausible Setup
+
+1. Create a Plausible account at [plausible.io](https://plausible.io)
+2. Get your Domain Key from the Plausible dashboard
+3. Set environment variables:
+   ```bash
+   NEXT_PUBLIC_ANALYTICS_PROVIDER=plausible
+   NEXT_PUBLIC_ANALYTICS_API_KEY=your_plausible_domain_key
+   NEXT_PUBLIC_ANALYTICS_DOMAIN=your_domain.com
+   ```
+
+### Privacy Features
+
+- **Do Not Track Respect**: Analytics won't load if `navigator.doNotTrack === '1'`
+- **PII Blacklisting**: PostHog automatically disables IP, email, and other PII collection
+- **Marketing Only**: Analytics only loads on marketing routes (not app routes)
+- **Environment Aware**: Analytics only load in production by default
+
+## �🚀 Deployment
 
 ### Deploy to Vercel
 

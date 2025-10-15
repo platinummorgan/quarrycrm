@@ -3,6 +3,9 @@ import { faker } from '@faker-js/faker'
 
 const prisma = new PrismaClient()
 
+// Set faker seed for reproducible data
+faker.seed(12345)
+
 async function main() {
   console.log('🌱 Starting seed...')
 
@@ -82,9 +85,10 @@ async function main() {
 
   console.log('✅ Created pipeline with stages')
 
-  // Create 10 companies
+  // Create 2,000 companies (for performance testing)
+  console.log('🌱 Creating 2,000 companies...')
   const companies = []
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 2000; i++) {
     const company = await prisma.company.create({
       data: {
         organizationId: organization.id,
@@ -97,13 +101,18 @@ async function main() {
       },
     })
     companies.push(company)
+
+    if ((i + 1) % 500 === 0) {
+      console.log(`  ✅ Created ${i + 1} companies`)
+    }
   }
 
-  console.log('✅ Created companies')
+  console.log('✅ Created 2,000 companies')
 
-  // Create 50 contacts
+  // Create 10,000 contacts (for performance testing)
+  console.log('🌱 Creating 10,000 contacts...')
   const contacts = []
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 10000; i++) {
     const contact = await prisma.contact.create({
       data: {
         organizationId: organization.id,
@@ -116,13 +125,18 @@ async function main() {
       },
     })
     contacts.push(contact)
+
+    if ((i + 1) % 1000 === 0) {
+      console.log(`  ✅ Created ${i + 1} contacts`)
+    }
   }
 
-  console.log('✅ Created contacts')
+  console.log('✅ Created 10,000 contacts')
 
-  // Create 12 deals
+  // Create 800 deals (for performance testing)
+  console.log('🌱 Creating 800 deals...')
   const deals: any[] = []
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 800; i++) {
     const deal = await prisma.deal.create({
       data: {
         organizationId: organization.id,
@@ -137,9 +151,13 @@ async function main() {
       },
     })
     deals.push(deal)
+
+    if ((i + 1) % 200 === 0) {
+      console.log(`  ✅ Created ${i + 1} deals`)
+    }
   }
 
-  console.log('✅ Created deals')
+  console.log('✅ Created 800 deals')
 
   // Create 30 activities
   const activityTypes = ['CALL', 'EMAIL', 'MEETING', 'NOTE', 'TASK'] as const
@@ -176,9 +194,9 @@ async function main() {
   - 1 Organization
   - 3 Users
   - 1 Pipeline with 5 Stages
-  - 10 Companies
-  - 50 Contacts
-  - 12 Deals
+  - 2,000 Companies
+  - 10,000 Contacts
+  - 800 Deals
   - 30 Activities
   - 1 Webhook
   `)

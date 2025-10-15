@@ -1,6 +1,7 @@
 import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { checkPlanLimit } from '@/lib/plans'
 
 // Input/Output schemas
 const pipelineCreateSchema = z.object({
@@ -154,6 +155,12 @@ export const pipelinesRouter = createTRPCRouter({
   create: orgProcedure
     .input(pipelineCreateSchema)
     .mutation(async ({ ctx, input }) => {
+      // Check plan limits
+      const limitCheck = await checkPlanLimit(ctx.orgId, 'pipelines')
+      if (!limitCheck.allowed) {
+        throw new Error(limitCheck.message || 'Plan limit reached')
+      }
+
       return await prisma.pipeline.create({
         data: {
           ...input,

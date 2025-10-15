@@ -15,6 +15,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { useLoadingState } from '@/hooks/use-loading-state'
 import { trpc } from '@/lib/trpc'
 import { KanbanColumn } from './kanban-column'
 import { KanbanCard } from './kanban-card'
@@ -56,6 +57,14 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
 
   // Update deal mutation
   const updateDealMutation = trpc.deals.update.useMutation()
+  const { showSkeleton, showEmptyState } = useLoadingState(isLoading, {
+    timeout: 400,
+    showToast: true,
+    toastMessage: 'Loading kanban board is taking longer than expected...',
+    onTimeout: () => {
+      console.error('Failed to load kanban board within timeout')
+    },
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -175,10 +184,29 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [focusedDealId, moveDealToStage])
 
-  if (isLoading) {
+  // Show skeleton for initial loading
+  if (showSkeleton) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="text-muted-foreground">Loading kanban board...</div>
+        <div className="animate-pulse">
+          <div className="h-8 w-8 bg-muted rounded-full"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show empty state after timeout
+  if (showEmptyState) {
+    return (
+      <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
+        <div className="text-center">
+          <div className="text-muted-foreground mb-2">
+            Loading is taking longer than expected
+          </div>
+          <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+            Refresh
+          </Button>
+        </div>
       </div>
     )
   }
