@@ -8,6 +8,12 @@ export default withAuth(
     const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
     const isApiAuthRoute = req.nextUrl.pathname.startsWith('/api/auth')
 
+    // Add X-Robots-Tag header for non-production environments
+    const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'prod'
+    if (!isProduction) {
+      req.headers.set('X-Robots-Tag', 'noindex, nofollow')
+    }
+
     // Redirect authenticated users away from auth pages
     if (isAuthPage && isAuth) {
       return NextResponse.redirect(new URL('/app', req.url))

@@ -7,6 +7,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { makeSEO } from '@/lib/seo'
+
+export const metadata = makeSEO({
+  title: 'Quarry CRM - Modern CRM for the Browser Era',
+  description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+  path: '/',
+})
 
 export default function MarketingPage() {
   return (
