@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function DemoSigninContent() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [signinAttempted, setSigninAttempted] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session, status } = useSession()
@@ -26,53 +27,77 @@ function DemoSigninContent() {
       return
     }
 
-    // If still loading session, wait
-    if (status === 'loading') {
+    // If still loading session and we haven't attempted signin yet, wait
+    if (status === 'loading' && !signinAttempted) {
       return
     }
 
-    // Attempt demo signin
-    const performDemoSignin = async () => {
-      try {
-        setLoading(true)
-        const result = await signIn('demo', {
-          token,
-          redirect: false,
-        })
-
-        if (result?.error) {
-          console.error('Demo signin error:', result.error)
-          setError('Failed to sign in with demo account')
-        } else if (result?.ok) {
-          // Signin successful, redirect will happen via useEffect
-          router.push('/app')
-        } else {
-          setError('Demo signin failed')
-        }
-      } catch (err) {
-        console.error('Demo signin exception:', err)
-        setError('An error occurred during demo signin')
-      } finally {
-        setLoading(false)
-      }
+    // If we attempted signin and now have a session, redirect
+    if (signinAttempted && status === 'authenticated') {
+      router.push('/app')
+      return
     }
 
-    performDemoSignin()
-  }, [searchParams, status, router])
+    // If we attempted signin but status is not loading anymore and we're not authenticated, show error
+    if (signinAttempted && status === 'unauthenticated') {
+      setError('Demo signin failed - no session established')
+      setLoading(false)
+      return
+    }
 
-  // Redirect if already authenticated
+    // Attempt demo signin if we haven't tried yet
+    if (!signinAttempted) {
+      const performDemoSignin = async () => {
+        try {
+          setLoading(true)
+          console.log('Attempting demo signin with token:', token.substring(0, 10) + '...')
+          const result = await signIn('demo', {
+            token,
+            redirect: false,
+          })
+
+          console.log('Demo signin result:', result)
+
+          if (result?.error) {
+            console.error('Demo signin error:', result.error)
+            setError(`Failed to sign in with demo account: ${result.error}`)
+            setLoading(false)
+          } else if (result?.ok) {
+            console.log('Demo signin reported success, waiting for session...')
+            setSigninAttempted(true)
+            // Don't set loading to false yet - wait for session to update
+          } else {
+            console.error('Demo signin failed with unknown result:', result)
+            setError('Demo signin failed with unknown error')
+            setLoading(false)
+          }
+        } catch (err) {
+          console.error('Demo signin exception:', err)
+          setError('An error occurred during demo signin')
+          setLoading(false)
+        }
+      }
+
+      performDemoSignin()
+    }
+  }, [searchParams, status, router, signinAttempted])
+
+  // If we attempted signin and session becomes authenticated, redirect
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (signinAttempted && status === 'authenticated') {
+      console.log('Session established after demo signin, redirecting to /app')
       router.push('/app')
     }
-  }, [status, router])
+  }, [status, signinAttempted, router])
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Signing you into the demo...</p>
+          <p className="mt-4 text-gray-600">
+            {signinAttempted ? 'Establishing session...' : 'Signing you into the demo...'}
+          </p>
         </div>
       </div>
     )
