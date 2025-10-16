@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useSession } from 'next-auth/react'
 import { EntityType } from '@/lib/csv-processor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -72,8 +73,12 @@ interface CsvExportProps {
 }
 
 export function CsvExport({ onExport }: CsvExportProps) {
+  const { data: session } = useSession()
   const [isExporting, setIsExporting] = useState(false)
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType | null>(null)
+  
+  // Check if user has demo role
+  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
 
   const form = useForm<ExportForm>({
     resolver: zodResolver(exportSchema),
@@ -160,7 +165,14 @@ export function CsvExport({ onExport }: CsvExportProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={form.handleSubmit(handleExport)} className="space-y-6">
+        {isDemo ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Export Disabled</p>
+            <p>Read-only demo. Export functionality is not available in demo mode.</p>
+          </div>
+        ) : (
+          <form onSubmit={form.handleSubmit(handleExport)} className="space-y-6">
           {/* Entity Type Selection */}
           <div className="space-y-2">
             <Label htmlFor="entityType">Data Type</Label>
@@ -281,6 +293,7 @@ export function CsvExport({ onExport }: CsvExportProps) {
             </Button>
           </div>
         </form>
+        )}
       </CardContent>
     </Card>
   )

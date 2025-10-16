@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getRedisClient } from './redis'
 
 interface RateLimitEntry {
   requests: number[]
@@ -10,6 +11,29 @@ interface RateLimitConfig {
   requestsPerMinute: number
   writesPerMinute: number
   windowMs: number
+}
+
+export interface RateLimitResult {
+  success: boolean
+  limit: number
+  remaining: number
+  reset: number // Unix timestamp when the window resets
+  retryAfter?: number // Seconds to wait before retry (only when success=false)
+}
+
+export interface SlidingWindowConfig {
+  limit: number // Maximum requests allowed in window
+  windowMs: number // Time window in milliseconds
+  keyPrefix?: string // Redis key prefix (default: 'ratelimit')
+}
+
+/**
+ * Extended Redis client interface with rate limiting commands
+ */
+interface RateLimitRedisClient {
+  setex(key: string, ttlSeconds: number, value: string): Promise<void>
+  get(key: string): Promise<string | null>
+  del(key: string): Promise<void>
 }
 
 class RateLimiter {
@@ -110,6 +134,183 @@ class RateLimiter {
 
 // Singleton instance for demo rate limiting
 const demoRateLimiter = new RateLimiter()
+
+/**
+ * Check rate limit using sliding window algorithm with Redis
+ * 
+ * @param identifier - Unique identifier (usually IP address)
+ * @param config - Rate limit configuration
+ * @returns Rate limit result with success status and timing info
+ */
+export async function checkRateLimit(
+  identifier: string,
+  config: SlidingWindowConfig
+): Promise<RateLimitResult> {
+  const { limit, windowMs, keyPrefix = 'ratelimit' } = config
+  const redis = getRedisClient() as RateLimitRedisClient
+  const key = `${keyPrefix}:${identifier}`
+  const now = Date.now()
+  const windowSeconds = Math.ceil(windowMs / 1000)
+
+  try {
+    // Use manual sliding window implementation with JSON storage
+    const currentValue = await redis.get(key)
+    
+    if (!currentValue) {
+      // First request in window
+      const data = JSON.stringify({
+        count: 1,
+        resetAt: now + windowMs,
+      })
+      await redis.setex(key, windowSeconds, data)
+      
+      return {
+        success: true,
+        limit,
+        remaining: limit - 1,
+        reset: Math.floor((now + windowMs) / 1000),
+      }
+    }
+
+    // Parse existing data
+    const parsed = JSON.parse(currentValue)
+    const { count, resetAt } = parsed
+
+    // Check if window has expired
+    if (now >= resetAt) {
+      // Start new window
+      const data = JSON.stringify({
+        count: 1,
+        resetAt: now + windowMs,
+      })
+      await redis.setex(key, windowSeconds, data)
+      
+      return {
+        success: true,
+        limit,
+        remaining: limit - 1,
+        reset: Math.floor((now + windowMs) / 1000),
+      }
+    }
+
+    // Check if limit exceeded
+    if (count >= limit) {
+      const retryAfter = Math.ceil((resetAt - now) / 1000)
+      return {
+        success: false,
+        limit,
+        remaining: 0,
+        reset: Math.floor(resetAt / 1000),
+        retryAfter,
+      }
+    }
+
+    // Increment counter
+    const newCount = count + 1
+    const data = JSON.stringify({
+      count: newCount,
+      resetAt,
+    })
+    const ttl = Math.ceil((resetAt - now) / 1000)
+    await redis.setex(key, ttl, data)
+
+    return {
+      success: true,
+      limit,
+      remaining: Math.max(0, limit - newCount),
+      reset: Math.floor(resetAt / 1000),
+    }
+  } catch (error) {
+    console.error('Rate limit check failed:', error)
+    // On error, allow the request (fail open)
+    return {
+      success: true,
+      limit,
+      remaining: limit,
+      reset: Math.floor((now + windowMs) / 1000),
+    }
+  }
+}
+
+/**
+ * Reset rate limit for a given identifier
+ * Useful for testing or manual overrides
+ * 
+ * @param identifier - Unique identifier (e.g., IP address)
+ * @param keyPrefix - Redis key prefix (default: 'ratelimit')
+ */
+export async function resetRateLimit(
+  identifier: string,
+  keyPrefix: string = 'ratelimit'
+): Promise<void> {
+  const redis = getRedisClient()
+  const key = `${keyPrefix}:${identifier}`
+  await redis.del(key)
+}
+
+/**
+ * Get client IP address from request
+ * Handles proxy headers (X-Forwarded-For, X-Real-IP)
+ * 
+ * @param request - Next.js request object or Headers
+ * @returns IP address or 'unknown'
+ */
+export function getClientIp(request: Request | NextRequest): string {
+  // Try various headers that might contain the real IP
+  const headers = request.headers
+  
+  // X-Forwarded-For can contain multiple IPs (client, proxy1, proxy2)
+  // The first one is typically the real client IP
+  const forwardedFor = headers.get('x-forwarded-for')
+  if (forwardedFor) {
+    const ips = forwardedFor.split(',').map(ip => ip.trim())
+    return ips[0]
+  }
+
+  // Cloudflare
+  const cfConnectingIp = headers.get('cf-connecting-ip')
+  if (cfConnectingIp) {
+    return cfConnectingIp
+  }
+
+  // X-Real-IP (nginx)
+  const realIp = headers.get('x-real-ip')
+  if (realIp) {
+    return realIp
+  }
+
+  // Vercel
+  const vercelForwardedFor = headers.get('x-vercel-forwarded-for')
+  if (vercelForwardedFor) {
+    return vercelForwardedFor
+  }
+
+  return 'unknown'
+}
+
+/**
+ * Predefined rate limit configurations for demo sessions
+ */
+export const DemoRateLimits = {
+  // Demo authentication endpoints - strict limits
+  AUTH: {
+    limit: 10, // 10 requests
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:demo:auth',
+  } as SlidingWindowConfig,
+  // Demo API endpoints - moderate limits
+  API: {
+    limit: 30, // 30 requests
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:demo:api',
+  } as SlidingWindowConfig,
+  // Demo data export - very strict
+  EXPORT: {
+    limit: 3, // 3 exports
+    windowMs: 5 * 60 * 1000, // per 5 minutes
+    keyPrefix: 'ratelimit:demo:export',
+  } as SlidingWindowConfig,
+} as const
 
 export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = false, limiter?: RateLimiter) {
   const limiterToUse = limiter || demoRateLimiter

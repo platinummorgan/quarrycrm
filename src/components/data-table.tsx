@@ -466,7 +466,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="relative">
+          <div className="relative" data-tour="contacts-search">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
@@ -683,6 +683,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
               {data.map((item, rowIndex) => (
                 <TableRow
                   key={item.id}
+                  data-tour={rowIndex === 0 ? 'contact-row' : undefined}
                   className={cn(
                     'cursor-pointer',
                     selectedRows.has(item.id) && 'bg-muted',

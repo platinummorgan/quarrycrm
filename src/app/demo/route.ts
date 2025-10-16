@@ -16,11 +16,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Generate demo token
-    const token = await generateDemoToken(demoOrg.id)
+    // Get current host for host pinning
+    const requestUrl = new URL(request.url)
+    const host = requestUrl.host
+
+    // Generate demo token with host pinning
+    const token = await generateDemoToken(demoOrg.id, host)
 
     // Create redirect URL with token
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = requestUrl.origin
     const redirectUrl = new URL('/api/auth/demo', baseUrl)
     redirectUrl.searchParams.set('token', token)
 

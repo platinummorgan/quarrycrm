@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { EntityType } from '@/lib/csv-processor'
+import { demoGuard } from '@/lib/demo-guard'
 
 // Get import templates for an organization
 export async function GET(request: NextRequest) {
@@ -42,6 +43,10 @@ export async function GET(request: NextRequest) {
 
 // Create a new import template
 export async function POST(request: NextRequest) {
+  // Block demo users from creating templates
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const body = await request.json()
     const { name, entityType, mappings, isDefault = false } = body
@@ -94,6 +99,10 @@ export async function POST(request: NextRequest) {
 
 // Update an import template
 export async function PUT(request: NextRequest) {
+  // Block demo users from updating templates
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const body = await request.json()
     const { id, name, mappings, isDefault } = body
@@ -155,6 +164,10 @@ export async function PUT(request: NextRequest) {
 
 // Delete an import template
 export async function DELETE(request: NextRequest) {
+  // Block demo users from deleting templates
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

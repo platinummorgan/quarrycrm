@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { ActivityType } from '@prisma/client'
+import { demoGuard } from '@/lib/demo-guard'
 
 // Simple email parsing - in production you'd use a proper email parsing library
 interface ParsedEmail {
@@ -38,6 +39,10 @@ function parseEmail(rawEmail: string): ParsedEmail {
 }
 
 export async function POST(request: NextRequest) {
+  // Demo user guard
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const rawEmail = await request.text()
 

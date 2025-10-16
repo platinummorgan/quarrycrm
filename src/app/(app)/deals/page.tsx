@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Board } from '@/components/deals/Board'
+import { BoardWithQueryHandler } from '@/components/deals/BoardWithQueryHandler'
 import { getDeals, getPipelines } from '@/server/deals'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -11,7 +11,7 @@ async function BoardWrapper() {
   ])
 
   return (
-    <Board
+    <BoardWithQueryHandler
       initialDeals={dealsData}
       initialPipelines={pipelinesData}
     />

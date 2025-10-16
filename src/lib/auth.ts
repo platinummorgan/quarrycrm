@@ -15,30 +15,49 @@ export const authOptions: NextAuthOptions = {
       name: 'Demo',
       credentials: {
         token: { label: 'Demo Token', type: 'text' },
+        host: { label: 'Host', type: 'text' }, // Optional host for pinning
       },
       async authorize(credentials) {
+        console.log('🔍 Demo provider authorize called with credentials:', !!credentials?.token)
         if (!credentials?.token) {
+          console.log('❌ No token provided')
           return null
         }
 
         try {
-          // Verify the demo token
-          const payload = await verifyDemoToken(credentials.token)
+          console.log('🔍 Verifying demo token with security checks...')
+          
+          // Verify the demo token with host pinning if provided
+          const expectedHost = credentials.host || process.env.NEXTAUTH_URL || undefined
+          console.log('🔍 Expected host for token:', expectedHost)
+          
+          const payload = await verifyDemoToken(credentials.token, expectedHost)
+          console.log('✅ Token verified successfully, orgId:', payload.orgId, 'jti:', payload.jti)
 
           // Find the demo user
           const demoUser = await prisma.user.findFirst({
             where: { email: 'demo@demo.example' },
           })
+          console.log('🔍 Demo user found:', !!demoUser)
 
           if (!demoUser) {
             throw new Error('Demo user not found')
           }
 
-          // Verify the user has access to the demo org
-          const membership = await prisma.orgMember.findFirst({
+          // Ensure the demo user has access to the demo org
+          const membership = await prisma.orgMember.upsert({
             where: {
-              userId: demoUser.id,
+              organizationId_userId: {
+                organizationId: payload.orgId,
+                userId: demoUser.id,
+              },
+            },
+            update: {
+              role: 'DEMO',
+            },
+            create: {
               organizationId: payload.orgId,
+              userId: demoUser.id,
               role: 'DEMO',
             },
             include: {
@@ -51,22 +70,19 @@ export const authOptions: NextAuthOptions = {
               },
             },
           })
+          console.log('✅ Demo membership ready:', !!membership)
 
-          if (!membership) {
-            throw new Error('Demo user does not have access to this organization')
-          }
-
-          // Return user object with demo context
+          console.log('✅ Demo auth successful, returning user object')
+          // Return user object with minimal properties for database session
           return {
             id: demoUser.id,
             email: demoUser.email,
             name: demoUser.name,
-            // Add demo-specific context
             isDemo: true,
             demoOrgId: payload.orgId,
           }
         } catch (error) {
-          console.error('Demo auth error:', error)
+          console.error('❌ Demo auth error:', error)
           return null
         }
       },
@@ -99,17 +115,21 @@ export const authOptions: NextAuthOptions = {
       : []),
   ],
   session: {
-    strategy: 'database',
+    strategy: 'jwt', // Changed from 'database' to support CredentialsProvider
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id
+    async session({ session, token }) {
+      console.log('🔍 SESSION CALLBACK: Called with session:', !!session, 'token:', !!token)
+      console.log('🔍 SESSION CALLBACK: Token data:', { id: token?.id, email: token?.email, isDemo: token?.isDemo })
 
-        // Handle demo sessions differently
-        if ((user as any).isDemo) {
-          const demoOrgId = (user as any).demoOrgId
+      if (session.user && token) {
+        session.user.id = token.id as string
 
+        // Handle demo sessions differently - check if user is the demo user
+        if (token.isDemo) {
+          console.log('🔍 Handling demo session for token:', token.id)
+          const demoOrgId = token.demoOrgId as string
+          
           // Get demo organization details
           const demoOrg = await prisma.organization.findUnique({
             where: { id: demoOrgId },
@@ -120,6 +140,7 @@ export const authOptions: NextAuthOptions = {
             },
           })
 
+          console.log('🔍 Demo org found:', !!demoOrg)
           if (demoOrg) {
             session.user.organizations = [{
               id: demoOrg.id,
@@ -136,64 +157,27 @@ export const authOptions: NextAuthOptions = {
             }
 
             session.user.isDemo = true
-          }
-        } else {
-          // Get user's organizations and current org context
-          const memberships = await prisma.orgMember.findMany({
-            where: { userId: user.id },
-            include: {
-              organization: {
-                select: {
-                  id: true,
-                  name: true,
-                  domain: true,
-                },
-              },
-            },
-          })
-
-          // For now, default to first org or create one if none exist
-          let currentOrg = memberships[0]?.organization
-
-          if (!currentOrg) {
-            // Create default organization for new users
-            const defaultOrg = await prisma.organization.create({
-              data: {
-                name: `${session.user.name || session.user.email}'s Organization`,
-                members: {
-                  create: {
-                    userId: user.id,
-                    role: 'OWNER',
-                  },
-                },
-              },
-            })
-            currentOrg = {
-              id: defaultOrg.id,
-              name: defaultOrg.name,
-              domain: defaultOrg.domain,
-            }
-          }
-
-          // Add org context to session
-          session.user.organizations = memberships.map((m) => ({
-            id: m.organization.id,
-            name: m.organization.name,
-            domain: m.organization.domain,
-            role: m.role,
-          }))
-
-          session.user.currentOrg = {
-            id: currentOrg.id,
-            name: currentOrg.name,
-            domain: currentOrg.domain,
-            role:
-              memberships.find((m) => m.organizationId === currentOrg.id)?.role ||
-              'MEMBER',
+            console.log('🔍 Demo session setup complete')
           }
         }
       }
+      
+      console.log('🔍 SESSION CALLBACK: Returning session')
       return session
+    },
+    async jwt({ token, user, account }) {
+      console.log('🔍 JWT callback called:', { token: !!token, user: !!user, account: !!account })
+      console.log('🔍 JWT callback data:', { tokenEmail: token?.email, userEmail: user?.email, accountProvider: account?.provider })
+
+      if (user) {
+        console.log('🔍 Setting JWT from user:', { id: user.id, email: user.email, isDemo: (user as any).isDemo })
+        token.id = user.id
+        token.isDemo = (user as any).isDemo
+        token.demoOrgId = (user as any).demoOrgId
+      }
+
+      console.log('🔍 JWT callback returning token with id:', token.id)
+      return token
     },
   },
   pages: {

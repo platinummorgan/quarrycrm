@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { OutboxManager } from '@/lib/outbox-manager'
+import { demoGuard } from '@/lib/demo-guard'
 
 export async function POST(request: NextRequest) {
+  // Block demo users from sync operations
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     // Get the outbox manager instance
     const outboxManager = OutboxManager.getInstance()

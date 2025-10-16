@@ -148,6 +148,7 @@ function DealCard({
     <Card
       ref={setNodeRef}
       style={style}
+      data-deal-id={deal.id}
       className={`cursor-grab transition-shadow hover:shadow-md ${
         isDragging || isSortableDragging ? 'opacity-50 shadow-lg' : ''
       } ${isFocused ? 'ring-2 ring-primary' : ''}`}
@@ -364,9 +365,13 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 export function Board({
   initialDeals,
   initialPipelines,
+  onPipelineChangeRef,
+  onDealFocusRef,
 }: {
   initialDeals: DealsListResponse
   initialPipelines: PipelinesListResponse
+  onPipelineChangeRef?: React.MutableRefObject<((pipelineId: string) => void) | undefined>
+  onDealFocusRef?: React.MutableRefObject<((dealId: string) => void) | undefined>
 }) {
   const sessionResult = useSession()
   const session = sessionResult?.data
@@ -388,6 +393,16 @@ export function Board({
       setSelectedPipeline(pipelines[0].id)
     }
   }, [pipelines, selectedPipeline])
+
+  // Expose functions to query handler via refs
+  useEffect(() => {
+    if (onPipelineChangeRef) {
+      onPipelineChangeRef.current = setSelectedPipeline
+    }
+    if (onDealFocusRef) {
+      onDealFocusRef.current = setFocusedDealId
+    }
+  }, [onPipelineChangeRef, onDealFocusRef])
 
   // Find selected pipeline
   const selectedPipelineData = pipelines.find((p) => p.id === selectedPipeline)

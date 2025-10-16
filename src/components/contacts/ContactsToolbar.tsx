@@ -298,7 +298,7 @@ export function ContactsToolbar({
         {/* Saved Views Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-tour="saved-views">
               <Save className="h-4 w-4 mr-2" />
               Views
               {savedViews && savedViews.length > 0 && (

@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { EntityType, CsvImportConfig } from '@/lib/csv-processor'
 import Papa from 'papaparse'
+import { demoGuard } from '@/lib/demo-guard'
 
 // Parse CSV and return headers and sample data
 export async function POST(request: NextRequest) {
+  // Block demo users from CSV imports
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File

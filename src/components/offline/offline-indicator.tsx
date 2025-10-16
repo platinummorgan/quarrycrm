@@ -59,7 +59,7 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={`flex items-center space-x-2 ${className}`}>
+          <div className={`flex items-center space-x-2 ${className}`} data-tour="offline-indicator">
             <Badge
               variant="outline"
               className={`flex items-center space-x-1 px-2 py-1 ${statusInfo.bgColor} ${statusInfo.color} border-current`}

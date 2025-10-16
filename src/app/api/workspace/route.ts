@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { checkDemoRateLimit } from '@/lib/rate-limit'
+import { demoGuard } from '@/lib/demo-guard'
 
 // GET /api/workspace - Get current workspace
 export async function GET(request: NextRequest) {
@@ -62,6 +63,10 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/workspace - Update workspace
 export async function PUT(request: NextRequest) {
+  // Block demo users from workspace updates
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const session = await getServerSession(authOptions)
 

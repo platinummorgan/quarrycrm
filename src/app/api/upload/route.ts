@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { demoGuard } from '@/lib/demo-guard'
 
 /**
  * File Upload API Route (Stub)
@@ -14,6 +15,10 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 
 export async function POST(request: NextRequest) {
+  // Block demo users from file uploads
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null

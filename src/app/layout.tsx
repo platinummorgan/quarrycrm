@@ -7,12 +7,18 @@ import { ThemeProvider } from 'next-themes'
 import { SessionProvider } from '@/components/providers/session-provider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { PreviewBanner } from '@/components/PreviewBanner'
+import { DebugHeaderPill } from '@/components/DebugHeaderPill'
 import dynamic from 'next/dynamic'
 
 const inter = Inter({ subsets: ['latin'] })
 
 // Dynamically import DemoBanner to avoid SSR issues
 const DemoBanner = dynamic(() => import('@/components/DemoBanner').then(mod => ({ default: mod.DemoBanner })), {
+  ssr: false,
+})
+
+// Dynamically import DemoTour to avoid SSR issues
+const DemoTour = dynamic(() => import('@/components/demo/Tour').then(mod => ({ default: mod.DemoTour })), {
   ssr: false,
 })
 
@@ -68,6 +74,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <PreviewBanner />
         <DemoBanner />
+        <DebugHeaderPill />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -78,6 +85,7 @@ export default function RootLayout({
             <TRPCProvider>
               <ToastProvider>
                 {children}
+                <DemoTour />
               </ToastProvider>
             </TRPCProvider>
           </SessionProvider>

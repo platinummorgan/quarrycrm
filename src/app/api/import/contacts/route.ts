@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { withLatencyLogMiddleware } from '@/lib/server/withLatencyLog'
+import { demoGuard } from '@/lib/demo-guard'
 
 const importContactSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -22,6 +23,10 @@ interface ImportData {
 }
 
 export const POST = withLatencyLogMiddleware(async (request: NextRequest) => {
+  // Demo user guard
+  const demoCheck = await demoGuard()
+  if (demoCheck) return demoCheck
+
   try {
     const session = await getServerSession(authOptions)
 

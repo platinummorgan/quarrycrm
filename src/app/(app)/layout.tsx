@@ -84,12 +84,14 @@ function AppLayout({ children }: { children: ReactNode }) {
                 {navigation.map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href
+                  const isDealsLink = item.name === 'Deals'
                   return (
                     <Button
                       key={item.name}
                       variant={isActive ? 'default' : 'ghost'}
                       size="sm"
                       asChild
+                      data-tour={isDealsLink ? 'deals-nav' : undefined}
                     >
                       <Link
                         href={item.href}

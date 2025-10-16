@@ -2,9 +2,59 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { EntityType } from '@/lib/csv-processor'
 import Papa from 'papaparse'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
+import { maskEmail, maskPhone } from '@/lib/mask-pii'
+import { checkRateLimit, getClientIp, DemoRateLimits } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is demo
+    const isDemo = session.user.isDemo || session.user.currentOrg?.role === 'DEMO'
+    
+    // Apply stricter rate limiting to demo users for exports
+    if (isDemo) {
+      const clientIp = getClientIp(request)
+      const rateLimitResult = await checkRateLimit(clientIp, DemoRateLimits.EXPORT)
+
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          {
+            error: 'Rate limit exceeded',
+            message: 'Too many export requests. Please try again later.',
+            retryAfter: rateLimitResult.retryAfter,
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': rateLimitResult.retryAfter?.toString() || '300',
+              'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+              'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+              'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+            },
+          }
+        )
+      }
+    }
+
+    const orgId = session.user.currentOrg?.id
+
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'Organization not found' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
     const {
       entityType,
@@ -27,9 +77,6 @@ export async function POST(request: NextRequest) {
 
     let data: any[] = []
     let filename = `${entityType.toLowerCase()}_export`
-
-    // Get current user/org from session (simplified - you'd use proper auth)
-    const orgId = 'org_123' // This should come from auth context
 
     switch (entityType) {
       case EntityType.CONTACT:
@@ -113,6 +160,19 @@ export async function POST(request: NextRequest) {
       if (item.owner?.user) {
         transformed.ownerName = item.owner.user.name
         delete transformed.owner
+      }
+
+      // Mask PII for demo users
+      if (isDemo) {
+        if (transformed.email) {
+          transformed.email = maskEmail(transformed.email)
+        }
+        if (transformed.phone) {
+          transformed.phone = maskPhone(transformed.phone)
+        }
+        if (transformed.contactEmail) {
+          transformed.contactEmail = maskEmail(transformed.contactEmail)
+        }
       }
 
       // Remove internal fields

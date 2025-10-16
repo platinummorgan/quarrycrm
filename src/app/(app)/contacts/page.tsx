@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { ContactsTable } from '@/components/contacts/ContactsTable'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'
+import { ContactQueryHandler } from '@/components/contacts/ContactQueryHandler'
 import { getContacts } from '@/server/contacts'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -81,6 +82,7 @@ export default function ContactsPage({ searchParams }: ContactsPageProps) {
       </Suspense>
 
       <ContactDrawer />
+      <ContactQueryHandler />
     </div>
   )
 }

@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { demoGuard } from '@/lib/demo-guard'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { importId: string } }
 ) {
   try {
+    // Block demo users from rollback operations
+    const demoCheck = await demoGuard()
+    if (demoCheck) return demoCheck
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
