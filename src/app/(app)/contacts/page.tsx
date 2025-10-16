@@ -82,7 +82,9 @@ export default function ContactsPage({ searchParams }: ContactsPageProps) {
       </Suspense>
 
       <ContactDrawer />
-      <ContactQueryHandler />
+      <Suspense fallback={null}>
+        <ContactQueryHandler />
+      </Suspense>
     </div>
   )
 }
