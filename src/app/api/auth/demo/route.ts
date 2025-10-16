@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/app', request.url))
     }
 
-    // Redirect to NextAuth signin with demo provider
-    const signInUrl = new URL('/api/auth/signin/demo', request.url)
-    signInUrl.searchParams.set('token', token)
-    signInUrl.searchParams.set('callbackUrl', '/app')
+    // For demo authentication, we need to handle it on the client side
+    // Redirect to a demo signin page that will automatically sign in
+    const demoSigninUrl = new URL('/auth/demo-signin', request.url)
+    demoSigninUrl.searchParams.set('token', token)
 
-    return NextResponse.redirect(signInUrl)
+    return NextResponse.redirect(demoSigninUrl)
   } catch (error) {
     console.error('Demo auth redirect error:', error)
     return NextResponse.redirect(new URL('/auth/signin?error=demo', request.url))
