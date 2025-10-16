@@ -33,7 +33,7 @@ function DemoSigninContent() {
     }
 
     // If we attempted signin and now have a session, redirect
-    if (signinAttempted && status === 'authenticated') {
+    if (signinAttempted && (status as any) === 'authenticated') {
       router.push('/app')
       return
     }
