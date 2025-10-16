@@ -9,20 +9,21 @@ import {
 
 export default function OrgSwitcher() {
   const sessionResult = useSession()
-  const { data: session, update } = sessionResult
+  const session = sessionResult?.data
+  const update = sessionResult?.update
   const [isOpen, setIsOpen] = useState(false)
 
-  if (!session?.user?.organizations || session.user.organizations.length <= 1) {
+  const organizations = session?.user?.organizations ?? []
+  const currentOrg = session?.user?.currentOrg
+
+  if (organizations.length <= 1) {
     return null
   }
-
-  const currentOrg = session.user.currentOrg
-  const organizations = session.user.organizations
 
   const switchOrg = async (orgId: string) => {
     // Update session with new current org
     const newCurrentOrg = organizations.find((org) => org.id === orgId)
-    if (newCurrentOrg) {
+    if (newCurrentOrg && update) {
       await update({
         currentOrg: newCurrentOrg,
       })

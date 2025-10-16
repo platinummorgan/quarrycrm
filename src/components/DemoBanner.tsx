@@ -8,7 +8,8 @@ export function DemoBanner() {
   const [isVisible, setIsVisible] = useState(true)
   const [isDemo, setIsDemo] = useState(false)
   const sessionResult = useSession()
-  const { data: session, status } = sessionResult
+  const session = sessionResult?.data
+  const status = sessionResult?.status ?? 'loading'
 
   useEffect(() => {
     if (status === 'loading') return
