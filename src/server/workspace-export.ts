@@ -44,7 +44,7 @@ export async function processExportJob(jobId: string) {
       data: { status: 'PROCESSING' },
     });
 
-    const metadata = job.metadata as ExportJobMetadata;
+  const metadata = (job.metadata as unknown) as ExportJobMetadata;
 
     // Fetch data
     const exportData: ExportData = {
