@@ -95,13 +95,7 @@ if (!process.env.SKIP_DB_MIGRATE) {
 	}
 }
 
-	// eslint-disable-next-line no-var
-	var __dbReset: (client?: any) => Promise<void>
-	// eslint-disable-next-line no-var
-	var __dbClose: () => Promise<void>
-	// eslint-disable-next-line no-var
-	var __withAdvisoryLock: <T>(fn: (client: any) => Promise<T>) => Promise<T>
-}
+ 
 
 import { resetPostgresDb, closePrisma, withAdvisoryLock } from '../tests/db-reset'
 
