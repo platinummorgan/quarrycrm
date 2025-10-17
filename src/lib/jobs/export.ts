@@ -59,7 +59,7 @@ export async function processExportJob(jobId: string): Promise<ExportResult> {
       data: { status: 'PROCESSING' },
     })
 
-    const options = (job.metadata as ExportOptions) || {}
+  const options = ((job.metadata as unknown) as ExportOptions) || {}
     const format = options.format || 'json'
 
     // Check storage configuration
