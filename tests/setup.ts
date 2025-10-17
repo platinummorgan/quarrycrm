@@ -2,7 +2,7 @@ import { resetPostgresDb, closePrisma, withAdvisoryLock } from './db-reset'
 import type { PrismaClient } from '@prisma/client'
 
 // Minimal env defaults for tests
-process.env.NODE_ENV ||= 'test'
+(process.env as any).NODE_ENV ||= 'test'
 process.env.NEXTAUTH_URL ||= 'http://localhost'
 process.env.DEMO_TOKEN_SECRET ||= 'demo'
 process.env.RESEND_API_KEY ||= 'test'
