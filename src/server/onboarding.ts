@@ -88,9 +88,9 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
       await prisma.orgMember.update({
         where: { id: member.id },
         data: {
-          onboardingProgress: progress,
-          onboardingCompleted: Object.values(progress).every(Boolean),
-        },
+            onboardingProgress: (progress as unknown) as any,
+            onboardingCompleted: Object.values(progress).every(Boolean),
+          },
       })
     }
 
