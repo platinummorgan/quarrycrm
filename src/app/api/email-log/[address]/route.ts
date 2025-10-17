@@ -49,7 +49,7 @@ async function getOrgIdFromEmail(rawEmail: string): Promise<string | null> {
   return organization?.id || null
 }
 
-const emailLogHandler = async (request: NextRequest) => {
+const emailLogHandler = async (request: NextRequest): Promise<NextResponse<any>> => {
   // Demo user guard
   const demoCheck = await demoGuard()
   if (demoCheck) return demoCheck
