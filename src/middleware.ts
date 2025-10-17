@@ -19,11 +19,12 @@ export function middleware(req: Request) {
 }
 
 export const config = { matcher: ['/:path*'] }
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 
 // Neutral module to avoid duplicate middleware definitions during build.
 // The real middleware lives at the repository root `middleware.ts`.
 
+// Neutral module to avoid duplicate middleware definitions during build.
+// The real middleware lives at the repository root `middleware.ts`.
+
+// Keep this file intentionally empty (no middleware exports).
 export {}
