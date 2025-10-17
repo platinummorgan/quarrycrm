@@ -194,7 +194,7 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
       include: {
         contact: { select: { id: true, firstName: true, lastName: true } },
         deal: { select: { id: true, title: true } },
-        user: { select: { id: true, name: true, email: true } },
+        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
       },
     })
   }
