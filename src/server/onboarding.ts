@@ -156,7 +156,7 @@ export async function completeOnboardingTask(
     await prisma.orgMember.update({
       where: { id: member.id },
       data: {
-        onboardingProgress: updatedProgress,
+        onboardingProgress: (updatedProgress as unknown) as any,
         onboardingCompleted: Object.values(updatedProgress).every(Boolean),
       },
     })
