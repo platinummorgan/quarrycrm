@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { TRPCError } from '@trpc/server'
 import { randomBytes, createHmac } from 'crypto'
 import { nanoid } from 'nanoid'
+import { createHash } from 'crypto'
 
 // Update workspace settings (name, logo, email log address)
 const updateWorkspaceSchema = z.object({
@@ -219,17 +220,25 @@ export const settingsRouter = createTRPCRouter({
       const token = nanoid(32)
       const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`
 
-      // Store invitation in audit log
+      // Store invitation in audit log (compute self-hash)
+      const eventPayload = {
+        organizationId: orgId,
+        eventType: 'member.invited',
+        eventData: {
+          email: input.email,
+          role: input.role,
+          token,
+          invitedBy: userId,
+        },
+      }
+
+      const canonical = JSON.stringify(eventPayload)
+      const selfHash = createHash('sha256').update(canonical).digest('hex')
+
       await prisma.eventAudit.create({
         data: {
-          organizationId: orgId,
-          eventType: 'member.invited',
-          eventData: {
-            email: input.email,
-            role: input.role,
-            token,
-            invitedBy: userId,
-          },
+          ...eventPayload,
+          selfHash,
         },
       })
 
