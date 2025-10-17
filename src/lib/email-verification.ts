@@ -40,24 +40,27 @@ export async function getDomainVerificationStatus(
       };
     }
 
+    // Normalize response shape: some SDK versions return { data, error }
+    const raw: any = (response as any)?.data ?? response
+
     return {
-      domain: response.name,
-      status: response.status as 'verified' | 'pending' | 'failed' | 'not_found',
+      domain: raw.name || domain,
+      status: raw.status as 'verified' | 'pending' | 'failed' | 'not_found',
       records: {
         dkim: {
-          status: (response.records?.find((r: any) => r.record === 'DKIM')?.status ||
+          status: (raw.records?.find((r: any) => r.record === 'DKIM')?.status ||
             'not_found') as 'verified' | 'pending' | 'failed' | 'not_found',
-          value: response.records?.find((r: any) => r.record === 'DKIM')?.value,
+          value: raw.records?.find((r: any) => r.record === 'DKIM')?.value,
         },
         spf: {
-          status: (response.records?.find((r: any) => r.record === 'SPF')?.status ||
+          status: (raw.records?.find((r: any) => r.record === 'SPF')?.status ||
             'not_found') as 'verified' | 'pending' | 'failed' | 'not_found',
-          value: response.records?.find((r: any) => r.record === 'SPF')?.value,
+          value: raw.records?.find((r: any) => r.record === 'SPF')?.value,
         },
         dmarc: {
-          status: (response.records?.find((r: any) => r.record === 'DMARC')?.status ||
+          status: (raw.records?.find((r: any) => r.record === 'DMARC')?.status ||
             'not_found') as 'verified' | 'pending' | 'failed' | 'not_found',
-          value: response.records?.find((r: any) => r.record === 'DMARC')?.value,
+          value: raw.records?.find((r: any) => r.record === 'DMARC')?.value,
         },
       },
     };
