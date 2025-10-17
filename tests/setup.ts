@@ -11,10 +11,10 @@ process.env.ENCRYPTION_KEY ||= 'a'.repeat(64) // 64 chars hex-like
 process.env.KMS_KEY_ID ||= 'local'
 
 declare global {
-  // test helpers
-  var __dbReset: ((client?: PrismaClient) => Promise<void>) | undefined
+  // test helpers (use flexible any types to avoid redeclaration conflicts in CI/type-check)
+  var __dbReset: ((client?: any) => Promise<void>) | undefined
   var __dbClose: (() => Promise<void>) | undefined
-  var __withAdvisoryLock: (<T>(fn: (client: PrismaClient) => Promise<T>) => Promise<T>) | undefined
+  var __withAdvisoryLock: (<T>(fn: (client: any) => Promise<T>) => Promise<T>) | undefined
 }
 
 globalThis.__dbReset = resetPostgresDb
