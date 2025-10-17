@@ -20,6 +20,11 @@ model Organization {
   plan           OrganizationPlan @default(FREE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  
+  // Soft delete fields
+  deletedAt      DateTime?
+  scheduledPurgeAt DateTime?
+  deletedBy      String?
 
   // Relations
   members        OrgMember[]
@@ -34,6 +39,7 @@ model Organization {
   importTemplates ImportTemplate[]
   importHistory   ImportHistory[]
   savedViews     SavedView[]
+  workspaceJobs  WorkspaceJob[]
 
   @@map("organizations")
 }
@@ -62,6 +68,11 @@ model OrgMember {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
+  // Onboarding
+  onboardingDismissed Boolean        @default(false)
+  onboardingCompleted Boolean        @default(false)
+  onboardingProgress  Json?          // Tracks which tasks are complete
+
   // Relations
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -87,13 +98,18 @@ model Contact {
   organizationId String
   firstName      String
   lastName       String
-  email          String?
-  phone          String?
+  email          String?   // Encrypted field
+  phone          String?   // Encrypted field
+  notes          String?  @db.Text   // Encrypted field (new)
   companyId      String?
   ownerId        String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
+
+  // Searchable hash fields for encrypted data
+  email_hash     String?   // BLAKE2b hash for email lookups
+  phone_hash     String?   // BLAKE2b hash for phone lookups
 
   // Relations
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -104,7 +120,8 @@ model Contact {
 
   @@index([organizationId])
   @@index([ownerId])
-  @@index([organizationId, email])
+  @@index([organizationId, email_hash]) // Use hash for lookups
+  @@index([organizationId, phone_hash]) // Use hash for lookups
   @@index([organizationId, firstName, lastName])
   @@map("contacts")
 }
@@ -272,6 +289,10 @@ model EventAudit {
   ipAddress      String?
   userAgent      String?
   createdAt      DateTime    @default(now())
+  
+  // Blockchain-style audit chain
+  prevHash       String?     // SHA-256 of previous record's self_hash (null for genesis)
+  selfHash       String      // SHA-256 of canonicalized payload (this record)
 
   // Relations
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -279,6 +300,7 @@ model EventAudit {
   @@index([organizationId])
   @@index([eventType])
   @@index([createdAt])
+  @@index([organizationId, createdAt])
   @@map("events_audit")
 }
 
@@ -481,4 +503,25 @@ model SavedView {
   @@index([organizationId, isPublic])
   @@index([viewUrl])
   @@map("saved_views")
+}
+
+model WorkspaceJob {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  type           String   // EXPORT, etc.
+  status         String   // PENDING, PROCESSING, COMPLETED, FAILED
+  metadata       Json?    // Job-specific data (format, options, etc.)
+  result         Json?    // Job results (download URL, record counts, etc.)
+  error          String?  // Error message if failed
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+  @@map("workspace_jobs")
 }

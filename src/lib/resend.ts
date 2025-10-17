@@ -1,8 +1,13 @@
 import { Resend } from 'resend'
 import MagicLinkEmail from '@/emails/MagicLinkEmail'
+import { getBaseUrl } from './baseUrl'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
+/**
+ * Send magic link email.
+ * Normalizes URL origin to the canonical base URL in production to avoid vercel.app preview links.
+ */
 export async function sendMagicLinkEmail({
   to,
   url,
@@ -17,12 +22,27 @@ export async function sendMagicLinkEmail({
     return { success: false, error: 'Email service not configured' }
   }
 
+  // Ensure URL uses canonical origin in production
   try {
+    const base = getBaseUrl()
+    let safeUrl = url
+    try {
+      const parsed = new URL(url)
+      const baseParsed = new URL(base)
+      // Replace origin with canonical origin but keep path + query + hash
+      parsed.protocol = baseParsed.protocol
+      parsed.host = baseParsed.host
+      safeUrl = parsed.toString()
+    } catch {
+      // If url is relative, join with base
+      safeUrl = `${base.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'login@mail.quarrycrm.com',
       to,
       subject: `Sign in to ${host}`,
-      react: MagicLinkEmail({ url, host }),
+      react: MagicLinkEmail({ url: safeUrl, host }),
     })
 
     if (error) {

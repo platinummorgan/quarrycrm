@@ -1,86 +1,43 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { prisma } from '@/lib/prisma'
+import { seedOrgUser, seedPipelines } from '../../../../tests/utils/seed'
 
 describe('Deals Board - Stage Movement Unit Tests', () => {
-  let testOrgId: string
-  let testUserId: string
-  let testMemberId: string
-  let testPipelineId: string
-  let testStage1Id: string
-  let testStage2Id: string
-  let testStage3Id: string
+  let ctx: Awaited<ReturnType<typeof seedOrgUser>>
+  let pipelineCtx: Awaited<ReturnType<typeof seedPipelines>>
   let testDealId: string
 
   // Setup test data before each test
   beforeEach(async () => {
-    // Create test organization with unique domain to avoid conflicts
-    const org = await prisma.organization.create({
-      data: {
-        name: 'Test Org - Deals Board',
-        domain: `test-deals-board-${Date.now()}.com`,
-      },
-    })
-    testOrgId = org.id
+    if (typeof globalThis.__dbReset === 'function' && typeof globalThis.__withAdvisoryLock === 'function') {
+      await globalThis.__withAdvisoryLock(async (tx) => {
+        await globalThis.__dbReset(tx)
+        ctx = await seedOrgUser(tx)
+        pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
 
-    // Create test user with unique email
-    const user = await prisma.user.create({
-      data: {
-        email: `test-deals-board-${Date.now()}@example.com`,
-        name: 'Test User',
-      },
-    })
-    testUserId = user.id
+        // Create a test deal in stage 1 inside the same transaction
+        const deal = await tx.deal.create({
+          data: {
+            title: 'Test Deal',
+            value: 10000,
+            probability: 50,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
+          },
+        })
+        testDealId = deal.id
+      })
+      return
+    }
 
-    // Create org member
-    const member = await prisma.orgMember.create({
-      data: {
-        organizationId: testOrgId,
-        userId: user.id,
-        role: 'ADMIN',
-      },
-    })
-    testMemberId = member.id
+    if (typeof globalThis.__dbReset === 'function') {
+      await globalThis.__dbReset()
+    }
 
-    // Create test pipeline with 3 stages
-    const pipeline = await prisma.pipeline.create({
-      data: {
-        name: 'Sales Pipeline',
-        organizationId: testOrgId,
-        ownerId: testMemberId,
-      },
-    })
-    testPipelineId = pipeline.id
-
-    // Create stages
-    const stage1 = await prisma.stage.create({
-      data: {
-        name: 'Qualification',
-        pipelineId: testPipelineId,
-        order: 0,
-        color: '#3b82f6',
-      },
-    })
-    testStage1Id = stage1.id
-
-    const stage2 = await prisma.stage.create({
-      data: {
-        name: 'Proposal',
-        pipelineId: testPipelineId,
-        order: 1,
-        color: '#eab308',
-      },
-    })
-    testStage2Id = stage2.id
-
-    const stage3 = await prisma.stage.create({
-      data: {
-        name: 'Negotiation',
-        pipelineId: testPipelineId,
-        order: 2,
-        color: '#22c55e',
-      },
-    })
-    testStage3Id = stage3.id
+    ctx = await seedOrgUser()
+    pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id)
 
     // Create a test deal in stage 1
     const deal = await prisma.deal.create({
@@ -88,10 +45,10 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
         title: 'Test Deal',
         value: 10000,
         probability: 50,
-        organizationId: testOrgId,
-        pipelineId: testPipelineId,
-        stageId: testStage1Id,
-        ownerId: testMemberId,
+        organizationId: ctx.org.id,
+        pipelineId: pipelineCtx.pipeline.id,
+        stageId: pipelineCtx.stages[0].id,
+        ownerId: ctx.membership.id,
       },
     })
     testDealId = deal.id
@@ -99,24 +56,27 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
 
   // Cleanup after each test
   afterEach(async () => {
+    // Skip manual cleanup when using global DB reset
+    if (typeof globalThis.__dbReset === 'function') return
+
     // Delete test data in correct order to avoid foreign key constraints
     await prisma.deal.deleteMany({
-      where: { organizationId: testOrgId },
+      where: { organizationId: ctx.org.id },
     })
     await prisma.stage.deleteMany({
-      where: { pipelineId: testPipelineId },
+      where: { pipelineId: pipelineCtx.pipeline.id },
     })
     await prisma.pipeline.deleteMany({
-      where: { organizationId: testOrgId },
+      where: { organizationId: ctx.org.id },
     })
     await prisma.orgMember.deleteMany({
-      where: { organizationId: testOrgId },
+      where: { organizationId: ctx.org.id },
     })
     await prisma.user.deleteMany({
-      where: { id: testUserId },
+      where: { id: ctx.user.id },
     })
     await prisma.organization.delete({
-      where: { id: testOrgId },
+      where: { id: ctx.org.id },
     })
   })
 
@@ -125,7 +85,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       // Move deal from stage 1 to stage 2
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage2Id },
+        data: { stageId: pipelineCtx.stages[1].id },
       })
 
       // Verify in database
@@ -144,7 +104,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
 
       expect(deal).toBeDefined()
       expect(deal?.id).toBe(testDealId)
-      expect(deal?.stageId).toBe(testStage2Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[1].id)
       expect(deal?.stage?.name).toBe('Proposal')
       expect(deal?.stage?.color).toBe('#eab308')
     })
@@ -153,38 +113,38 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       // Move from stage 1 to stage 2
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage2Id },
+        data: { stageId: pipelineCtx.stages[1].id },
       })
 
       // Verify stage 2
       let deal = await prisma.deal.findUnique({
         where: { id: testDealId },
       })
-      expect(deal?.stageId).toBe(testStage2Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[1].id)
 
       // Move from stage 2 to stage 3
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage3Id },
+        data: { stageId: pipelineCtx.stages[2].id },
       })
 
       // Verify stage 3
       deal = await prisma.deal.findUnique({
         where: { id: testDealId },
       })
-      expect(deal?.stageId).toBe(testStage3Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[2].id)
 
       // Move back to stage 1
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage1Id },
+        data: { stageId: pipelineCtx.stages[0].id },
       })
 
       // Verify back to stage 1
       deal = await prisma.deal.findUnique({
         where: { id: testDealId },
       })
-      expect(deal?.stageId).toBe(testStage1Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[0].id)
     })
 
     it('should prevent moving deals to stages from different pipelines', async () => {
@@ -192,8 +152,8 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       const otherPipeline = await prisma.pipeline.create({
         data: {
           name: 'Other Pipeline',
-          organizationId: testOrgId,
-          ownerId: testMemberId,
+          organizationId: ctx.org.id,
+          ownerId: ctx.membership.id,
         },
       })
 
@@ -222,7 +182,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
         },
       })
       expect(deal?.stageId).toBe(otherStage.id)
-      expect(deal?.pipelineId).toBe(testPipelineId) // Deal still belongs to original pipeline
+      expect(deal?.pipelineId).toBe(pipelineCtx.pipeline.id) // Deal still belongs to original pipeline
       expect(deal?.stage?.pipelineId).toBe(otherPipeline.id) // But stage belongs to different pipeline
 
       // Cleanup
@@ -246,7 +206,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
           organizationId: otherOrg.id, // Wrong org
         },
         data: {
-          stageId: testStage2Id,
+          stageId: pipelineCtx.stages[1].id,
         },
       })
 
@@ -257,7 +217,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       const deal = await prisma.deal.findUnique({
         where: { id: testDealId },
       })
-      expect(deal?.stageId).toBe(testStage1Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[0].id)
 
       // Cleanup
       await prisma.organization.delete({ where: { id: otherOrg.id } })
@@ -273,36 +233,36 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
             title: 'Deal 1',
             value: 10000,
             probability: 50,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage1Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
           },
           {
             title: 'Deal 2',
             value: 20000,
             probability: 75,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage1Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
           },
           {
             title: 'Deal 3',
             value: 30000,
             probability: 100,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage2Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[1].id,
+            ownerId: ctx.membership.id,
           },
         ],
       })
 
       const deals = await prisma.deal.findMany({
         where: {
-          organizationId: testOrgId,
-          pipelineId: testPipelineId,
+          organizationId: ctx.org.id,
+          pipelineId: pipelineCtx.pipeline.id,
           deletedAt: null,
         },
         include: {
@@ -311,8 +271,8 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       })
 
       // Group deals by stage
-      const stage1Deals = deals.filter((d) => d.stageId === testStage1Id)
-      const stage2Deals = deals.filter((d) => d.stageId === testStage2Id)
+      const stage1Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[0].id)
+      const stage2Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[1].id)
 
       // Calculate weighted totals
       // Stage 1: (10000 * 50% = 5000) + (20000 * 75% = 15000) + original deal (10000 * 50% = 5000)
@@ -342,41 +302,41 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
             title: 'Deal with null value',
             value: null,
             probability: 50,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage1Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
           },
           {
             title: 'Deal with null probability',
             value: 10000,
             probability: null,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage1Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
           },
           {
             title: 'Deal with both null',
             value: null,
             probability: null,
-            organizationId: testOrgId,
-            pipelineId: testPipelineId,
-            stageId: testStage1Id,
-            ownerId: testMemberId,
+            organizationId: ctx.org.id,
+            pipelineId: pipelineCtx.pipeline.id,
+            stageId: pipelineCtx.stages[0].id,
+            ownerId: ctx.membership.id,
           },
         ],
       })
 
       const deals = await prisma.deal.findMany({
         where: {
-          organizationId: testOrgId,
-          pipelineId: testPipelineId,
+          organizationId: ctx.org.id,
+          pipelineId: pipelineCtx.pipeline.id,
           deletedAt: null,
         },
       })
 
-      const stage1Deals = deals.filter((d) => d.stageId === testStage1Id)
+      const stage1Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[0].id)
 
       // Calculate weighted totals (should handle nulls gracefully)
       const stage1Weighted = stage1Deals.reduce(
@@ -395,7 +355,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
 
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage2Id },
+        data: { stageId: pipelineCtx.stages[1].id },
       })
 
       const endTime = performance.now()
@@ -416,16 +376,16 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
           firstName: 'John',
           lastName: 'Doe',
           email: 'john@example.com',
-          organizationId: testOrgId,
-          ownerId: testMemberId,
+          organizationId: ctx.org.id,
+          ownerId: ctx.membership.id,
         },
       })
 
       const company = await prisma.company.create({
         data: {
           name: 'Test Company',
-          organizationId: testOrgId,
-          ownerId: testMemberId,
+          organizationId: ctx.org.id,
+          ownerId: ctx.membership.id,
         },
       })
 
@@ -441,7 +401,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       // Move deal to different stage
       await prisma.deal.update({
         where: { id: testDealId },
-        data: { stageId: testStage2Id },
+        data: { stageId: pipelineCtx.stages[1].id },
       })
 
       // Verify all relationships are preserved
@@ -454,7 +414,7 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
         },
       })
 
-      expect(deal?.stageId).toBe(testStage2Id)
+      expect(deal?.stageId).toBe(pipelineCtx.stages[1].id)
       expect(deal?.contact?.firstName).toBe('John')
       expect(deal?.company?.name).toBe('Test Company')
 
@@ -470,10 +430,10 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
           title: 'Test Deal 2',
           value: 20000,
           probability: 75,
-          organizationId: testOrgId,
-          pipelineId: testPipelineId,
-          stageId: testStage1Id,
-          ownerId: testMemberId,
+          organizationId: ctx.org.id,
+          pipelineId: pipelineCtx.pipeline.id,
+          stageId: pipelineCtx.stages[0].id,
+          ownerId: ctx.membership.id,
         },
       })
 
@@ -481,21 +441,21 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       const [result1, result2] = await Promise.all([
         prisma.deal.update({
           where: { id: testDealId },
-          data: { stageId: testStage2Id },
+          data: { stageId: pipelineCtx.stages[1].id },
         }),
         prisma.deal.update({
           where: { id: deal2.id },
-          data: { stageId: testStage2Id },
+          data: { stageId: pipelineCtx.stages[1].id },
         }),
       ])
 
       // Verify both moves succeeded
-      expect(result1.stageId).toBe(testStage2Id)
-      expect(result2.stageId).toBe(testStage2Id)
+      expect(result1.stageId).toBe(pipelineCtx.stages[1].id)
+      expect(result2.stageId).toBe(pipelineCtx.stages[1].id)
 
       // Verify in database
       const deals = await prisma.deal.findMany({
-        where: { organizationId: testOrgId, stageId: testStage2Id },
+        where: { organizationId: ctx.org.id, stageId: pipelineCtx.stages[1].id },
       })
       expect(deals).toHaveLength(2)
 

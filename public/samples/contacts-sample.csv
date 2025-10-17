@@ -1,0 +1,11 @@
+firstName,lastName,email,phone,company,title,notes
+Alice,Johnson,alice.johnson@example.com,+1-555-0101,Acme Corp,Sales Director,Interested in enterprise plan
+Bob,Smith,bob.smith@techstart.io,+1-555-0102,TechStart,CTO,Looking for integration options
+Carol,Williams,carol@designpro.com,+1-555-0103,DesignPro,Creative Director,Requested demo for Q4
+David,Brown,david.brown@fastgrow.com,+1-555-0104,FastGrow,CEO,Hot lead - follow up this week
+Emma,Davis,emma.davis@cloudsys.io,+1-555-0105,CloudSys,Product Manager,Needs pricing information
+Frank,Miller,frank.miller@dataflow.com,+1-555-0106,DataFlow,VP Engineering,Technical evaluation in progress
+Grace,Wilson,grace@marketmagic.com,+1-555-0107,MarketMagic,Marketing Director,Interested in marketing automation
+Henry,Moore,henry.moore@salesforce.com,+1-555-0108,InnovateLabs,Head of Sales,Wants to schedule a call
+Iris,Taylor,iris.taylor@venture.co,+1-555-0109,VentureCo,Investor,Networking connection
+Jack,Anderson,jack@startup.xyz,+1-555-0110,StartupXYZ,Founder,Early stage - long term potential

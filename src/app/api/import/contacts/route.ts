@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const runtime = 'nodejs'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { withLatencyLogMiddleware } from '@/lib/server/withLatencyLog'
 import { demoGuard } from '@/lib/demo-guard'
+import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit'
 
 const importContactSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -22,7 +24,20 @@ interface ImportData {
   }>
 }
 
-export const POST = withLatencyLogMiddleware(async (request: NextRequest) => {
+// Extract org ID for rate limiting
+async function getOrgIdFromRequest(req: NextRequest): Promise<string | null> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
+  
+  const member = await prisma.orgMember.findFirst({
+    where: { userId: session.user.id },
+    select: { organizationId: true },
+  })
+  
+  return member?.organizationId || null
+}
+
+const importHandler = async (request: NextRequest) => {
   // Demo user guard
   const demoCheck = await demoGuard()
   if (demoCheck) return demoCheck
@@ -245,4 +260,11 @@ export const POST = withLatencyLogMiddleware(async (request: NextRequest) => {
       { status: 500 }
     )
   }
-}, { route: 'contacts-import' })
+}
+
+// Apply rate limiting and latency logging
+export const POST = withWriteRateLimit(
+  withLatencyLogMiddleware(importHandler, { route: 'contacts-import' }),
+  WriteRateLimits.IMPORT,
+  getOrgIdFromRequest
+)

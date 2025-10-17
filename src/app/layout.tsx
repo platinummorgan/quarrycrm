@@ -25,6 +25,9 @@ const DemoTour = dynamic(() => import('@/components/demo/Tour').then(mod => ({ d
 export async function generateMetadata(): Promise<Metadata> {
   const isPreview = process.env.NEXT_PUBLIC_APP_ENV === 'preview'
   
+  // Note: Demo subdomain robots handling is done via middleware X-Robots-Tag header
+  // This ensures proper SEO exclusion regardless of metadata cache
+  
   return {
     title: 'Quarry CRM - Modern CRM for the Browser Era',
     description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',

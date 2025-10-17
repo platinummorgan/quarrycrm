@@ -3,6 +3,20 @@ import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req) {
+    // Canonical host redirect: quarrycrm.vercel.app -> www.quarrycrm.com
+    // Allow auth routes to pass through without redirect.
+    try {
+      const url = new URL(req.url)
+      const host = url.host
+      const isAuthRoute = url.pathname.startsWith('/api/auth/')
+      if (host === 'quarrycrm.vercel.app' && !isAuthRoute) {
+        url.host = 'www.quarrycrm.com'
+        return NextResponse.redirect(url, 308)
+      }
+    } catch (err) {
+      // ignore URL parse errors and continue with auth middleware
+    }
+
     const token = req.nextauth.token
     const isAuth = !!token
     const isAuthPage = req.nextUrl.pathname.startsWith('/auth')

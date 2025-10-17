@@ -1,7 +1,7 @@
 'use client'
 
 import { BetaBanner } from '@/components/site/BetaBanner'
-import { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,8 @@ import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { OutboxBanner } from '@/components/offline/outbox-banner'
 import { CommandKProvider } from '@/components/CommandK'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'
+import { OnboardingProgressServer } from '@/components/onboarding/OnboardingProgressServer'
+import { DemoPill } from '@/components/ui/DemoPill'
 import { useSession } from 'next-auth/react'
 import {
   Users,
@@ -33,15 +35,14 @@ const navigation = [
 
 function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const sessionResult = useSession()
-  const session = sessionResult?.data
-
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
 
   return (
     <div className="min-h-screen bg-background">
       <BetaBanner />
       <SkipLink href="#main-content">Skip to main content</SkipLink>
+      
+      {/* Demo Banner - Full width, prominent */}
+      <DemoPill variant="large" />
       
       {/* Header */}
       <header className="border-b bg-card">
@@ -51,13 +52,14 @@ function AppLayout({ children }: { children: ReactNode }) {
               <Link href="/app" className="text-xl font-bold">
                 Quarry-CRM
               </Link>
-              {isDemo && (
-                <div className="rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white">
-                  Read-only demo
-                </div>
-              )}
+              {/* Small pill in header for redundancy */}
+              <DemoPill variant="default" />
             </div>
             <div className="flex items-center space-x-4">
+              {/* Onboarding Progress */}
+              <Suspense fallback={null}>
+                <OnboardingProgressServer />
+              </Suspense>
               {/* Search trigger button */}
               <Button
                 variant="outline"

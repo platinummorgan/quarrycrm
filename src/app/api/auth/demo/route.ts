@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { signIn } from 'next-auth/react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

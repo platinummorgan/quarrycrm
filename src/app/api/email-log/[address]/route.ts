@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { ActivityType } from '@prisma/client'
 import { demoGuard } from '@/lib/demo-guard'
+import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit'
 
 // Simple email parsing - in production you'd use a proper email parsing library
 interface ParsedEmail {
@@ -38,7 +39,17 @@ function parseEmail(rawEmail: string): ParsedEmail {
   return { from, to, subject, body: body.trim() }
 }
 
-export async function POST(request: NextRequest) {
+// Extract org ID from email address
+async function getOrgIdFromEmail(rawEmail: string): Promise<string | null> {
+  const email = parseEmail(rawEmail)
+  const organization = await prisma.organization.findFirst({
+    where: { emailLogAddress: email.to },
+    select: { id: true },
+  })
+  return organization?.id || null
+}
+
+const emailLogHandler = async (request: NextRequest) => {
   // Demo user guard
   const demoCheck = await demoGuard()
   if (demoCheck) return demoCheck
@@ -113,3 +124,13 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// Apply rate limiting
+export const POST = withWriteRateLimit(
+  emailLogHandler,
+  WriteRateLimits.EMAIL_LOG,
+  async (req) => {
+    const rawEmail = await req.text()
+    return getOrgIdFromEmail(rawEmail)
+  }
+)

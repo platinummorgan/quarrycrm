@@ -1,10 +1,26 @@
 import { NextAuthOptions } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import EmailProvider from 'next-auth/providers/email'
+import { Resend } from 'resend'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import { getBaseUrl } from '@/lib/baseUrl'
 import { verifyDemoToken } from '@/lib/demo-auth'
+
+const isProd = process.env.NODE_ENV === 'production';
+
+// Resend client and helpers for magic link delivery
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Build magic link URLs on NEXTAUTH_URL when present; otherwise force the public
+// production host so links always point to the canonical app domain.
+const baseUrl = process.env.NEXTAUTH_URL || 'https://www.quarrycrm.com';
+
+function forceBase(url: string) {
+  const u = new URL(url);
+  return new URL(u.pathname + u.search, baseUrl).toString();
+}
+
+const emailFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -87,8 +103,34 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
-    // Only include EmailProvider if email server is configured
-    ...(process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_FROM
+    // EmailProvider via Resend (preferred) or SMTP fallback
+    ...(process.env.RESEND_API_KEY
+      ? [
+          EmailProvider({
+            from: emailFrom,
+            async sendVerificationRequest({ identifier, url }) {
+              if (!resend) {
+                throw new Error('Resend client not configured')
+              }
+              const forced = forceBase(url)
+              const result = await resend.emails.send({
+                from: emailFrom,
+                to: identifier,
+                subject: 'Your Quarry CRM sign-in link',
+                html: `<p>Click to sign in:</p><p><a href="${forced}">${forced}</a></p>`,
+              })
+              // The Resend SDK may return an object with `error` on failure
+              if ((result as any)?.error) {
+                console.error('Magic link send failed:', (result as any).error)
+                throw new Error(
+                  `Magic link send failed: ${((result as any).error?.message) || String((result as any).error)}`
+                )
+              }
+            },
+            maxAge: 10 * 60,
+          }),
+        ]
+      : process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER
       ? [
           EmailProvider({
             server: {
@@ -100,16 +142,13 @@ export const authOptions: NextAuthOptions = {
               },
               secure: process.env.EMAIL_SERVER_SECURE === 'true',
             },
-            from: 'login@mail.quarrycrm.com',
-            sendVerificationRequest: async ({ identifier: email, url, provider }) => {
-              const { sendMagicLinkEmail } = await import('@/lib/resend')
-              const { host } = new URL(url)
-              const baseUrl = getBaseUrl()
-              if (process.env.NODE_ENV === 'development' && !url.startsWith(baseUrl)) {
-                console.warn(`NEXTAUTH_URL mismatch detected: expected ${baseUrl}, got ${url}`)
-              }
-              await sendMagicLinkEmail({ to: email, url, host })
+            from: process.env.EMAIL_FROM || 'login@mail.quarrycrm.com',
+            sendVerificationRequest: async ({ identifier: email, url }) => {
+              const { sendMagicLinkEmail } = await import('@/lib/auth-email')
+              // This will throw on failure so the UI surfaces an error
+              await sendMagicLinkEmail(email, url)
             },
+            maxAge: 10 * 60, // 10 minutes
           }),
         ]
       : []),
@@ -184,6 +223,26 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
     verifyRequest: '/auth/verify-request',
   },
+  cookies: isProd ? {
+    sessionToken: {
+      name: '__Secure-next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.quarrycrm.com',
+      },
+    },
+    callbackUrl: {
+      name: '__Secure-next-auth.callback-url',
+      options: { sameSite: 'lax', path: '/', secure: true, domain: '.quarrycrm.com' },
+    },
+    csrfToken: {
+      name: '__Host-next-auth.csrf-token',
+      options: { sameSite: 'lax', path: '/', secure: true },
+    },
+  } : {},
 }
 
 function html({ url, host }: { url: string; host: string }) {

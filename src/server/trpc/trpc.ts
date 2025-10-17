@@ -88,3 +88,38 @@ export const demoProcedure = orgProcedure.use(async ({ ctx, next }) => {
   }
   return next()
 })
+
+// Rate-limited procedure for write operations
+import { checkCombinedRateLimit, getClientIp, type SlidingWindowConfig } from '@/lib/rate-limit'
+
+export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: number }) {
+  return orgProcedure.use(async ({ ctx, next }) => {
+    // Extract IP from request headers
+    const clientIp = getClientIp(ctx.req)
+    const orgId = ctx.orgId
+
+    // Check rate limit
+    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
+
+    if (!rateLimitResult.success) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Rate limit exceeded. Please wait ${rateLimitResult.retryAfter} seconds before trying again.`,
+        cause: {
+          retryAfter: rateLimitResult.retryAfter,
+          limit: rateLimitResult.limit,
+          reset: rateLimitResult.reset,
+        },
+      })
+    }
+
+    // Add rate limit info to response headers
+    if (ctx.res) {
+      ctx.res.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
+      ctx.res.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
+      ctx.res.set('X-RateLimit-Reset', rateLimitResult.reset.toString())
+    }
+
+    return next()
+  })
+}

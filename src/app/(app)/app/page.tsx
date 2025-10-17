@@ -7,8 +7,10 @@ import {
 } from '@/components/ui/card'
 import { Users, Building2, Target, Activity, TrendingUp } from 'lucide-react'
 import { OverdueTasksWidget, DealsAtRiskWidget } from '@/components/dashboard/widgets'
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
+import { checkOnboardingProgress } from '@/server/onboarding'
 import { formatDistanceToNow } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -102,7 +104,10 @@ async function getDashboardData(orgId: string) {
 
 export default async function AppDashboard() {
   const { orgId } = await requireOrg()
-  const { stats, recentActivities } = await getDashboardData(orgId)
+  const [{ stats, recentActivities }, onboardingState] = await Promise.all([
+    getDashboardData(orgId),
+    checkOnboardingProgress(),
+  ])
 
   const statsConfig = [
     {
@@ -147,6 +152,11 @@ export default async function AppDashboard() {
           Welcome to Quarry-CRM. Here&apos;s an overview of your business.
         </p>
       </div>
+
+      {/* Onboarding Checklist */}
+      {onboardingState && !onboardingState.dismissed && !onboardingState.completed && (
+        <OnboardingChecklist initialState={onboardingState} />
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

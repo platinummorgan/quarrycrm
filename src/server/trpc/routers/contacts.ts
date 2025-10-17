@@ -1,7 +1,8 @@
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure, rateLimitedProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkPlanLimit } from '@/lib/plans'
+import { WriteRateLimits } from '@/lib/rate-limit'
 
 // Input/Output schemas
 const contactFiltersSchema = z.object({
@@ -212,7 +213,8 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Create contact
-  create: demoProcedure
+  create: rateLimitedProcedure(WriteRateLimits.CONTACTS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(contactCreateSchema)
     .mutation(async ({ ctx, input }) => {
       // Check plan limits
@@ -252,7 +254,8 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Update contact (partial)
-  update: demoProcedure
+  update: rateLimitedProcedure(WriteRateLimits.CONTACTS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(
       z.object({
         id: z.string(),
@@ -273,7 +276,8 @@ export const contactsRouter = createTRPCRouter({
     }),
 
   // Soft delete contact
-  delete: demoProcedure
+  delete: rateLimitedProcedure(WriteRateLimits.CONTACTS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.contact.updateMany({

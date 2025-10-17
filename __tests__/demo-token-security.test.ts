@@ -9,9 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { generateDemoToken, verifyDemoToken, DemoTokenPayload } from '@/lib/demo-auth'
+import { generateDemoToken, verifyDemoToken, DemoTokenPayload, signHs256, getHmacKey } from '@/lib/demo-auth'
 import { storeTokenJti, isTokenUsed } from '@/lib/redis'
-import { SignJWT } from 'jose'
 
 // Mock Redis for testing
 vi.mock('@/lib/redis', () => {
@@ -79,19 +78,15 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject token with expiration > 15 minutes', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
-      // Manually create token with 30 minute expiration
+      // Manually create token with 30 minute expiration using project's signer
       const now = Math.floor(Date.now() / 1000)
-      const badToken = await new SignJWT({
+      const badToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-jti-123',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now)
-        .setExpirationTime(now + 30 * 60) // 30 minutes
-        .sign(secret)
+        iat: now,
+        exp: now + 30 * 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(badToken)).rejects.toThrow(
         'Token expiration exceeds maximum allowed duration'
@@ -99,19 +94,15 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject expired token', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
       // Create token that expired 1 minute ago
       const now = Math.floor(Date.now() / 1000)
-      const expiredToken = await new SignJWT({
+      const expiredToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-jti-expired',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now - 16 * 60) // Issued 16 minutes ago
-        .setExpirationTime(now - 60) // Expired 1 minute ago
-        .sign(secret)
+        iat: now - 16 * 60,
+        exp: now - 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(expiredToken)).rejects.toThrow('Token has expired')
     })
@@ -128,19 +119,15 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject token with IAT too far in future', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
       // Create token with IAT 5 minutes in the future
       const now = Math.floor(Date.now() / 1000)
-      const futureToken = await new SignJWT({
+      const futureToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-jti-future',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now + 5 * 60) // 5 minutes in future
-        .setExpirationTime(now + 20 * 60)
-        .sign(secret)
+        iat: now + 5 * 60,
+        exp: now + 20 * 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(futureToken)).rejects.toThrow(
         'Token issued-at time is too far in the future'
@@ -148,19 +135,15 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject token with IAT too old', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
       // Create token issued 20 minutes ago (older than max expiry)
       const now = Math.floor(Date.now() / 1000)
-      const oldToken = await new SignJWT({
+      const oldToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-jti-old',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now - 20 * 60) // 20 minutes ago
-        .setExpirationTime(now + 60) // Still valid for 1 minute
-        .sign(secret)
+        iat: now - 20 * 60,
+        exp: now + 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(oldToken)).rejects.toThrow(
         'Token issued-at time is too old'
@@ -263,16 +246,12 @@ describe('Demo Token Security', () => {
 
   describe('Payload Validation', () => {
     it('should reject token with missing orgId', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
-      const badToken = await new SignJWT({
+      const badToken = signHs256({ alg: 'HS256' }, {
         role: 'demo',
         jti: 'test-jti',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime(Math.floor(Date.now() / 1000) + 15 * 60)
-        .sign(secret)
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 15 * 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(badToken)).rejects.toThrow(
         'Invalid token payload structure'
@@ -280,17 +259,13 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject token with wrong role', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
-      const badToken = await new SignJWT({
+      const badToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'admin', // Wrong role
         jti: 'test-jti',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime(Math.floor(Date.now() / 1000) + 15 * 60)
-        .sign(secret)
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 15 * 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(badToken)).rejects.toThrow(
         'Invalid token payload structure'
@@ -298,17 +273,13 @@ describe('Demo Token Security', () => {
     })
 
     it('should reject token with missing JTI', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
-      const badToken = await new SignJWT({
+      const badToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         // No JTI
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime(Math.floor(Date.now() / 1000) + 15 * 60)
-        .sign(secret)
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 15 * 60,
+      } as any, getHmacKey(DEMO_TOKEN_SECRET))
 
       await expect(verifyDemoToken(badToken)).rejects.toThrow(
         'Invalid token payload structure'
@@ -333,19 +304,15 @@ describe('Demo Token Security', () => {
     })
 
     it('should provide descriptive error messages', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
-      
       // Create expired token
       const now = Math.floor(Date.now() / 1000)
-      const expiredToken = await new SignJWT({
+      const expiredToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-expired',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now - 16 * 60)
-        .setExpirationTime(now - 60)
-        .sign(secret)
+        iat: now - 16 * 60,
+        exp: now - 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       try {
         await verifyDemoToken(expiredToken)
@@ -382,19 +349,16 @@ describe('Demo Token Security', () => {
     })
 
     it('should enforce all security checks in order', async () => {
-      const secret = new TextEncoder().encode(DEMO_TOKEN_SECRET)
       const now = Math.floor(Date.now() / 1000)
 
       // Create token that fails multiple checks
-      const badToken = await new SignJWT({
+      const badToken = signHs256({ alg: 'HS256' }, {
         orgId: ORG_ID,
         role: 'demo',
         jti: 'test-jti',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt(now + 5 * 60) // Future IAT (should fail before other checks)
-        .setExpirationTime(now + 35 * 60) // 35 minutes (also invalid)
-        .sign(secret)
+        iat: now + 5 * 60,
+        exp: now + 35 * 60,
+      }, getHmacKey(DEMO_TOKEN_SECRET))
 
       // Should fail on IAT check (first security check)
       await expect(verifyDemoToken(badToken)).rejects.toThrow('issued-at time')

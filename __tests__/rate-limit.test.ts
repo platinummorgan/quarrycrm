@@ -341,4 +341,112 @@ describe('Rate Limiter', () => {
       expect(failResult.remaining).toBe(0)
     })
   })
+
+  describe('WriteRateLimits configuration', () => {
+    it('should have CONTACTS configuration', async () => {
+      const { WriteRateLimits } = await import('@/lib/rate-limit')
+      expect(WriteRateLimits.CONTACTS).toBeDefined()
+      expect(WriteRateLimits.CONTACTS.limit).toBe(100)
+      expect(WriteRateLimits.CONTACTS.keyPrefix).toBe('ratelimit:write:contacts')
+    })
+
+    it('should have DEALS configuration', async () => {
+      const { WriteRateLimits } = await import('@/lib/rate-limit')
+      expect(WriteRateLimits.DEALS).toBeDefined()
+      expect(WriteRateLimits.DEALS.limit).toBe(50)
+      expect(WriteRateLimits.DEALS.keyPrefix).toBe('ratelimit:write:deals')
+    })
+
+    it('should have IMPORT configuration with stricter limits', async () => {
+      const { WriteRateLimits } = await import('@/lib/rate-limit')
+      expect(WriteRateLimits.IMPORT).toBeDefined()
+      expect(WriteRateLimits.IMPORT.limit).toBe(5)
+      expect(WriteRateLimits.IMPORT.keyPrefix).toBe('ratelimit:write:import')
+    })
+
+    it('should have EMAIL_LOG configuration', async () => {
+      const { WriteRateLimits } = await import('@/lib/rate-limit')
+      expect(WriteRateLimits.EMAIL_LOG).toBeDefined()
+      expect(WriteRateLimits.EMAIL_LOG.limit).toBe(200)
+      expect(WriteRateLimits.EMAIL_LOG.keyPrefix).toBe('ratelimit:write:email')
+    })
+  })
+
+  describe('withWriteRateLimit middleware', () => {
+    it('should allow requests within limit', async () => {
+      const { withWriteRateLimit } = await import('@/lib/rate-limit')
+      
+      const mockHandler = vi.fn(async () => {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      })
+
+      const config = { limit: 5, windowMs: 60000, keyPrefix: 'test-write' }
+      const wrapped = withWriteRateLimit(mockHandler, config)
+
+      const request = new Request('https://example.com/api/contacts', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': '203.0.113.100' },
+      })
+
+      const response = await wrapped(request)
+      expect(response.status).toBe(200)
+      expect(mockHandler).toHaveBeenCalled()
+      expect(response.headers.get('X-RateLimit-Limit')).toBe('5')
+      expect(response.headers.get('X-RateLimit-Remaining')).toBe('4')
+    })
+
+    it('should block requests exceeding limit', async () => {
+      const { withWriteRateLimit } = await import('@/lib/rate-limit')
+      
+      const mockHandler = vi.fn(async () => {
+        return new Response(JSON.stringify({ success: true }), { status: 200 })
+      })
+
+      const config = { limit: 2, windowMs: 60000, keyPrefix: 'test-write2' }
+      const wrapped = withWriteRateLimit(mockHandler, config)
+
+      const request = new Request('https://example.com/api/contacts', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': '203.0.113.101' },
+      })
+
+      // Make 2 successful requests
+      await wrapped(request)
+      await wrapped(request)
+
+      // 3rd request should be blocked
+      const response = await wrapped(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(429)
+      expect(data.error).toBe('Rate limit exceeded')
+      expect(data.retryAfter).toBeGreaterThan(0)
+      expect(response.headers.get('Retry-After')).toBeTruthy()
+    })
+
+    it('should not call handler when rate limited', async () => {
+      const { withWriteRateLimit } = await import('@/lib/rate-limit')
+      
+      const mockHandler = vi.fn(async () => {
+        return new Response(JSON.stringify({ success: true }), { status: 200 })
+      })
+
+      const config = { limit: 1, windowMs: 60000, keyPrefix: 'test-write3' }
+      const wrapped = withWriteRateLimit(mockHandler, config)
+
+      const request = new Request('https://example.com/api/contacts', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': '203.0.113.102' },
+      })
+
+      await wrapped(request)
+      expect(mockHandler).toHaveBeenCalledTimes(1)
+
+      await wrapped(request)
+      expect(mockHandler).toHaveBeenCalledTimes(1) // Should not be called again
+    })
+  })
 })

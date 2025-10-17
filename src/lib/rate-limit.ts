@@ -312,6 +312,56 @@ export const DemoRateLimits = {
   } as SlidingWindowConfig,
 } as const
 
+/**
+ * Rate limit configurations for write endpoints
+ * Each config has a base limit and a burst limit (for short spikes)
+ */
+export const WriteRateLimits = {
+  // Contact creation/updates
+  CONTACTS: {
+    limit: 100, // 100 writes per minute (normal)
+    burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:contacts',
+  } as SlidingWindowConfig & { burst: number },
+  // Deal creation/updates
+  DEALS: {
+    limit: 50, // 50 writes per minute
+    burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:deals',
+  } as SlidingWindowConfig & { burst: number },
+  // Bulk imports
+  IMPORT: {
+    limit: 5, // 5 imports per minute (strict)
+    burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:import',
+  } as SlidingWindowConfig & { burst: number },
+  // Email log ingestion
+  EMAIL_LOG: {
+    limit: 200, // 200 emails per minute
+  // Keep burst handling but ensure it's >= limit so short bursts are allowed
+  burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:email',
+  } as SlidingWindowConfig & { burst: number },
+  // Company creation/updates
+  COMPANIES: {
+    limit: 60, // 60 writes per minute
+    burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:companies',
+  } as SlidingWindowConfig & { burst: number },
+  // Pipeline creation/updates
+  PIPELINES: {
+    limit: 60, // 60 writes per minute
+    burst: 120, // Allow burst up to 120
+    windowMs: 60 * 1000, // per minute
+    keyPrefix: 'ratelimit:write:pipelines',
+  } as SlidingWindowConfig & { burst: number },
+} as const
+
 export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = false, limiter?: RateLimiter) {
   const limiterToUse = limiter || demoRateLimiter
   const ip = request.headers.get('x-forwarded-for') ||
@@ -345,6 +395,135 @@ export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = fals
   }
 
   return null // Allowed
+}
+
+/**
+ * Check rate limit for both IP and organization
+ * Uses the more restrictive limit of the two
+ * 
+ * @param clientIp - Client IP address
+ * @param orgId - Organization ID (optional)
+ * @param config - Rate limit configuration
+ * @returns Combined rate limit result
+ */
+export async function checkCombinedRateLimit(
+  clientIp: string,
+  orgId: string | null,
+  config: SlidingWindowConfig & { burst?: number }
+): Promise<RateLimitResult> {
+  // Check IP-based rate limit (uses burst limit if available)
+  const burstLimit = config.burst || config.limit
+  const ipResult = await checkRateLimit(clientIp, {
+    ...config,
+    limit: burstLimit,
+    keyPrefix: `${config.keyPrefix}:ip`,
+  })
+
+  // If organization ID provided, also check org-based limit
+  if (orgId) {
+    const orgResult = await checkRateLimit(orgId, {
+      ...config,
+      keyPrefix: `${config.keyPrefix}:org`,
+    })
+
+    // Return the more restrictive result
+    if (!ipResult.success || !orgResult.success) {
+      return {
+        success: false,
+        limit: config.limit,
+        remaining: Math.min(ipResult.remaining, orgResult.remaining),
+        reset: Math.max(ipResult.reset, orgResult.reset),
+        retryAfter: Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0),
+      }
+    }
+
+    // Both passed - return the more restrictive remaining count
+    return {
+      success: true,
+      limit: config.limit,
+      remaining: Math.min(ipResult.remaining, orgResult.remaining),
+      reset: Math.max(ipResult.reset, orgResult.reset),
+    }
+  }
+
+  // Only IP-based check
+  return {
+    ...ipResult,
+    limit: config.limit, // Return the normal limit, not burst
+  }
+}
+
+/**
+ * Middleware wrapper for write endpoints with rate limiting
+ * Checks both IP and organization-based limits
+ * 
+ * @param handler - The actual route handler
+ * @param config - Rate limit configuration
+ * @param getOrgId - Optional function to extract org ID from request
+ * @returns Wrapped handler with rate limiting
+ * 
+ * @example
+ * export const POST = withWriteRateLimit(
+ *   async (req) => {
+ *     // Your handler code
+ *     return NextResponse.json({ success: true });
+ *   },
+ *   WriteRateLimits.CONTACTS,
+ *   async (req) => {
+ *     const session = await getServerSession(authOptions);
+ *     return session?.user?.currentOrg?.id || null;
+ *   }
+ * );
+ */
+export function withWriteRateLimit<T = any>(
+  handler: (req: NextRequest, context?: any) => Promise<NextResponse<T>>,
+  config: SlidingWindowConfig & { burst?: number },
+  getOrgId?: (req: NextRequest) => Promise<string | null>
+) {
+  return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
+    const clientIp = getClientIp(req)
+    const orgId = getOrgId ? await getOrgId(req) : null
+    
+    // Check combined rate limit (IP + Org)
+    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many requests. Please slow down and try again.',
+          retryAfter: rateLimitResult.retryAfter,
+          limit: rateLimitResult.limit,
+          reset: rateLimitResult.reset,
+        } as any,
+        {
+          status: 429,
+          headers: {
+            'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+            'X-RateLimit-Scope': orgId ? 'ip+org' : 'ip',
+          },
+        }
+      )
+    }
+    
+    // Add rate limit headers to successful responses
+    const response = await handler(req, context)
+    const headers = new Headers(response.headers)
+    headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
+    headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
+    headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString())
+    headers.set('X-RateLimit-Scope', orgId ? 'ip+org' : 'ip')
+    
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
+  }
 }
 
 export { RateLimiter }

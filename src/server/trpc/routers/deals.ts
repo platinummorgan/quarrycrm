@@ -1,6 +1,7 @@
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import { createTRPCRouter, orgProcedure, demoProcedure, rateLimitedProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { WriteRateLimits } from '@/lib/rate-limit'
 
 // Input/Output schemas
 const dealFiltersSchema = z.object({
@@ -326,7 +327,8 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Create deal
-  create: demoProcedure
+  create: rateLimitedProcedure(WriteRateLimits.DEALS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(dealCreateSchema)
     .mutation(async ({ ctx, input }) => {
       return await prisma.deal.create({
@@ -387,7 +389,8 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Update deal (partial)
-  update: demoProcedure
+  update: rateLimitedProcedure(WriteRateLimits.DEALS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(
       z.object({
         id: z.string(),
@@ -408,7 +411,8 @@ export const dealsRouter = createTRPCRouter({
     }),
 
   // Soft delete deal
-  delete: demoProcedure
+  delete: rateLimitedProcedure(WriteRateLimits.DEALS)
+    .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await prisma.deal.updateMany({

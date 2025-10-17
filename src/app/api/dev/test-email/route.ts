@@ -1,36 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { sendMagicLinkEmail } from '@/lib/resend'
-import { getBaseUrl } from '@/lib/baseUrl'
+import { NextResponse } from 'next/server'
+import { Resend } from 'resend'
 
-export async function POST(request: NextRequest) {
+export const runtime = 'nodejs'
+
+const resend = new Resend(process.env.RESEND_API_KEY!)
+const base = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+const from = process.env.EMAIL_FROM || 'onboarding@resend.dev'
+
+export async function POST(req: Request) {
   try {
-    const { email } = await request.json()
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
-    }
-
-    const baseUrl = getBaseUrl()
-    const testUrl = `${baseUrl}/auth/signin?test=true`
-
-    const result = await sendMagicLinkEmail({
-      to: email,
-      url: testUrl,
-      host: 'QuarryCRM (Test)',
+    const { to } = await req.json()
+    if (!to) return NextResponse.json({ ok: false, error: "Missing 'to'" }, { status: 400 })
+    const link = new URL('/api/auth/callback/email?token=test-token', base).toString()
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject: 'Test mail from Quarry CRM',
+      html: `<a href="${link}">${link}</a>`,
     })
-
-    if (result.success) {
-      return NextResponse.json({ message: 'Test email sent successfully' })
-    } else {
-      console.error('Test email failed:', result.error)
-      return NextResponse.json({ 
-        error: 'Failed to send test email', 
-        details: result.error,
-        suggestion: 'Check your Resend API key and domain verification status'
-      }, { status: 500 })
-    }
-  } catch (error) {
-    console.error('Test email error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Resend SDK may return an object with `error` on failure
+    if ((result as any)?.error) throw new Error((result as any).error.message || String((result as any).error))
+    return NextResponse.json({ ok: true })
+  } catch (e: any) {
+    console.error('test-email error:', e)
+    return NextResponse.json({ ok: false, error: e?.message || String(e) }, { status: 500 })
   }
 }

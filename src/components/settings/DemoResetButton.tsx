@@ -44,13 +44,14 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
   const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'prod'
   if (isProduction) return null
 
-  // Only show for demo users
+  // Check if user is in demo org (isDemo flag OR role is DEMO)
   const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
-  if (!isDemo) return null
-
+  
   // Only show for OWNER role
   const isOwner = session?.user?.currentOrg?.role === 'OWNER'
-  if (!isOwner) return null
+  
+  // Show only if user is owner of a demo org
+  if (!isDemo || !isOwner) return null
 
   const handleReset = async () => {
     setIsResetting(true)

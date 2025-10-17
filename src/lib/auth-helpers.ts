@@ -76,3 +76,23 @@ export async function validateOrgAccess(orgId: string) {
     orgRole: membership.role,
   }
 }
+
+// Helper to get the current organization member
+export async function getCurrentMember() {
+  const { session, orgId, userId } = await requireOrg()
+
+  const member = await prisma.orgMember.findUnique({
+    where: {
+      organizationId_userId: {
+        organizationId: orgId,
+        userId: userId,
+      },
+    },
+  })
+
+  if (!member) {
+    throw new Error('Member not found')
+  }
+
+  return member
+}
