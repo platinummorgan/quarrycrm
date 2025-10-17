@@ -11,6 +11,18 @@ export async function GET(request: NextRequest) {
   const rateLimitResult = await checkRateLimit(clientIp, DemoRateLimits.AUTH)
 
   if (!rateLimitResult.success) {
+    const retryAfterStr = rateLimitResult.retryAfter != null
+      ? rateLimitResult.retryAfter.toString()
+      : (rateLimitResult.reset ? Math.max(0, Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))).toString() : undefined)
+
+    const headers: Record<string, string> = {
+      'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+      'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+      'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+    }
+
+    if (retryAfterStr) headers['Retry-After'] = retryAfterStr
+
     return NextResponse.json(
       {
         error: 'Rate limit exceeded',
@@ -19,12 +31,7 @@ export async function GET(request: NextRequest) {
       },
       {
         status: 429,
-        headers: {
-          'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-        },
+        headers,
       }
     )
   }

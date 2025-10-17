@@ -16,6 +16,32 @@ vi.mock('@/lib/demo-auth', () => ({
 
 const { isDemoSession, withDemoProtection, isDemoOrganization, getDemoOrgId } = await import('@/lib/demo-protection');
 
+const defaultOrg = {
+  id: 'org-1',
+  name: 'Test Org',
+  domain: null,
+  role: 'OWNER',
+} as const;
+
+const buildSession = (
+  overrides: Partial<Session['user']> = {},
+  expires = '2025-12-31'
+): Session => {
+  const { organizations, currentOrg, ...rest } = overrides;
+  const resolvedOrg = currentOrg ?? { ...defaultOrg };
+
+  return {
+    user: {
+      id: 'user-1',
+      isDemo: false,
+      ...rest,
+      currentOrg: resolvedOrg,
+      organizations: organizations ?? [resolvedOrg],
+    },
+    expires,
+  };
+};
+
 describe('Demo Protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -24,14 +50,10 @@ describe('Demo Protection', () => {
 
   describe('isDemoSession', () => {
     it('should return true if session.user.isDemo is true', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const result = await isDemoSession();
@@ -39,14 +61,11 @@ describe('Demo Protection', () => {
     });
 
     it('should return true if currentOrg.role is DEMO', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: false, 
-          currentOrg: { id: '1', name: 'Demo Org', domain: null, role: 'DEMO' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: false,
+        currentOrg: { id: '1', name: 'Demo Org', domain: null, role: 'DEMO' },
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const result = await isDemoSession();
@@ -54,14 +73,10 @@ describe('Demo Protection', () => {
     });
 
     it('should return false if not demo', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: false, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: false,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const result = await isDemoSession();
@@ -78,14 +93,10 @@ describe('Demo Protection', () => {
 
   describe('withDemoProtection', () => {
     it('should block POST requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn();
@@ -105,14 +116,10 @@ describe('Demo Protection', () => {
     });
 
     it('should block PUT requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn();
@@ -131,14 +138,10 @@ describe('Demo Protection', () => {
     });
 
     it('should block PATCH requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn();
@@ -157,14 +160,10 @@ describe('Demo Protection', () => {
     });
 
     it('should block DELETE requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn();
@@ -183,14 +182,10 @@ describe('Demo Protection', () => {
     });
 
     it('should allow GET requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn().mockResolvedValue(
@@ -208,14 +203,10 @@ describe('Demo Protection', () => {
     });
 
     it('should allow HEAD requests for demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: true, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: true,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn().mockResolvedValue(new NextResponse(null));
@@ -231,14 +222,10 @@ describe('Demo Protection', () => {
     });
 
     it('should allow write requests for non-demo users', async () => {
-      const session: Session = {
-        user: { 
-          id: '1', 
-          isDemo: false, 
-          currentOrg: { id: '1', name: 'Test Org', domain: null, role: 'OWNER' } 
-        },
-        expires: '2025-12-31',
-      };
+      const session = buildSession({
+        id: '1',
+        isDemo: false,
+      });
       vi.mocked(getServerSession).mockResolvedValue(session);
 
       const handler = vi.fn().mockResolvedValue(

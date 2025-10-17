@@ -1,0 +1,39 @@
+name: Migrate Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  migrate-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Deploy migrations with advisory-lock retry
+        run: |
+          set -e
+          max=3
+          for i in $(seq 1 $max); do
+            echo "Attempt $i/$max: prisma migrate deploy"
+            if npx prisma migrate deploy; then
+              echo "migrate deploy succeeded"
+              break
+            fi
+            if [ $i -lt $max ]; then
+              echo "Deploy failed; retrying after backoff..."
+              sleep $((i * 5))
+            else
+              echo "All attempts failed; exiting."
+              exit 1
+            fi
+          done
+      - name: Generate Prisma Client
+        run: npx prisma generate

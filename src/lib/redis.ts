@@ -93,6 +93,12 @@ let redisClient: RedisClient | null = null
  */
 export function getRedisClient(): RedisClient {
   if (redisClient) return redisClient
+  // Allow tests/dev to force an in-memory adapter via env
+  if (process.env.RATE_LIMIT_ADAPTER === 'memory') {
+    console.log('Using in-memory Redis adapter due to RATE_LIMIT_ADAPTER=memory')
+    redisClient = new InMemoryRedis()
+    return redisClient
+  }
 
   // Try to use Upstash Redis if configured
   const upstashUrl = process.env.UPSTASH_REDIS_REST_URL

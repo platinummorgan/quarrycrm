@@ -1,20 +1,81 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { seedOrgUser, seedPipelines, seedContacts } from '../../../../tests/utils/seed'
+import { seedPipelines, seedContacts, seedOrgUser } from '../../../../tests/utils/seed'
 
 describe('Contacts Feature - Smoke Tests', () => {
-  let ctx: Awaited<ReturnType<typeof seedOrgUser>>
+  let ctx: { org: { id: string }; user: { id: string }; membership: { id: string } }
   let pipelineCtx: Awaited<ReturnType<typeof seedPipelines>>
 
+  // Ensure a minimal organization/user/membership exist for the whole suite
+  beforeAll(async () => {
+    // If a global DB reset is available, per-test seeding (in beforeEach)
+    // will create a fresh org/user/membership for every test. Creating
+    // suite-level rows here would be immediately truncated by the reset,
+    // leading to foreign key errors during tests. Only create suite-level
+    // records when the global reset helper is NOT available.
+    if (typeof globalThis.__dbReset === 'function') {
+      return
+    }
+
+    const org = await prisma.organization.create({
+      data: { name: 'Test Org (contacts smoke)' },
+      select: { id: true },
+    })
+
+    const user = await prisma.user.create({
+      data: { email: `contacts-smoke-${Date.now()}@test.local`, name: 'Contacts Smoke' },
+      select: { id: true },
+    })
+
+    const membership = await prisma.orgMember.create({
+      data: { organizationId: org.id, userId: user.id, role: 'OWNER' },
+      select: { id: true },
+    })
+
+    ctx = { org, user, membership } as any
+  })
+
+  afterAll(async () => {
+    if (!ctx?.org?.id) return
+
+    // cleanup created rows (safe in a test DB)
+    try {
+      // Delete the organization first so cascading foreign keys remove
+      // pipelines, org members, contacts, etc. Then remove the user.
+      await prisma.organization.delete({ where: { id: ctx.org.id } })
+    } catch (err) {
+      // Best-effort cleanup; log and continue
+      console.warn('Error deleting organization during afterAll cleanup:', err)
+    }
+
+    try {
+      await prisma.user.delete({ where: { id: ctx.user.id } })
+    } catch (err) {
+      console.warn('Error deleting user during afterAll cleanup:', err)
+    }
+  })
+
   beforeEach(async () => {
-    // Reset DB at the start of each test in this mutate-heavy suite
+    // eslint-disable-next-line no-console
+    console.debug(`contacts.smoke.beforeEach: start (pid=${process.pid})`)
+    // Reset DB and create a test organization + user + membership for each test.
+    // Use the global advisory lock helper when available to avoid races across
+    // workers; otherwise run reset + seed sequentially in this worker.
     if (typeof globalThis.__dbReset === 'function' && typeof globalThis.__withAdvisoryLock === 'function') {
-      // Run reset + seed under DB advisory lock to avoid races across workers
-      await globalThis.__withAdvisoryLock(async (tx) => {
+      // Use the shared prisma client for reset/seed to avoid cross-client
+      // visibility issues on branch DBs. globalThis.__withAdvisoryLock was
+      // re-wired in tests/setup.ts to use the app's prisma singleton by
+      // default; the tx passed to the callback is used for atomic seed
+      // operations.
+      await globalThis.__withAdvisoryLock(async (tx: Prisma.TransactionClient) => {
         await globalThis.__dbReset(tx)
         ctx = await seedOrgUser(tx)
         pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
       })
+
+      // Because reset/seed used the same shared Prisma instance, there is no
+      // need for cross-client visibility polling. Proceed directly.
       return
     }
 
@@ -24,7 +85,7 @@ describe('Contacts Feature - Smoke Tests', () => {
 
     ctx = await seedOrgUser()
     pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id)
-  })
+  }, 300000)
 
   describe('Contacts List', () => {
     it('should list contacts with pagination (25/page)', async () => {

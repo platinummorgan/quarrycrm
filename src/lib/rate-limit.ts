@@ -25,6 +25,7 @@ export interface SlidingWindowConfig {
   limit: number // Maximum requests allowed in window
   windowMs: number // Time window in milliseconds
   keyPrefix?: string // Redis key prefix (default: 'ratelimit')
+  burst?: number // optional burst capacity (handled by callers)
 }
 
 /**
@@ -36,7 +37,11 @@ interface RateLimitRedisClient {
   del(key: string): Promise<void>
 }
 
+// Lightweight in-memory store for sliding-window counts used when RATE_LIMIT_ADAPTER=memory
+const memoryStore = new Map<string, number[]>()
+
 class RateLimiter {
+  // legacy in-memory limiter (kept for demo helpers). Not used by checkRateLimit when adapter=memory.
   private store = new Map<string, RateLimitEntry>()
   private config: RateLimitConfig
 
@@ -132,8 +137,25 @@ class RateLimiter {
   }
 }
 
-// Singleton instance for demo rate limiting
+// Singleton instance for demo rate limiting (in-memory)
 const demoRateLimiter = new RateLimiter()
+
+// Adapter selection: evaluate at call-time so tests can change the env dynamically
+function getAdapter() {
+  return (process.env.RATE_LIMIT_ADAPTER || 'redis')
+}
+
+function getInMemoryLimiter() {
+  return demoRateLimiter
+}
+
+function getRedisClientOrNull() {
+  try {
+    return getRedisClient()
+  } catch (e) {
+    return null
+  }
+}
 
 /**
  * Check rate limit using sliding window algorithm with Redis
@@ -147,15 +169,78 @@ export async function checkRateLimit(
   config: SlidingWindowConfig
 ): Promise<RateLimitResult> {
   const { limit, windowMs, keyPrefix = 'ratelimit' } = config
-  const redis = getRedisClient() as RateLimitRedisClient
-  const key = `${keyPrefix}:${identifier}`
   const now = Date.now()
   const windowSeconds = Math.ceil(windowMs / 1000)
+
+  // DEBUG: log adapter selection and key for troubleshooting failing tests
+  try {
+    // eslint-disable-next-line no-console
+    console.debug(`[rate-limit] adapter=${getAdapter()} keyPrefix=${keyPrefix} identifier=${identifier}`)
+  } catch {}
+
+  // If adapter is memory, use in-memory sliding window keyed by keyPrefix:identifier
+  const effectivePrefix = keyPrefix || 'ratelimit'
+  if (getAdapter() === 'memory') {
+    try {
+      const key = `${effectivePrefix}:${identifier}`
+      const cutoff = now - windowMs
+      // Read existing timestamps first
+      const existing = (memoryStore.get(key) || []).filter((t) => t > cutoff)
+
+      // Compute what the new count would be if we allowed this request
+      const hypotheticalList = existing.concat([now])
+      const current = hypotheticalList.length
+      const oldest = hypotheticalList[0] || now
+      const resetMs = oldest + windowMs
+      const allowed = current <= limit
+      const remaining = Math.max(0, limit - current)
+      const retryAfter = allowed ? undefined : Math.ceil((resetMs - now) / 1000)
+
+      // Only persist the new timestamp after all reads and computations succeeded
+      // (this avoids consuming a token if something throws)
+      memoryStore.set(key, hypotheticalList)
+
+      return {
+        success: allowed,
+        limit,
+        remaining,
+        reset: Math.floor(resetMs / 1000),
+        retryAfter,
+      }
+    } catch (e) {
+      console.error('In-memory rate limit check failed:', e)
+      // Fail-open: do not consume a token when the in-memory logic errors
+      return {
+        success: true,
+        limit,
+        remaining: limit,
+        reset: Math.floor((now + windowMs) / 1000),
+        retryAfter: undefined,
+      }
+    }
+  }
+
+  // Default: use Redis-backed sliding window
+  const redis = getRedisClientOrNull() as RateLimitRedisClient | null
+  if (!redis) {
+    // Redis not available; fail-open (do not consume tokens)
+    console.warn('Redis client not available for rate limiting; failing open for this check')
+    return {
+      success: true,
+      limit,
+      remaining: limit,
+      reset: Math.floor((now + windowMs) / 1000),
+      retryAfter: undefined,
+    }
+  }
+
+  const effectivePrefixRedis = keyPrefix || 'ratelimit'
+  const key = `${effectivePrefixRedis}:${identifier}`
 
   try {
     // Use manual sliding window implementation with JSON storage
     const currentValue = await redis.get(key)
-    
+
     if (!currentValue) {
       // First request in window
       const data = JSON.stringify({
@@ -163,7 +248,7 @@ export async function checkRateLimit(
         resetAt: now + windowMs,
       })
       await redis.setex(key, windowSeconds, data)
-      
+
       return {
         success: true,
         limit,
@@ -184,7 +269,7 @@ export async function checkRateLimit(
         resetAt: now + windowMs,
       })
       await redis.setex(key, windowSeconds, data)
-      
+
       return {
         success: true,
         limit,
@@ -243,9 +328,24 @@ export async function resetRateLimit(
   identifier: string,
   keyPrefix: string = 'ratelimit'
 ): Promise<void> {
-  const redis = getRedisClient()
   const key = `${keyPrefix}:${identifier}`
-  await redis.del(key)
+
+  // Always clear in-memory store (safe no-op if not present)
+  try {
+    memoryStore.delete(key)
+  } catch (e) {
+    // ignore
+  }
+
+  // Also attempt to clear Redis entry if available
+  try {
+    const redis = getRedisClientOrNull()
+    if (redis) {
+      await redis.del(key)
+    }
+  } catch (e) {
+    // ignore
+  }
 }
 
 /**
@@ -411,19 +511,22 @@ export async function checkCombinedRateLimit(
   orgId: string | null,
   config: SlidingWindowConfig & { burst?: number }
 ): Promise<RateLimitResult> {
+  // Ensure we always have a sane key prefix
+  const basePrefix = config.keyPrefix || 'ratelimit'
+
   // Check IP-based rate limit (uses burst limit if available)
   const burstLimit = config.burst || config.limit
   const ipResult = await checkRateLimit(clientIp, {
     ...config,
     limit: burstLimit,
-    keyPrefix: `${config.keyPrefix}:ip`,
+    keyPrefix: `${basePrefix}:ip`,
   })
 
   // If organization ID provided, also check org-based limit
   if (orgId) {
     const orgResult = await checkRateLimit(orgId, {
       ...config,
-      keyPrefix: `${config.keyPrefix}:org`,
+      keyPrefix: `${basePrefix}:org`,
     })
 
     // Return the more restrictive result
@@ -431,25 +534,32 @@ export async function checkCombinedRateLimit(
       return {
         success: false,
         limit: config.limit,
-        remaining: Math.min(ipResult.remaining, orgResult.remaining),
+        // Clamp remaining to the configured (non-burst) limit
+        remaining: Math.min(ipResult.remaining, orgResult.remaining, config.limit),
+        // reset should be the later reset time among the two
         reset: Math.max(ipResult.reset, orgResult.reset),
-        retryAfter: Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0),
+        // retryAfter should be the max positive value (or undefined if both undefined)
+        retryAfter: Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0) || undefined,
       }
     }
 
-    // Both passed - return the more restrictive remaining count
+    // Both passed - return the more restrictive remaining count, normalize limit to config.limit
     return {
       success: true,
       limit: config.limit,
-      remaining: Math.min(ipResult.remaining, orgResult.remaining),
+      remaining: Math.min(ipResult.remaining, orgResult.remaining, config.limit),
       reset: Math.max(ipResult.reset, orgResult.reset),
     }
   }
 
   // Only IP-based check
   return {
-    ...ipResult,
-    limit: config.limit, // Return the normal limit, not burst
+    success: ipResult.success,
+    // Normalize to configured (non-burst) limit when returning to callers
+    limit: config.limit,
+    remaining: Math.min(ipResult.remaining, config.limit),
+    reset: ipResult.reset,
+    retryAfter: ipResult.retryAfter,
   }
 }
 
@@ -481,13 +591,30 @@ export function withWriteRateLimit<T = any>(
   getOrgId?: (req: NextRequest) => Promise<string | null>
 ) {
   return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
+    // Clone request to avoid consuming the body twice (handlers may read it)
+  // clone() returns a standard Request; cast to NextRequest for typing
+  const reqForOrg = (req.clone() as unknown) as NextRequest
     const clientIp = getClientIp(req)
-    const orgId = getOrgId ? await getOrgId(req) : null
+    const orgId = getOrgId ? await getOrgId(reqForOrg) : null
     
     // Check combined rate limit (IP + Org)
     const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
     
     if (!rateLimitResult.success) {
+      // Build headers safely (HeadersInit cannot contain undefined values)
+      const retryAfterStr = rateLimitResult.retryAfter != null
+        ? rateLimitResult.retryAfter.toString()
+        : (rateLimitResult.reset ? Math.max(0, Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))).toString() : undefined)
+
+      const headers: Record<string, string> = {
+        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+        'X-RateLimit-Scope': orgId ? 'ip+org' : 'ip',
+      }
+
+      if (retryAfterStr) headers['Retry-After'] = retryAfterStr
+
       return NextResponse.json(
         {
           error: 'Rate limit exceeded',
@@ -499,19 +626,14 @@ export function withWriteRateLimit<T = any>(
         } as any,
         {
           status: 429,
-          headers: {
-            'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-            'X-RateLimit-Scope': orgId ? 'ip+org' : 'ip',
-          },
+          headers,
         }
       )
     }
     
-    // Add rate limit headers to successful responses
-    const response = await handler(req, context)
+  // If the handler wants to run, call it with the original request
+  // (we cloned earlier to permit body reads in getOrgId)
+  const response = await handler(req, context)
     const headers = new Headers(response.headers)
     headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
     headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())

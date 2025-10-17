@@ -24,20 +24,51 @@ import crypto from 'crypto'
  * ENCRYPTION_KEY format: "v2:base64key2,v1:base64key1"
  * KMS_KEY_ID: "v2" (latest key for encryption)
  */
-const DEFAULT_KEY_ID = process.env.KMS_KEY_ID || 'v1';
+// Prefer explicit vN style KMS keys; otherwise default to v1 for tests and compatibility
+const DEFAULT_KEY_ID = (() => {
+  const k = process.env.KMS_KEY_ID
+  if (k && /^v\d+$/.test(k)) return k
+  return 'v1'
+})()
 
 function parseKeyEnv(): Record<string, Buffer> {
-  const env = process.env.ENCRYPTION_KEY || '';
-  const keyMap: Record<string, Buffer> = {};
-  for (const pair of env.split(',')) {
-    const [id, b64] = pair.split(':');
-    if (id && b64) {
-      try {
-        keyMap[id] = Buffer.from(b64, 'base64');
-      } catch {}
+  const keyMap: Record<string, Buffer> = {}
+
+  // Helper that inserts into the map using parseKey
+  const insert = (id: string, raw: string | undefined) => {
+    if (!raw) return
+    try {
+      keyMap[id] = parseKey(raw)
+    } catch {}
+  }
+
+  // 1) Support consolidated ENCRYPTION_KEY like "v2:base64,v1:base64" or unversioned single key
+  const env = process.env.ENCRYPTION_KEY || ''
+  const parts = env.split(',').map(p => p.trim()).filter(Boolean)
+  for (const part of parts) {
+    if (!part) continue
+    if (part.includes(':')) {
+      const idx = part.indexOf(':')
+      const id = part.slice(0, idx)
+      const val = part.slice(idx + 1)
+      insert(id, val)
+    } else {
+      // Unversioned single key => map to default id
+      insert(DEFAULT_KEY_ID, part)
     }
   }
-  return keyMap;
+
+  // 2) Also support ENV variables like ENCRYPTION_KEY_V1, ENCRYPTION_KEY_V2, etc.
+  for (const [envKey, envVal] of Object.entries(process.env)) {
+    const m = envKey.match(/^ENCRYPTION_KEY(?:_V(\d+))?$/i)
+    if (m && envVal) {
+      const ver = m[1] ? `v${m[1]}` : DEFAULT_KEY_ID
+      // If we already set this from consolidated ENCRYPTION_KEY, prefer explicit var (overwrite)
+      insert(ver, envVal)
+    }
+  }
+
+  return keyMap
 }
 
 function getKey(version: string = DEFAULT_KEY_ID): Buffer {
@@ -267,11 +298,33 @@ export function batchRotateKeys<T extends Record<string, any>>(
 
 /**
  * Generate new encryption key (for setup)
- * @returns base64-encoded 32 bytes
+ * @returns 64-char lower-case hex (32 bytes)
  */
-export function generateEncryptionKey(): string {
-  return crypto.randomBytes(32).toString('base64');
+export function generateEncryptionKeyHex(): string {
+  return crypto.randomBytes(32).toString('hex')
 }
+
+function parseKey(input: string): Buffer {
+  // 1) Hex (64 hex chars)
+  const hexOk = /^[a-f0-9]{64}$/i.test(input)
+  if (hexOk) return Buffer.from(input, 'hex')
+
+  // 2) Try base64: validate round-trip to avoid accidental utf8 decoding
+  try {
+    const b = Buffer.from(input, 'base64')
+    // base64 round-trip check (strip padding/newlines)
+    const normalized = input.replace(/\s+/g, '')
+    if (b.toString('base64') === normalized) return b
+  } catch {
+    // fall through
+  }
+
+  // 3) Fallback to utf8
+  return Buffer.from(input, 'utf8')
+}
+
+// Backwards-compatible alias expected by tests
+export const generateEncryptionKey = generateEncryptionKeyHex
 
 /**
  * Generate search salt (for setup)

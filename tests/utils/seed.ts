@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 
 /**
  * Lazy-loaded Prisma client to avoid connecting at import time.
@@ -17,7 +18,7 @@ function getPrismaClient(): PrismaClient {
  * Seed organization, user, and membership.
  * Returns full objects (not just IDs) for easy access in tests.
  */
-export async function seedOrgUser(client?: PrismaClient) {
+export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClient) {
   const db = client ?? getPrismaClient()
   const org = await db.organization.create({
     data: {
@@ -48,7 +49,11 @@ export async function seedOrgUser(client?: PrismaClient) {
  * Seed a minimal pipeline with 3 stages.
  * Uses names/colors that match test assertions.
  */
-export async function seedPipelines(orgId: string, ownerMemberId: string, client?: PrismaClient) {
+export async function seedPipelines(
+  orgId: string,
+  ownerMemberId: string,
+  client?: PrismaClient | Prisma.TransactionClient
+) {
   const db = client ?? getPrismaClient()
   const pipeline = await db.pipeline.create({
     data: {
@@ -84,7 +89,7 @@ export async function seedContacts(
   orgId: string,
   ownerId: string,
   count: number,
-  options?: { companyId?: string; client?: PrismaClient }
+  options?: { companyId?: string; client?: PrismaClient | Prisma.TransactionClient }
 ) {
   const db = options?.client ?? getPrismaClient()
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { createHash, randomBytes } from 'crypto'
 
 /**
@@ -43,7 +44,7 @@ const globalLock = (() => {
  * to prevent accidental TRUNCATE on dev/prod databases.
  * Set ALLOW_UNSAFE_TEST_DB=1 to bypass this check (NOT recommended for CI/prod).
  */
-export async function resetPostgresDb(client?: PrismaClient) {
+export async function resetPostgresDb(client?: PrismaClient | Prisma.TransactionClient) {
   // Safety check: Refuse to TRUNCATE unless DATABASE_URL points to a test DB
   // or ALLOW_UNSAFE_TEST_DB=1 was set in test setup
   const databaseUrl = process.env.DATABASE_URL || ''
@@ -55,12 +56,13 @@ export async function resetPostgresDb(client?: PrismaClient) {
       'Refusing to TRUNCATE: DATABASE_URL must point to a test database. ' +
       'Expected "_test" in the database URL (e.g., postgres://user:pass@host/quarrycrm_test). ' +
       `Current: ${databaseUrl.replace(/:[^:@]+@/, ':***@')} ` +
+      'If you see `file:tests/test.db` here, ensure `.env.test` does not override TEST_DATABASE_URL with a file-based fallback. ' +
       'Set ALLOW_UNSAFE_TEST_DB=1 to bypass this check (NOT recommended for CI/production).'
     )
   }
 
   const db = client ?? getPrismaClient()
-  const RESET_TIMEOUT_MS = 3000
+  const RESET_TIMEOUT_MS = 30000 // increase timeout to handle remote DB latency
 
   return globalLock(async () => {
     // Wrap reset logic in a timeout guard to catch accidental hangs
@@ -101,12 +103,12 @@ export async function resetPostgresDb(client?: PrismaClient) {
   })
 }
 
-export async function closePrisma() {
+export async function closePrisma(client?: PrismaClient) {
   // Ensure disconnect doesn't hang tests: race with a short timeout
   const DISCONNECT_TIMEOUT = 3000
-  const client = getPrismaClient()
+  const c = client ?? getPrismaClient()
   await Promise.race([
-    client.$disconnect(),
+    c.$disconnect(),
     new Promise((r) => setTimeout(r, DISCONNECT_TIMEOUT)),
   ])
 }
@@ -116,26 +118,63 @@ export async function closePrisma() {
  * Useful for performing reset + seed within the same lock to avoid races
  * between parallel test workers.
  */
-export async function withAdvisoryLock<T>(fn: (client: any) => Promise<T>) {
+export async function withAdvisoryLock<T>(clientOrFn: any, maybeFn?: (client: any) => Promise<T>) {
   const LOCK_ID = 424242
-  const client = getPrismaClient()
+  // Support two call styles:
+  // - withAdvisoryLock(fn) -> uses internal client
+  // - withAdvisoryLock(prisma, fn) -> uses provided client
+  let client: any
+  let fn: (client: any) => Promise<T>
+  if (typeof clientOrFn === 'function') {
+    client = getPrismaClient()
+    fn = clientOrFn
+  } else {
+    client = clientOrFn ?? getPrismaClient()
+    fn = maybeFn!
+  }
+  // Instead of attempting to acquire the advisory lock while inside the
+  // transaction (which can exceed Prisma's interactive transaction
+  // timeout), acquire the lock on the client connection first using
+  // pg_try_advisory_lock in a loop. Once acquired, run the transaction
+  // callback and finally release the lock.
+  const MAX_WAIT_MS = 60_000
+  const ATTEMPT_DELAY_MS = 100
 
-  // Use a transaction callback provided by Prisma. The tx client that
-  // Prisma passes into the callback is guaranteed to run on a single
-  // physical connection for the lifetime of the callback. Acquire a
-  // session-level advisory lock on that connection, run the provided
-  // function passing the tx client, and then release the lock.
-  return client.$transaction(async (tx) => {
-    await tx.$executeRawUnsafe(`SELECT pg_advisory_lock(${LOCK_ID})`)
-    try {
-      return await fn(tx)
-    } finally {
-      try {
-        await tx.$executeRawUnsafe(`SELECT pg_advisory_unlock(${LOCK_ID})`)
-      } catch (err) {
-        // ignore
-      }
+  // Attempt to acquire the lock on the client connection (not inside tx)
+  const start = Date.now()
+  // eslint-disable-next-line no-console
+  console.debug(`withAdvisoryLock: attempting to acquire advisory lock ${LOCK_ID}`)
+
+  while (true) {
+    const res: Array<{ pg_try_advisory_lock: boolean } | any> = await client.$queryRawUnsafe(
+      `SELECT pg_try_advisory_lock(${LOCK_ID}) as pg_try_advisory_lock`
+    )
+    const acquired = Array.isArray(res) ? Boolean((res[0] && (res[0].pg_try_advisory_lock ?? res[0].pg_try_advisory_lock === 1)) ?? false) : false
+    if (acquired) {
+      // eslint-disable-next-line no-console
+      console.debug(`withAdvisoryLock: acquired lock ${LOCK_ID} after ${Date.now() - start}ms`)
+      break
     }
-  })
+
+    if (Date.now() - start > MAX_WAIT_MS) {
+      throw new Error(`withAdvisoryLock: failed to acquire advisory lock ${LOCK_ID} within ${MAX_WAIT_MS}ms`)
+    }
+
+    // Wait then retry
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((r) => setTimeout(r, ATTEMPT_DELAY_MS))
+  }
+
+  try {
+    return await client.$transaction(async (tx: Prisma.TransactionClient) => {
+      return await fn(tx)
+    })
+  } finally {
+    try {
+      await client.$executeRawUnsafe(`SELECT pg_advisory_unlock(${LOCK_ID})`)
+    } catch (err) {
+      // ignore
+    }
+  }
 }
 

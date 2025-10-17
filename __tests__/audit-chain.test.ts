@@ -329,9 +329,14 @@ describe('Audit Chain', () => {
       let prevHash: string | null = null
 
       for (let i = 0; i < 100; i++) {
+        // Build a valid Date even when minutes exceed 59 by rolling into hours
+        const hour = Math.floor(i / 60)
+        const minute = i % 60
+        const createdAt = new Date(Date.UTC(2025, 0, 1, hour, minute, 0))
+
         const record = createMockAudit({
           id: `rec-${i}`,
-          createdAt: new Date(`2025-01-01T00:${String(i).padStart(2, '0')}:00Z`),
+          createdAt,
           eventType: i % 2 === 0 ? 'contact.created' : 'contact.updated',
           eventData: { index: i },
         })

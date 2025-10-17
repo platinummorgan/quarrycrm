@@ -9,11 +9,24 @@ import { NextResponse } from 'next/server'
 export async function demoGuard() {
   const session = await getServerSession(authOptions)
   
+  // If there's no session, treat as unauthenticated
+  if (!session) {
+    return NextResponse.json(
+      {
+        error: 'Authentication required',
+        code: 'UNAUTHENTICATED',
+      },
+      { status: 401 }
+    )
+  }
+
   if (session?.user?.isDemo) {
     return NextResponse.json(
       { 
         error: 'Demo users have read-only access',
-        code: 'DEMO_READ_ONLY' 
+        code: 'DEMO_READ_ONLY',
+        // Human-friendly message used by some callers/tests
+        message: 'Demo users cannot perform write operations',
       },
       { status: 403 }
     )

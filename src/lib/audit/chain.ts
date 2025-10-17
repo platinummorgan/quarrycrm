@@ -37,7 +37,18 @@ export function canonicalizeAuditRecord(record: Partial<EventAudit>): string {
     userId: record.userId || null,
     ipAddress: record.ipAddress || null,
     userAgent: record.userAgent || null,
-    createdAt: record.createdAt?.toISOString() || new Date().toISOString(),
+    // Normalize createdAt: accept Date, string or number, fallback to now
+    createdAt: ((): string => {
+      const v = record.createdAt
+      if (!v) return new Date().toISOString()
+      if (v instanceof Date) return isNaN(v.getTime()) ? new Date().toISOString() : v.toISOString()
+      try {
+        const d = new Date(v as any)
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
+      } catch {
+        return new Date().toISOString()
+      }
+    })(),
   }
 
   // Sort keys alphabetically and stringify
@@ -59,6 +70,12 @@ export function canonicalizeAuditRecord(record: Partial<EventAudit>): string {
  */
 export function computeAuditHash(record: Partial<EventAudit>): string {
   const canonical = canonicalizeAuditRecord(record)
+  if (process.env.AUDIT_DEBUG) {
+    // Keep debug output compact but informative for failing tests
+    // Avoid leaking secrets; this is only for local test debugging
+    // eslint-disable-next-line no-console
+    console.log('[audit-debug] canonical:', canonical)
+  }
   return crypto.createHash('sha256').update(canonical).digest('hex')
 }
 
@@ -124,42 +141,58 @@ export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult
 
     // 1. Check genesis record (first should have null prevHash)
     if (i === 0) {
-      if (record.prevHash !== null) {
+      if ((record as any).prevHash !== null) {
         errors.push({
           recordId: record.id,
           recordIndex: i,
           errorType: 'genesis',
           message: 'First record must have null prevHash (genesis)',
           expected: 'null',
-          actual: record.prevHash,
+          actual: (record as any).prevHash,
         })
       }
     }
 
     // 2. Verify selfHash matches computed hash
     const expectedSelfHash = computeAuditHash(record)
-    if (record.selfHash !== expectedSelfHash) {
+    if ((record as any).selfHash !== expectedSelfHash) {
+      if (process.env.AUDIT_DEBUG) {
+        // eslint-disable-next-line no-console
+        console.log('[audit-debug] selfHash mismatch at index', i, 'id', record.id)
+        // eslint-disable-next-line no-console
+        console.log('[audit-debug] expectedSelfHash:', expectedSelfHash)
+        // eslint-disable-next-line no-console
+        console.log('[audit-debug] actualSelfHash:', (record as any).selfHash)
+      }
       errors.push({
         recordId: record.id,
         recordIndex: i,
         errorType: 'self_hash',
         message: 'Record selfHash does not match computed hash (tampered data)',
         expected: expectedSelfHash,
-        actual: record.selfHash,
+        actual: (record as any).selfHash,
       })
     }
 
     // 3. Verify prevHash matches previous record's selfHash
     if (i > 0) {
       const prevRecord = records[i - 1]
-      if (record.prevHash !== prevRecord.selfHash) {
+      if ((record as any).prevHash !== (prevRecord as any).selfHash) {
+        if (process.env.AUDIT_DEBUG) {
+          // eslint-disable-next-line no-console
+          console.log('[audit-debug] prevHash mismatch at index', i, 'id', record.id)
+          // eslint-disable-next-line no-console
+          console.log('[audit-debug] expectedPrevHash:', (prevRecord as any).selfHash)
+          // eslint-disable-next-line no-console
+          console.log('[audit-debug] actualPrevHash:', (record as any).prevHash)
+        }
         errors.push({
           recordId: record.id,
           recordIndex: i,
           errorType: 'prev_hash',
           message: 'Record prevHash does not match previous selfHash (broken chain)',
-          expected: prevRecord.selfHash,
-          actual: record.prevHash || 'null',
+          expected: (prevRecord as any).selfHash,
+          actual: (record as any).prevHash || 'null',
         })
       }
     }
@@ -223,7 +256,7 @@ export async function createAuditRecord(
   // Compute chain hashes
   const { prevHash, selfHash } = computeChainHashes(
     data,
-    latestRecord?.selfHash || null
+    (latestRecord as any)?.selfHash || null
   )
 
   // Create record with hashes

@@ -23,7 +23,8 @@ vi.mock('@/lib/prisma', () => ({
     activity: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     importBatch: { create: vi.fn(), findUnique: vi.fn() },
     importTemplate: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-    organization: { update: vi.fn() },
+    organization: { update: vi.fn(), findFirst: vi.fn() },
+    orgMember: { findFirst: vi.fn() },
   },
 }))
 

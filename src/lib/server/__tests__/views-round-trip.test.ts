@@ -189,8 +189,8 @@ describe('Saved Views Round-trip Test', () => {
 
   test('View ownership and permissions are enforced', async () => {
     // Test ownership logic without database
-    const viewOwnerId = 'owner-user-id'
-    const accessingUserId = 'different-user-id'
+    const viewOwnerId: string = 'owner-user-id'
+    const accessingUserId: string = 'different-user-id'
 
     // Should deny access to different user
     const hasAccess = viewOwnerId === accessingUserId

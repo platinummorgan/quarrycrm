@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, resetRateLimit, getClientIp, DemoRateLimits } from '@/lib/rate-limit'
 import { getRedisClient } from '@/lib/redis'
 
@@ -43,7 +44,7 @@ describe('Rate Limiter', () => {
       '192.168.1.9', '192.168.1.10', '192.168.1.11', '192.168.1.12',
     ]
     
-    const prefixes = ['test', 'auth', 'api']
+  const prefixes = ['test', 'auth', 'api', 'ratelimit']
     
     for (const ip of testIps) {
       for (const prefix of prefixes) {
@@ -157,6 +158,9 @@ describe('Rate Limiter', () => {
         setex: vi.fn(),
         del: vi.fn(),
       }
+      // Ensure this test uses the Redis adapter so the mocked client path is used
+      const prevAdapter = process.env.RATE_LIMIT_ADAPTER
+      process.env.RATE_LIMIT_ADAPTER = 'redis'
       vi.mocked(getRedisClient).mockReturnValueOnce(mockClient as any)
 
       const result = await checkRateLimit('192.168.1.8', {
@@ -167,6 +171,13 @@ describe('Rate Limiter', () => {
       // Should allow request on error
       expect(result.success).toBe(true)
       expect(result.remaining).toBe(5)
+
+      // Restore adapter env
+      if (prevAdapter === undefined) {
+        delete process.env.RATE_LIMIT_ADAPTER
+      } else {
+        process.env.RATE_LIMIT_ADAPTER = prevAdapter
+      }
     })
 
     it('should return correct reset timestamp', async () => {
@@ -376,17 +387,14 @@ describe('Rate Limiter', () => {
     it('should allow requests within limit', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
       
-      const mockHandler = vi.fn(async () => {
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      })
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
+        NextResponse.json({ success: true })
+      )
 
       const config = { limit: 5, windowMs: 60000, keyPrefix: 'test-write' }
       const wrapped = withWriteRateLimit(mockHandler, config)
 
-      const request = new Request('https://example.com/api/contacts', {
+      const request = new NextRequest('https://example.com/api/contacts', {
         method: 'POST',
         headers: { 'x-forwarded-for': '203.0.113.100' },
       })
@@ -401,14 +409,14 @@ describe('Rate Limiter', () => {
     it('should block requests exceeding limit', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
       
-      const mockHandler = vi.fn(async () => {
-        return new Response(JSON.stringify({ success: true }), { status: 200 })
-      })
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
+        NextResponse.json({ success: true })
+      )
 
       const config = { limit: 2, windowMs: 60000, keyPrefix: 'test-write2' }
       const wrapped = withWriteRateLimit(mockHandler, config)
 
-      const request = new Request('https://example.com/api/contacts', {
+      const request = new NextRequest('https://example.com/api/contacts', {
         method: 'POST',
         headers: { 'x-forwarded-for': '203.0.113.101' },
       })
@@ -430,14 +438,14 @@ describe('Rate Limiter', () => {
     it('should not call handler when rate limited', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
       
-      const mockHandler = vi.fn(async () => {
-        return new Response(JSON.stringify({ success: true }), { status: 200 })
-      })
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
+        NextResponse.json({ success: true })
+      )
 
       const config = { limit: 1, windowMs: 60000, keyPrefix: 'test-write3' }
       const wrapped = withWriteRateLimit(mockHandler, config)
 
-      const request = new Request('https://example.com/api/contacts', {
+      const request = new NextRequest('https://example.com/api/contacts', {
         method: 'POST',
         headers: { 'x-forwarded-for': '203.0.113.102' },
       })

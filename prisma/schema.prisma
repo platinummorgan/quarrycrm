@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,123 +8,88 @@ datasource db {
 }
 
 model Organization {
-  id             String          @id @default(cuid())
-  name           String
-  domain         String?         @unique
-  description    String?
-  logo           String?         // URL or path to logo
-  emailLogAddress String?        @unique // Unique email address for logging activities via email
-  plan           OrganizationPlan @default(FREE)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  
-  // Soft delete fields
-  deletedAt      DateTime?
-  scheduledPurgeAt DateTime?
-  deletedBy      String?
-
-  // Relations
-  members        OrgMember[]
-  contacts       Contact[]
-  companies      Company[]
-  pipelines      Pipeline[]
-  deals          Deal[]
-  activities     Activity[]
-  webhooks       Webhook[]
-  apiKeys        ApiKey[]
-  eventsAudit    EventAudit[]
-  importTemplates ImportTemplate[]
-  importHistory   ImportHistory[]
-  savedViews     SavedView[]
-  workspaceJobs  WorkspaceJob[]
+  id          String       @id @default(cuid())
+  name        String
+  domain      String?      @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  activities  Activity[]
+  companies   Company[]
+  contacts    Contact[]
+  deals       Deal[]
+  eventsAudit EventAudit[]
+  members     OrgMember[]
+  pipelines   Pipeline[]
+  webhooks    Webhook[]
+  savedViews  SavedView[]
 
   @@map("organizations")
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String?
-  emailVerified DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
+  id          String      @id @default(cuid())
+  email       String      @unique
+  name        String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   memberships OrgMember[]
-  accounts     Account[]
-  sessions     Session[]
+  savedViews  SavedView[]  @relation("UserToSavedView")
 
   @@map("users")
 }
 
 model OrgMember {
-  id             String            @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
   userId         String
-  role           OrgMemberRole     @default(MEMBER)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  // Onboarding
-  onboardingDismissed Boolean        @default(false)
-  onboardingCompleted Boolean        @default(false)
-  onboardingProgress  Json?          // Tracks which tasks are complete
-
-  // Relations
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Owned resources
-  contacts       Contact[]
-  companies      Company[]
-  pipelines      Pipeline[]
-  deals          Deal[]
+  role           OrgMemberRole @default(MEMBER)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   activities     Activity[]
+  companies      Company[]
+  contacts       Contact[]
+  deals          Deal[]
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pipelines      Pipeline[]
   webhooks       Webhook[]
-  apiKeys        ApiKey[]
-  importTemplates ImportTemplate[]
-  importHistory   ImportHistory[]
-  savedViews     SavedView[]
 
   @@unique([organizationId, userId])
   @@map("org_members")
 }
 
 model Contact {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   firstName      String
   lastName       String
-  email          String?   // Encrypted field
-  phone          String?   // Encrypted field
-  notes          String?  @db.Text   // Encrypted field (new)
+  email          String?
+  phone          String?
   companyId      String?
   ownerId        String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Searchable hash fields for encrypted data
-  email_hash     String?   // BLAKE2b hash for email lookups
-  phone_hash     String?   // BLAKE2b hash for phone lookups
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notes          String?
+  email_hash     String?
+  phone_hash     String?
+  activities     Activity[]
   company        Company?     @relation(fields: [companyId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner          OrgMember    @relation(fields: [ownerId], references: [id])
   deals          Deal[]
-  activities     Activity[]
 
   @@index([organizationId])
   @@index([ownerId])
-  @@index([organizationId, email_hash]) // Use hash for lookups
-  @@index([organizationId, phone_hash]) // Use hash for lookups
+  @@index([organizationId, email_hash])
+  @@index([organizationId, phone_hash])
   @@index([organizationId, firstName, lastName])
   @@map("contacts")
 }
 
 model Company {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   name           String
   website        String?
@@ -135,16 +97,13 @@ model Company {
   description    String?
   domain         String?
   ownerId        String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Relations
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner          OrgMember    @relation(fields: [ownerId], references: [id])
   contacts       Contact[]
   deals          Deal[]
-  activities     Activity[]
 
   @@index([organizationId])
   @@index([ownerId])
@@ -154,21 +113,19 @@ model Company {
 }
 
 model Pipeline {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   name           String
   description    String?
-  isDefault      Boolean   @default(false)
+  isDefault      Boolean      @default(false)
   ownerId        String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Relations
+  deals          Deal[]
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner          OrgMember    @relation(fields: [ownerId], references: [id])
   stages         Stage[]
-  deals          Deal[]
 
   @@index([organizationId])
   @@index([ownerId])
@@ -176,46 +133,43 @@ model Pipeline {
 }
 
 model Stage {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   pipelineId String
   name       String
   order      Int
   color      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  // Relations
-  pipeline   Pipeline  @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   deals      Deal[]
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
 
   @@index([pipelineId])
   @@map("stages")
 }
 
 model Deal {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   title          String
   value          Float?
-  probability    Float?    @default(0) // Probability of closing (0-100)
+  // nullable int probability (tests may set values like 50)
+  probability     Int?
   stageId        String?
   pipelineId     String
   contactId      String?
   companyId      String?
   ownerId        String
   expectedClose  DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  stage          Stage?       @relation(fields: [stageId], references: [id])
-  pipeline       Pipeline     @relation(fields: [pipelineId], references: [id])
-  contact        Contact?     @relation(fields: [contactId], references: [id])
-  company        Company?     @relation(fields: [companyId], references: [id])
-  owner          OrgMember    @relation(fields: [ownerId], references: [id])
   activities     Activity[]
+  company        Company?     @relation(fields: [companyId], references: [id])
+  contact        Contact?     @relation(fields: [contactId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+  pipeline       Pipeline     @relation(fields: [pipelineId], references: [id])
+  stage          Stage?       @relation(fields: [stageId], references: [id])
 
   @@index([organizationId])
   @@index([ownerId])
@@ -225,55 +179,62 @@ model Deal {
   @@map("deals")
 }
 
+model SavedView {
+  id             String   @id @default(cuid())
+  organizationId String
+  ownerId        String?
+  name           String
+  entity         String
+  filters        Json
+  isPublic       Boolean  @default(false)
+  isStarred      Boolean  @default(false)
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy      User?        @relation("UserToSavedView", fields: [createdById], references: [id])
+
+  @@index([organizationId, entity])
+  @@map("saved_views")
+}
+
 model Activity {
-  id             String        @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   type           ActivityType
   description    String
-  subject        String?       // For emails
-  body           String?       // For emails and detailed notes
-  dueDate        DateTime?     // For tasks
-  isCompleted    Boolean       @default(false) // For tasks
   contactId      String?
   dealId         String?
-  companyId      String?       // Link to company
   ownerId        String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contact        Contact?     @relation(fields: [contactId], references: [id])
   deal           Deal?        @relation(fields: [dealId], references: [id])
-  company        Company?     @relation(fields: [companyId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner          OrgMember    @relation(fields: [ownerId], references: [id])
 
   @@index([organizationId])
   @@index([ownerId])
   @@index([contactId])
   @@index([dealId])
-  @@index([companyId])
-  @@index([dueDate])
-  @@index([isCompleted])
   @@map("activities")
 }
 
 model Webhook {
-  id             String        @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   url            String
   secret         String
-  events         String[]      // JSON array of event types
-  isActive       Boolean       @default(true)
+  events         String[]
+  isActive       Boolean      @default(true)
   ownerId        String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
-
-  // Relations
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner          OrgMember     @relation(fields: [ownerId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
 
   @@index([organizationId])
   @@index([ownerId])
@@ -281,63 +242,26 @@ model Webhook {
 }
 
 model EventAudit {
-  id             String      @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   eventType      String
-  eventData      Json        // Store event payload
+  eventData      Json
   userId         String?
   ipAddress      String?
   userAgent      String?
-  createdAt      DateTime    @default(now())
-  
-  // Blockchain-style audit chain
-  prevHash       String?     // SHA-256 of previous record's self_hash (null for genesis)
-  selfHash       String      // SHA-256 of canonicalized payload (this record)
-
-  // Relations
+  createdAt      DateTime     @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([eventType])
   @@index([createdAt])
-  @@index([organizationId, createdAt])
   @@map("events_audit")
-}
-
-model ApiKey {
-  id             String      @id @default(cuid())
-  organizationId String
-  name           String      // Descriptive name for the key
-  key            String      @unique // The actual API key (hashed)
-  keyPrefix      String      // First 8 chars for display
-  lastUsedAt     DateTime?
-  expiresAt      DateTime?
-  ownerId        String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  deletedAt      DateTime?
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner          OrgMember    @relation(fields: [ownerId], references: [id])
-
-  @@index([organizationId])
-  @@index([ownerId])
-  @@index([key])
-  @@map("api_keys")
-}
-
-enum OrganizationPlan {
-  FREE
-  PRO
-  TEAM
 }
 
 enum OrgMemberRole {
   OWNER
   ADMIN
   MEMBER
-  DEMO
 }
 
 enum ActivityType {
@@ -346,182 +270,4 @@ enum ActivityType {
   MEETING
   NOTE
   TASK
-}
-
-enum EntityType {
-  CONTACT
-  COMPANY
-  DEAL
-}
-
-enum ImportStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  ROLLED_BACK
-}
-
-enum RollbackAction {
-  CREATE
-  UPDATE
-  DELETE
-}
-
-// NextAuth.js Models
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verificationtokens")
-}
-
-model ImportTemplate {
-  id             String      @id @default(cuid())
-  organizationId String
-  name           String
-  entityType     EntityType  // contacts, companies, deals
-  mappings       Json        // Column mapping configuration
-  isDefault      Boolean     @default(false)
-  ownerId        String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner          OrgMember    @relation(fields: [ownerId], references: [id])
-  imports        ImportHistory[]
-
-  @@index([organizationId])
-  @@index([ownerId])
-  @@index([organizationId, entityType])
-  @@map("import_templates")
-}
-
-model ImportHistory {
-  id             String         @id @default(cuid())
-  organizationId String
-  entityType     EntityType
-  filename       String
-  status         ImportStatus
-  totalRows      Int
-  processedRows  Int
-  skippedRows    Int
-  errorRows      Int
-  templateId     String?        // Template used for import
-  mappings       Json           // Column mappings used
-  affectedIds    String[]       // IDs of created/updated records
-  errors         Json?          // Import errors
-  ownerId        String
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  // Relations
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner          OrgMember      @relation(fields: [ownerId], references: [id])
-  template       ImportTemplate? @relation(fields: [templateId], references: [id])
-  rollbacks      ImportRollback[]
-
-  @@index([organizationId])
-  @@index([ownerId])
-  @@index([organizationId, status])
-  @@map("import_history")
-}
-
-model ImportRollback {
-  id             String      @id @default(cuid())
-  importId       String      // Reference to ImportHistory
-  entityType     EntityType
-  entityId       String      // ID of the record
-  action         RollbackAction // create, update, delete
-  previousData   Json?       // Data before import (for updates)
-  createdAt      DateTime    @default(now())
-
-  // Relations
-  importHistory  ImportHistory @relation(fields: [importId], references: [id], onDelete: Cascade)
-
-  @@index([importId])
-  @@index([entityId])
-  @@map("import_rollback")
-}
-
-model SavedView {
-  id             String      @id @default(cuid())
-  organizationId String
-  name           String
-  description    String?
-  entityType     EntityType  // contacts, companies, deals
-  filters        Json        // Filter criteria
-  sortBy         String?     // Field to sort by
-  sortOrder      String?     // 'asc' or 'desc'
-  isPublic       Boolean     @default(false) // Can be shared via URL
-  isStarred      Boolean     @default(false) // Favorite views
-  viewUrl        String?     @unique // Unique URL for sharing
-  ownerId        String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner          OrgMember    @relation(fields: [ownerId], references: [id])
-
-  @@index([organizationId])
-  @@index([ownerId])
-  @@index([organizationId, entityType])
-  @@index([organizationId, isPublic])
-  @@index([viewUrl])
-  @@map("saved_views")
-}
-
-model WorkspaceJob {
-  id             String   @id @default(cuid())
-  organizationId String
-  userId         String
-  type           String   // EXPORT, etc.
-  status         String   // PENDING, PROCESSING, COMPLETED, FAILED
-  metadata       Json?    // Job-specific data (format, options, etc.)
-  result         Json?    // Job results (download URL, record counts, etc.)
-  error          String?  // Error message if failed
-  createdAt      DateTime @default(now())
-  completedAt    DateTime?
-
-  // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId])
-  @@index([userId])
-  @@index([status])
-  @@map("workspace_jobs")
 }
