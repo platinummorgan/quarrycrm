@@ -158,7 +158,7 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
       where: { organizationId },
       include: {
         company: { select: { id: true, name: true } },
-        owner: { select: { id: true, name: true, email: true } },
+        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
       },
     })
   }
@@ -168,7 +168,7 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
     data.companies = await prisma.company.findMany({
       where: { organizationId },
       include: {
-        owner: { select: { id: true, name: true, email: true } },
+        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
       },
     })
   }
@@ -182,7 +182,7 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
         stage: { select: { id: true, name: true } },
         contact: { select: { id: true, firstName: true, lastName: true } },
         company: { select: { id: true, name: true } },
-        owner: { select: { id: true, name: true, email: true } },
+        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
       },
     })
   }
