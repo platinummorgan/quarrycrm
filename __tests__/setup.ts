@@ -95,10 +95,6 @@ if (!process.env.SKIP_DB_MIGRATE) {
 	}
 }
 
-import { resetPostgresDb, closePrisma, withAdvisoryLock } from '../tests/db-reset'
-
-// Make it available to tests
-declare global {
 	// eslint-disable-next-line no-var
 	var __dbReset: (client?: any) => Promise<void>
 	// eslint-disable-next-line no-var
@@ -107,9 +103,15 @@ declare global {
 	var __withAdvisoryLock: <T>(fn: (client: any) => Promise<T>) => Promise<T>
 }
 
-globalThis.__dbReset = resetPostgresDb
-globalThis.__dbClose = closePrisma
-globalThis.__withAdvisoryLock = withAdvisoryLock
+import { resetPostgresDb, closePrisma, withAdvisoryLock } from '../tests/db-reset'
+
+// Export helpers to globalThis without re-declaring global types. This avoids
+// "Subsequent variable declarations must have the same type" when multiple
+// setup files or test helpers declare slightly different shapes for the same
+// globals in CI/type-check environments.
+(globalThis as any).__dbReset = resetPostgresDb
+(globalThis as any).__dbClose = closePrisma
+(globalThis as any).__withAdvisoryLock = withAdvisoryLock
 
 // Optional: per-file reset toggle via env, NOT global (keeps tests fast)
 if (process.env.DB_RESET_EAGER === '1') {
