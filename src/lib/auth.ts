@@ -6,11 +6,12 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import { getBaseUrl } from '@/lib/baseUrl'
 import { verifyDemoToken } from '@/lib/demo-auth'
+import { ensureUserOrg } from '@/server/ensure-user-org'
 
 const isProd = process.env.NODE_ENV === 'production';
 
 // Resend client and helpers for magic link delivery
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Note: Don't cache the Resend client - create it fresh in the provider to ensure env vars are loaded
 // Build magic link URLs on NEXTAUTH_URL when present; otherwise force the public
 // production host so links always point to the canonical app domain.
 const baseUrl = process.env.NEXTAUTH_URL || 'https://www.quarrycrm.com';
@@ -20,11 +21,62 @@ function forceBase(url: string) {
   return new URL(u.pathname + u.search, baseUrl).toString();
 }
 
-const emailFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev';
-
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
+  debug: true, // Enable debug logging
   providers: [
+    // Temporary simple email login for debugging
+    CredentialsProvider({
+      id: 'email-simple',
+      name: 'Email',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) return null
+        
+        // Find or create user
+        let user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        })
+        
+        if (!user) {
+          // Create user
+          user = await prisma.user.create({
+            data: {
+              email: credentials.email,
+              emailVerified: new Date(),
+            },
+          })
+          
+          // Create organization
+          const emailDomain = credentials.email.split('@')[1]
+          const orgName = emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1)
+          
+          const org = await prisma.organization.create({
+            data: {
+              name: `${orgName} Organization`,
+              domain: emailDomain,
+            },
+          })
+          
+          // Add user as owner
+          await prisma.orgMember.create({
+            data: {
+              organizationId: org.id,
+              userId: user.id,
+              role: 'OWNER',
+            },
+          })
+        }
+        
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        }
+      },
+    }),
     // Demo provider for read-only access
     CredentialsProvider({
       id: 'demo',
@@ -103,60 +155,158 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
-    // EmailProvider via Resend (preferred) or SMTP fallback
-    ...(process.env.RESEND_API_KEY
-      ? [
-          EmailProvider({
+    // EmailProvider - Always include it, check for API key at runtime
+    EmailProvider({
+      from: process.env.EMAIL_FROM?.trim() || 'noreply@mail.quarrycrm.com',
+      async sendVerificationRequest({ identifier, url }) {
+        // Create Resend client here to ensure env vars are loaded
+        // Trim environment variables to remove any whitespace/newlines
+        const apiKey = process.env.RESEND_API_KEY?.trim()
+        if (!apiKey) {
+          console.error('❌ RESEND_API_KEY not available at runtime')
+          throw new Error('Email service not configured - RESEND_API_KEY missing')
+        }
+        
+        const resend = new Resend(apiKey)
+        const emailFrom = process.env.EMAIL_FROM?.trim() || 'noreply@mail.quarrycrm.com'
+        const forced = forceBase(url)
+        
+        console.log('📧 Sending magic link email to:', identifier, 'from:', emailFrom)
+        console.log('🔗 Magic link URL:', forced)
+        console.log('🔗 Original URL:', url)
+        console.log('🌐 Base URL:', baseUrl)
+        
+        try {
+          const result = await resend.emails.send({
             from: emailFrom,
-            async sendVerificationRequest({ identifier, url }) {
-              if (!resend) {
-                throw new Error('Resend client not configured')
-              }
-              const forced = forceBase(url)
-              const result = await resend.emails.send({
-                from: emailFrom,
-                to: identifier,
-                subject: 'Your Quarry CRM sign-in link',
-                html: `<p>Click to sign in:</p><p><a href="${forced}">${forced}</a></p>`,
-              })
-              // The Resend SDK may return an object with `error` on failure
-              if ((result as any)?.error) {
-                console.error('Magic link send failed:', (result as any).error)
-                throw new Error(
-                  `Magic link send failed: ${((result as any).error?.message) || String((result as any).error)}`
-                )
-              }
-            },
-            maxAge: 10 * 60,
-          }),
-        ]
-      : process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER
-      ? [
-          EmailProvider({
-            server: {
-              host: process.env.EMAIL_SERVER_HOST,
-              port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-              auth: {
-                user: process.env.EMAIL_SERVER_USER,
-                pass: process.env.EMAIL_SERVER_PASSWORD,
-              },
-              secure: process.env.EMAIL_SERVER_SECURE === 'true',
-            },
-            from: process.env.EMAIL_FROM || 'login@mail.quarrycrm.com',
-            sendVerificationRequest: async ({ identifier: email, url }) => {
-              const { sendMagicLinkEmail } = await import('@/lib/auth-email')
-              // This will throw on failure so the UI surfaces an error
-              await sendMagicLinkEmail(email, url)
-            },
-            maxAge: 10 * 60, // 10 minutes
-          }),
-        ]
-      : []),
+            to: identifier,
+            subject: 'Your Quarry CRM sign-in link',
+            html: `<p>Click to sign in:</p><p><a href="${forced}">${forced}</a></p>`,
+          })
+          
+          // Resend SDK returns { data: { id }, error: null } on success
+          // or { data: null, error: { message } } on failure
+          if (result.error) {
+            console.error('❌ Magic link send failed:', result.error)
+            throw new Error(`Email send failed: ${result.error.message || 'Unknown error'}`)
+          }
+          
+          console.log('✅ Magic link sent successfully, email ID:', result.data?.id)
+          // Must not throw or return error - NextAuth expects success
+        } catch (error: any) {
+          console.error('❌ Exception sending magic link:', error)
+          // Re-throw so NextAuth knows it failed
+          throw error
+        }
+      },
+      maxAge: 10 * 60,
+    }),
   ],
   session: {
-    strategy: 'jwt', // Changed from 'database' to support CredentialsProvider
+    strategy: 'jwt', // Use JWT for sessions
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // Use database for verification tokens but JWT for sessions
+  useSecureCookies: isProd,
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      console.log('🔍 SIGNIN CALLBACK:', { 
+        user: user?.email, 
+        userId: user?.id,
+        account: account?.provider,
+        hasEmail: !!email 
+      })
+      
+      // Guarantee the user has an organization before they hit the app
+      try {
+        if (user?.id) await ensureUserOrg(user.id)
+      } catch (err) {
+        console.error('❌ ensureUserOrg failed during signIn callback:', err)
+        // don't block sign-in on failure
+      }
+
+      // For email provider sign-ins, ensure user has an organization
+      if (account?.provider === 'email' && user?.id && user?.email) {
+        console.log('🔍 Email provider sign-in, checking organization membership')
+        
+        try {
+          // Check if user has any organization memberships
+          const existingMembership = await prisma.orgMember.findFirst({
+            where: { userId: user.id }
+          })
+          
+          if (!existingMembership) {
+            console.log('🔍 User has no organization, creating default organization')
+            
+            // Extract domain from email for organization name
+            const emailDomain = user.email.split('@')[1]
+            const orgName = emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1)
+            
+            // Create a default organization for the user
+            const org = await prisma.organization.create({
+              data: {
+                name: `${orgName} Organization`,
+                domain: emailDomain,
+              }
+            })
+            
+            console.log('✅ Created organization:', org.id)
+            
+            // Add user as owner of the organization
+            await prisma.orgMember.create({
+              data: {
+                organizationId: org.id,
+                userId: user.id,
+                role: 'OWNER',
+              }
+            })
+            
+            console.log('✅ Added user as organization owner')
+          } else {
+            console.log('✅ User already has organization membership')
+          }
+        } catch (error) {
+          console.error('❌ Error ensuring organization membership:', error)
+          // Don't block sign-in if organization creation fails
+        }
+      }
+      
+      // Allow all sign-ins - the adapter will handle user creation
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      console.log('🔍 REDIRECT CALLBACK:', { url, baseUrl })
+      
+      // Parse the URL to check for errors
+      const urlObj = new URL(url, baseUrl)
+      
+      // If redirecting to sign-in page after callback, redirect to app instead
+      if (urlObj.pathname === '/auth/signin' && !urlObj.searchParams.has('error')) {
+        console.log('🔍 Redirecting from sign-in to /app/contacts after successful auth')
+        return `${baseUrl}/app/contacts`
+      }
+      
+      // If there's an error in the URL, allow it through
+      if (urlObj.searchParams.has('error')) {
+        console.log('🔍 Error in URL, returning as-is:', url)
+        return url
+      }
+      
+      // Allows relative callback URLs
+      if (url.startsWith("/")) {
+        // If it's the sign-in page without error, redirect to app
+        if (url === '/auth/signin' || url.startsWith('/auth/signin?')) {
+          return `${baseUrl}/app/contacts`
+        }
+        return `${baseUrl}${url}`
+      }
+      
+      // Allows callback URLs on the same origin
+      if (new URL(url).origin === baseUrl) return url
+      
+      // Default redirect after sign in
+      return `${baseUrl}/app/contacts`
+    },
     async session({ session, token }) {
       console.log('🔍 SESSION CALLBACK: Called with session:', !!session, 'token:', !!token)
       console.log('🔍 SESSION CALLBACK: Token data:', { id: token?.id, email: token?.email, isDemo: token?.isDemo })
@@ -200,12 +350,25 @@ export const authOptions: NextAuthOptions = {
           }
         }
       }
+      // Attach currentOrganizationId to session for faster context resolution
+      try {
+        const userId = (token?.id as string) || (session.user?.id as string)
+        if (userId) {
+          const m = await prisma.orgMember.findFirst({
+            where: { userId },
+            select: { organizationId: true },
+          })
+          ;(session.user as any).currentOrganizationId = m?.organizationId ?? null
+        }
+      } catch (err) {
+        // ignore errors here
+      }
       
       console.log('🔍 SESSION CALLBACK: Returning session')
       return session
     },
-    async jwt({ token, user, account }) {
-      console.log('🔍 JWT callback called:', { token: !!token, user: !!user, account: !!account })
+    async jwt({ token, user, account, trigger }) {
+      console.log('🔍 JWT callback called:', { token: !!token, user: !!user, account: !!account, trigger })
       console.log('🔍 JWT callback data:', { tokenEmail: token?.email, userEmail: user?.email, accountProvider: account?.provider })
 
       if (user) {
@@ -213,6 +376,29 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.isDemo = (user as any).isDemo
         token.demoOrgId = (user as any).demoOrgId
+        
+        // For email sign-in, fetch user's organizations
+        if (account?.provider === 'email') {
+          console.log('🔍 Email sign-in detected, fetching organizations for user:', user.id)
+          const userWithOrgs = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: {
+              memberships: {
+                include: {
+                  organization: true
+                }
+              }
+            }
+          })
+          
+          if (userWithOrgs && userWithOrgs.memberships.length > 0) {
+            const firstOrg = userWithOrgs.memberships[0]
+            token.organizationId = firstOrg.organizationId
+            console.log('🔍 User has organization:', firstOrg.organizationId)
+          } else {
+            console.log('⚠️ User has no organizations, may need onboarding')
+          }
+        }
       }
 
       console.log('🔍 JWT callback returning token with id:', token.id)
