@@ -14,6 +14,8 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
       links: [
         httpBatchLink({
           url: '/api/trpc',
+          // Ensure browser requests send cookies so server can read NextAuth session
+          fetch: (input, init) => fetch(input as RequestInfo, { ...init, credentials: 'include' }),
         }),
       ],
     })
