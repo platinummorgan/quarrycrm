@@ -6,6 +6,7 @@ import {
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkPlanLimit } from '@/lib/plans'
+import { getPipelines as getDemoPipelines } from '@/server/deals'
 
 // Input/Output schemas
 const pipelineCreateSchema = z.object({
@@ -62,47 +63,67 @@ const pipelineListResponseSchema = z.object({
 
 export const pipelinesRouter = createTRPCRouter({
   // List pipelines with stages
-  list: orgProcedure
+  // Use demoProcedure so public / unauthenticated visits can receive demo pipelines
+  list: demoProcedure
     .output(pipelineListResponseSchema)
     .query(async ({ ctx }) => {
-      const items = await prisma.pipeline.findMany({
-        where: {
-          organizationId: ctx.orgId,
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          isDefault: true,
-          stages: {
-            select: {
-              id: true,
-              name: true,
-              order: true,
-              color: true,
-              _count: {
-                select: {
-                  deals: true,
+      // If an organization context exists, return real pipelines
+      if (ctx?.orgId) {
+        const items = await prisma.pipeline.findMany({
+          where: {
+            organizationId: ctx.orgId,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            isDefault: true,
+            stages: {
+              select: {
+                id: true,
+                name: true,
+                order: true,
+                color: true,
+                _count: {
+                  select: {
+                    deals: true,
+                  },
                 },
               },
+              orderBy: {
+                order: 'asc',
+              },
             },
-            orderBy: {
-              order: 'asc',
+            _count: {
+              select: {
+                deals: true,
+              },
             },
+            createdAt: true,
+            updatedAt: true,
           },
-          _count: {
-            select: {
-              deals: true,
-            },
+          orderBy: {
+            createdAt: 'desc',
           },
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
+        })
+
+        return { items }
+      }
+
+      // No org context — return demo pipelines shaped to match the output schema
+      const pipelines = await getDemoPipelines()
+      const now = new Date()
+      const items = pipelines.map((p) => ({
+        ...p,
+        _count: { deals: p.stages.reduce((sum, s) => sum + (s._count?.deals || 0), 0) },
+        createdAt: now,
+        updatedAt: now,
+        stages: p.stages.map((s) => ({
+          ...s,
+          _count: { deals: s._count?.deals || 0 },
+        })),
+      }))
 
       return { items }
     }),

@@ -95,7 +95,8 @@ const dealListResponseSchema = z.object({
 
 export const dealsRouter = createTRPCRouter({
   // List deals with pagination and filters
-  list: orgProcedure
+  // Use demoProcedure so public visits receive demo data when unauthenticated
+  list: demoProcedure
     .input(dealFiltersSchema)
     .output(dealListResponseSchema)
     .query(async ({ ctx, input }) => {
@@ -111,224 +112,113 @@ export const dealsRouter = createTRPCRouter({
         cursor,
       } = input
 
-      // Build where clause
-      const where: any = {
-        organizationId: ctx.orgId,
-        deletedAt: null,
-      }
-
-      // Add search filter using pg_trgm
-      if (q && q.trim()) {
-        where.title = {
-          search: q.trim(),
-        }
-      }
-
-      // Add filters
-      if (owner) {
-        where.ownerId = owner
-      }
-      if (stage) {
-        where.stageId = stage
-      }
-      if (pipeline) {
-        where.pipelineId = pipeline
-      }
-      if (contact) {
-        where.contactId = contact
-      }
-      if (company) {
-        where.companyId = company
-      }
-
-      // Add updated since filter
-      if (updatedSince) {
-        where.updatedAt = {
-          gte: updatedSince,
-        }
-      }
-
-      // Keyset pagination using updatedAt as cursor
-      if (cursor) {
-        const cursorDate = new Date(cursor)
-        where.updatedAt = {
-          ...where.updatedAt,
-          lt: cursorDate,
-        }
-      }
-
-      // Get total count for pagination info
-      const total = await prisma.deal.count({ where })
-
-      // Get deals with optimized select
-      const items = await prisma.deal.findMany({
-        where,
-        select: {
-          id: true,
-          title: true,
-          value: true,
-          probability: true,
-          expectedClose: true,
-          stage: {
-            select: {
-              id: true,
-              name: true,
-              color: true,
-            },
-          },
-          pipeline: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          contact: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-          company: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          owner: {
-            select: {
-              id: true,
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-            },
-          },
-          updatedAt: true,
-          createdAt: true,
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-        take: limit + 1, // Take one extra to check if there are more
-      })
-
-      const hasMore = items.length > limit
-      const actualItems = hasMore ? items.slice(0, limit) : items
-      const nextCursor = hasMore
-        ? items[limit - 1].updatedAt.toISOString()
-        : null
-
-      return {
-        items: actualItems,
-        nextCursor,
-        hasMore,
-        total,
-      }
-    }),
-
-  // Get deal by ID
-  getById: orgProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const deal = await prisma.deal.findFirst({
-        where: {
-          id: input.id,
+      // If org context exists, return real data
+      if (ctx?.orgId) {
+        // Build where clause
+        const where: any = {
           organizationId: ctx.orgId,
           deletedAt: null,
-        },
-        select: {
-          id: true,
-          title: true,
-          value: true,
-          probability: true,
-          expectedClose: true,
-          stage: {
-            select: {
-              id: true,
-              name: true,
-              color: true,
-            },
-          },
-          pipeline: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          contact: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true,
-              company: {
-                select: {
-                  id: true,
-                  name: true,
-                },
+        }
+
+        if (q && q.trim()) {
+          where.title = { search: q.trim() }
+        }
+
+        if (owner) where.ownerId = owner
+        if (stage) where.stageId = stage
+        if (pipeline) where.pipelineId = pipeline
+        if (contact) where.contactId = contact
+        if (company) where.companyId = company
+        if (updatedSince) where.updatedAt = { gte: updatedSince }
+
+        // Pagination
+        const take = limit + 1
+        const items = await prisma.deal.findMany({
+          where,
+          select: {
+            id: true,
+            title: true,
+            value: true,
+            probability: true,
+            expectedClose: true,
+            stage: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
               },
             },
-          },
-          company: {
-            select: {
-              id: true,
-              name: true,
-              website: true,
-              domain: true,
-            },
-          },
-          owner: {
-            select: {
-              id: true,
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
+            pipeline: {
+              select: {
+                id: true,
+                name: true,
               },
             },
-          },
-          activities: {
-            select: {
-              id: true,
-              type: true,
-              description: true,
-              createdAt: true,
-              owner: {
-                select: {
-                  id: true,
-                  user: {
-                    select: {
-                      id: true,
-                      name: true,
-                      email: true,
-                    },
+            contact: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            owner: {
+              select: {
+                id: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
                   },
                 },
               },
             },
-            orderBy: {
-              createdAt: 'desc',
-            },
-            take: 20,
+            updatedAt: true,
+            createdAt: true,
           },
-          updatedAt: true,
-          createdAt: true,
-        },
-      })
+          orderBy: { updatedAt: 'desc' },
+          take,
+        })
 
-      if (!deal) {
-        throw new Error('Deal not found')
+        const hasMore = items.length > limit
+        const actualItems = hasMore ? items.slice(0, limit) : items
+        const nextCursor = hasMore
+          ? items[limit - 1].updatedAt.toISOString()
+          : null
+
+        const total = await prisma.deal.count({ where })
+
+        return {
+          items: actualItems,
+          nextCursor,
+          hasMore,
+          total,
+        }
       }
 
-      return deal
+      // No org context — return demo deals shaped to expected response
+      const { getDeals: getDemoDeals } = await import('@/server/deals')
+      const demo = await getDemoDeals({ limit })
+      // Ensure dates exist (demo helper should include them, but normalize)
+      const items = demo.items.map((it) => ({
+        ...it,
+        createdAt: it.createdAt || new Date(),
+        updatedAt: it.updatedAt || new Date(),
+      }))
+
+      return {
+        items,
+        nextCursor: demo.nextCursor,
+        hasMore: demo.hasMore,
+        total: demo.total,
+      }
     }),
 
   // Create deal

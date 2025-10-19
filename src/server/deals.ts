@@ -23,13 +23,27 @@ export async function getDeals(
   return PerformanceUtils.measureServerOperation(
     'deals-list',
     async () => {
-      const { orgId } = await requireOrg()
+      // Try to get authenticated user, but don't fail if not authenticated
+      let orgId: string | null = null
+      try {
+        const authResult = await requireOrg()
+        orgId = authResult.orgId
+      } catch (error) {
+        // User is not authenticated, will provide demo data below
+        orgId = null
+      }
+
       const {
         pipeline,
         q,
         limit = 25,
         cursor,
       } = dealsFiltersSchema.parse(filters)
+
+      // If not authenticated, return demo data
+      if (!orgId) {
+        return getDemoDeals(filters)
+      }
 
       // Build where clause
       const where: any = {
@@ -151,7 +165,20 @@ export async function getDeals(
 
 // Server action to get pipelines list
 export async function getPipelines(): Promise<PipelinesListResponse> {
-  const { orgId } = await requireOrg()
+  // Try to get authenticated user, but don't fail if not authenticated
+  let orgId: string | null = null
+  try {
+    const authResult = await requireOrg()
+    orgId = authResult.orgId
+  } catch (error) {
+    // User is not authenticated, will provide demo data below
+    orgId = null
+  }
+
+  // If not authenticated, return demo pipelines
+  if (!orgId) {
+    return getDemoPipelines()
+  }
 
   const pipelines = await prisma.pipeline.findMany({
     where: {
@@ -251,4 +278,246 @@ export async function moveDealToStage(data: {
   revalidatePath('/app/deals')
 
   return updatedDeal
+}
+
+// Demo data for unauthenticated users
+function getDemoDeals(filters: {
+  pipeline?: string
+  q?: string
+  limit?: number
+  cursor?: string
+}): DealsListResponse {
+  const { pipeline, q, limit = 25 } = filters
+
+  // Demo deals data
+  const demoDeals = [
+    {
+      id: 'demo-deal-1',
+      title: 'Enterprise Software License',
+      value: 50000,
+      probability: 75,
+      expectedClose: new Date('2025-12-01'),
+      updatedAt: new Date('2025-10-15'),
+      createdAt: new Date('2025-09-01'),
+      stage: {
+        id: 'demo-stage-2',
+        name: 'Qualified',
+        color: '#10b981',
+      },
+      pipeline: {
+        id: 'demo-pipeline-1',
+        name: 'Sales Pipeline',
+      },
+      contact: {
+        id: 'demo-contact-1',
+        firstName: 'John',
+        lastName: 'Smith',
+        email: 'john.smith@techcorp.com',
+      },
+      company: {
+        id: 'demo-company-1',
+        name: 'TechCorp Inc.',
+      },
+      owner: {
+        id: 'demo-user-1',
+        user: {
+          id: 'demo-user-1',
+          name: 'Demo User',
+          email: 'demo@quarrycrm.com',
+        },
+      },
+    },
+    {
+      id: 'demo-deal-2',
+      title: 'Consulting Services',
+      value: 25000,
+      probability: 60,
+      expectedClose: new Date('2025-11-15'),
+      updatedAt: new Date('2025-10-14'),
+      createdAt: new Date('2025-08-15'),
+      stage: {
+        id: 'demo-stage-3',
+        name: 'Proposal',
+        color: '#f59e0b',
+      },
+      pipeline: {
+        id: 'demo-pipeline-1',
+        name: 'Sales Pipeline',
+      },
+      contact: {
+        id: 'demo-contact-2',
+        firstName: 'Sarah',
+        lastName: 'Johnson',
+        email: 'sarah.johnson@consulting.com',
+      },
+      company: {
+        id: 'demo-company-2',
+        name: 'Johnson Consulting',
+      },
+      owner: {
+        id: 'demo-user-1',
+        user: {
+          id: 'demo-user-1',
+          name: 'Demo User',
+          email: 'demo@quarrycrm.com',
+        },
+      },
+    },
+    {
+      id: 'demo-deal-3',
+      title: 'Mobile App Development',
+      value: 35000,
+      probability: 80,
+      expectedClose: new Date('2025-10-30'),
+      updatedAt: new Date('2025-10-13'),
+      createdAt: new Date('2025-07-20'),
+      stage: {
+        id: 'demo-stage-4',
+        name: 'Negotiation',
+        color: '#8b5cf6',
+      },
+      pipeline: {
+        id: 'demo-pipeline-1',
+        name: 'Sales Pipeline',
+      },
+      contact: {
+        id: 'demo-contact-3',
+        firstName: 'Mike',
+        lastName: 'Davis',
+        email: 'mike.davis@startup.io',
+      },
+      company: {
+        id: 'demo-company-3',
+        name: 'StartupXYZ',
+      },
+      owner: {
+        id: 'demo-user-1',
+        user: {
+          id: 'demo-user-1',
+          name: 'Demo User',
+          email: 'demo@quarrycrm.com',
+        },
+      },
+    },
+    {
+      id: 'demo-deal-4',
+      title: 'Cloud Migration Project',
+      value: 75000,
+      probability: 45,
+      expectedClose: new Date('2026-01-15'),
+      updatedAt: new Date('2025-10-12'),
+      createdAt: new Date('2025-06-10'),
+      stage: {
+        id: 'demo-stage-1',
+        name: 'Lead',
+        color: '#3b82f6',
+      },
+      pipeline: {
+        id: 'demo-pipeline-1',
+        name: 'Sales Pipeline',
+      },
+      contact: {
+        id: 'demo-contact-4',
+        firstName: 'Lisa',
+        lastName: 'Chen',
+        email: 'lisa.chen@enterprise.com',
+      },
+      company: {
+        id: 'demo-company-4',
+        name: 'Enterprise Solutions Ltd.',
+      },
+      owner: {
+        id: 'demo-user-1',
+        user: {
+          id: 'demo-user-1',
+          name: 'Demo User',
+          email: 'demo@quarrycrm.com',
+        },
+      },
+    },
+  ]
+
+  // Filter by pipeline if specified
+  let filteredDeals = demoDeals
+  if (pipeline) {
+    filteredDeals = demoDeals.filter(deal => deal.pipeline.id === pipeline)
+  }
+
+  // Filter by search query if specified
+  if (q && q.trim()) {
+    const searchTerm = q.toLowerCase()
+    filteredDeals = filteredDeals.filter(deal =>
+      deal.title.toLowerCase().includes(searchTerm) ||
+      deal.contact?.firstName?.toLowerCase().includes(searchTerm) ||
+      deal.contact?.lastName?.toLowerCase().includes(searchTerm) ||
+      deal.contact?.email?.toLowerCase().includes(searchTerm) ||
+      deal.company?.name?.toLowerCase().includes(searchTerm)
+    )
+  }
+
+  // Apply limit
+  const items = filteredDeals.slice(0, limit)
+  const hasMore = filteredDeals.length > limit
+
+  return {
+    items,
+    nextCursor: hasMore ? 'demo-cursor' : null,
+    hasMore,
+    total: filteredDeals.length,
+  }
+}
+
+function getDemoPipelines(): PipelinesListResponse {
+  return [
+    {
+      id: 'demo-pipeline-1',
+      name: 'Sales Pipeline',
+      description: 'Standard sales process pipeline',
+      isDefault: true,
+      stages: [
+        {
+          id: 'demo-stage-1',
+          name: 'Lead',
+          order: 0,
+          color: '#3b82f6',
+          _count: { deals: 1 },
+        },
+        {
+          id: 'demo-stage-2',
+          name: 'Qualified',
+          order: 1,
+          color: '#10b981',
+          _count: { deals: 1 },
+        },
+        {
+          id: 'demo-stage-3',
+          name: 'Proposal',
+          order: 2,
+          color: '#f59e0b',
+          _count: { deals: 1 },
+        },
+        {
+          id: 'demo-stage-4',
+          name: 'Negotiation',
+          order: 3,
+          color: '#8b5cf6',
+          _count: { deals: 1 },
+        },
+        {
+          id: 'demo-stage-5',
+          name: 'Closed Won',
+          order: 4,
+          color: '#22c55e',
+          _count: { deals: 0 },
+        },
+        {
+          id: 'demo-stage-6',
+          name: 'Closed Lost',
+          order: 5,
+          color: '#ef4444',
+          _count: { deals: 0 },
+        },
+      ],
+    },
+  ]
 }
