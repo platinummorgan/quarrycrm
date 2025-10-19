@@ -355,4 +355,49 @@ export const companiesRouter = createTRPCRouter({
       subLabel: m.user?.email ?? '',
     }))
   }),
+
+  // Search companies for combobox/dropdown
+  search: orgProcedure
+    .input(z.object({
+      q: z.string().optional(),
+      limit: z.number().min(1).max(50).default(10),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { q, limit } = input
+
+      const where: any = {
+        organizationId: ctx.orgId,
+        deletedAt: null,
+      }
+
+      // Add search filter using pg_trgm
+      if (q && q.trim()) {
+        where.OR = [
+          {
+            name: {
+              search: q.trim(),
+            },
+          },
+          {
+            domain: {
+              search: q.trim(),
+            },
+          },
+        ]
+      }
+
+      const companies = await prisma.company.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+        take: limit,
+      })
+
+      return companies
+    }),
 })

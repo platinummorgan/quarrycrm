@@ -26,6 +26,7 @@ import {
 import { Loader2, User, Mail, Phone } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { useRouter } from 'next/navigation'
+import { CompanySelect } from './CompanySelect'
 
 interface ContactDrawerProps {
   open?: boolean
@@ -52,7 +53,6 @@ export function ContactDrawer({
       email: '',
       phone: '',
       ownerId: undefined,
-      companyId: '',
       notes: '',
     },
   })
@@ -85,6 +85,7 @@ export function ContactDrawer({
 
   // Local ownerId state to allow hiding the select when only one option exists
   const [ownerId, setOwnerId] = useState<string | undefined>(undefined)
+  const [companyId, setCompanyId] = useState<string | undefined>(undefined)
 
   // Preselect current member when available
   useEffect(() => {
@@ -150,12 +151,14 @@ export function ContactDrawer({
       setSelectedContactId(null)
       setIsCreating(true)
       setIsOpen(true)
+      setCompanyId(undefined)
       form.reset({
         firstName: '',
         lastName: '',
         email: '',
         phone: '',
         ownerId: undefined,
+        notes: '',
       })
     }
 
@@ -213,7 +216,7 @@ export function ContactDrawer({
     // Prevent double submits when a mutation is already in-flight
     if (createPending || updatePending) return
 
-    const { firstName, lastName, email, phone, companyId, notes } = data as any
+    const { firstName, lastName, email, phone, notes } = data as any
 
     if (isEditMode) {
       // Only send updateable fields according to the server update schema
@@ -254,8 +257,10 @@ export function ContactDrawer({
         lastName: contact.lastName,
         email: contact.email || '',
         phone: contact.phone || '',
+        notes: contact.notes || '',
         ownerId: contact.owner.id,
       })
+      setCompanyId(contact.companyId || undefined)
       setIsLoadingContact(false)
     } else if (isEditMode && getContactQuery.isError) {
       console.error('Failed to load contact:', getContactQuery.error)
@@ -408,23 +413,10 @@ export function ContactDrawer({
             )}
 
             {/* Company (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="companyId" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Company (optional)
-              </Label>
-              <Input
-                id="companyId"
-                placeholder="Company ID"
-                {...form.register('companyId')}
-                disabled={isSubmitting}
-              />
-              {form.formState.errors.companyId && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.companyId.message}
-                </p>
-              )}
-            </div>
+            <CompanySelect
+              value={companyId}
+              onChange={setCompanyId}
+            />
 
             {/* Notes (optional) */}
             <div className="space-y-2">

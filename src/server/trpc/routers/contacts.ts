@@ -210,6 +210,8 @@ export const contactsRouter = createTRPCRouter({
           lastName: true,
           email: true,
           phone: true,
+          notes: true,
+          companyId: true,
           owner: {
             select: {
               id: true,
