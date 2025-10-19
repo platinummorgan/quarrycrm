@@ -11,17 +11,20 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useLoadingState } from '@/hooks/use-loading-state'
 import { trpc } from '@/lib/trpc'
 import { KanbanColumn } from './kanban-column'
 import { KanbanCard } from './kanban-card'
 import { QuickCreateDeal } from './quick-create-deal'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Settings } from 'lucide-react'
 
 interface KanbanBoardProps {
@@ -30,7 +33,9 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [selectedPipeline, setSelectedPipeline] = useState<string>(pipelineId || '')
+  const [selectedPipeline, setSelectedPipeline] = useState<string>(
+    pipelineId || ''
+  )
   const [focusedDealId, setFocusedDealId] = useState<string | null>(null)
 
   // Fetch pipelines
@@ -39,7 +44,7 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
   const pipelines = pipelinesData?.items || []
 
   // Find selected pipeline
-  const selectedPipelineData = pipelines.find(p => p.id === selectedPipeline)
+  const selectedPipelineData = pipelines.find((p) => p.id === selectedPipeline)
 
   // Get stages from selected pipeline
   const stages = selectedPipelineData?.stages || []
@@ -105,7 +110,7 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
       const stageDeals = dealsByStage[stage.id] || []
       const count = stageDeals.length
       const weightedTotal = stageDeals.reduce((sum, deal) => {
-        return sum + ((deal.value || 0) * (deal.probability || 0) / 100)
+        return sum + ((deal.value || 0) * (deal.probability || 0)) / 100
       }, 0)
 
       totals[stage.id] = { count, weightedTotal }
@@ -130,11 +135,11 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
     const overId = over.id as string
 
     // If dropping on a stage (not another card)
-    if (stages?.some(stage => stage.id === overId)) {
+    if (stages?.some((stage) => stage.id === overId)) {
       const newStageId = overId
       updateDealMutation.mutate({
         id: activeId,
-        data: { stageId: newStageId }
+        data: { stageId: newStageId },
       })
     }
 
@@ -142,29 +147,33 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
   }
 
   const activeDeal = activeId
-    ? dealsData?.items.find(deal => deal.id === activeId)
+    ? dealsData?.items.find((deal) => deal.id === activeId)
     : null
 
   // Keyboard navigation
-  const moveDealToStage = useCallback((dealId: string, direction: 'left' | 'right') => {
-    const deal = dealsData?.items.find(d => d.id === dealId)
-    if (!deal || !stages.length) return
+  const moveDealToStage = useCallback(
+    (dealId: string, direction: 'left' | 'right') => {
+      const deal = dealsData?.items.find((d) => d.id === dealId)
+      if (!deal || !stages.length) return
 
-    const currentStageIndex = stages.findIndex(s => s.id === deal.stage?.id)
-    if (currentStageIndex === -1) return
+      const currentStageIndex = stages.findIndex((s) => s.id === deal.stage?.id)
+      if (currentStageIndex === -1) return
 
-    const newStageIndex = direction === 'left'
-      ? Math.max(0, currentStageIndex - 1)
-      : Math.min(stages.length - 1, currentStageIndex + 1)
+      const newStageIndex =
+        direction === 'left'
+          ? Math.max(0, currentStageIndex - 1)
+          : Math.min(stages.length - 1, currentStageIndex + 1)
 
-    if (newStageIndex !== currentStageIndex) {
-      const newStageId = stages[newStageIndex].id
-      updateDealMutation.mutate({
-        id: dealId,
-        data: { stageId: newStageId }
-      })
-    }
-  }, [dealsData?.items, stages, updateDealMutation])
+      if (newStageIndex !== currentStageIndex) {
+        const newStageId = stages[newStageIndex].id
+        updateDealMutation.mutate({
+          id: dealId,
+          data: { stageId: newStageId },
+        })
+      }
+    },
+    [dealsData?.items, stages, updateDealMutation]
+  )
 
   // Keyboard event handler
   useEffect(() => {
@@ -189,7 +198,7 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="animate-pulse">
-          <div className="h-8 w-8 bg-muted rounded-full"></div>
+          <div className="h-8 w-8 rounded-full bg-muted"></div>
         </div>
       </div>
     )
@@ -200,10 +209,14 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
     return (
       <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
         <div className="text-center">
-          <div className="text-muted-foreground mb-2">
+          <div className="mb-2 text-muted-foreground">
             Loading is taking longer than expected
           </div>
-          <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            size="sm"
+          >
             Refresh
           </Button>
         </div>
@@ -269,9 +282,7 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
           </div>
 
           <DragOverlay>
-            {activeDeal ? (
-              <KanbanCard deal={activeDeal} isDragging />
-            ) : null}
+            {activeDeal ? <KanbanCard deal={activeDeal} isDragging /> : null}
           </DragOverlay>
         </DndContext>
       ) : (

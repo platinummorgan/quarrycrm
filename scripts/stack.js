@@ -2,7 +2,8 @@
 const { execSync } = require('child_process')
 const fs = require('fs')
 
-const SKIP_DOCKER = process.env.SKIP_DOCKER === '1' || process.env.SKIP_DOCKER === 'true'
+const SKIP_DOCKER =
+  process.env.SKIP_DOCKER === '1' || process.env.SKIP_DOCKER === 'true'
 
 function dockerAvailable() {
   try {
@@ -13,7 +14,7 @@ function dockerAvailable() {
   }
 }
 
-async function main(){
+async function main() {
   if (SKIP_DOCKER) {
     console.log('[info] SKIP_DOCKER=1, skipping Docker')
     return
@@ -28,7 +29,7 @@ async function main(){
   // Try to start docker compose if docker-compose.test.yml exists
   const composeFile = 'docker-compose.test.yml'
   if (!fs.existsSync(composeFile)) {
-    console.log(`[info] ${composeFile} not found, skipping Docker`) 
+    console.log(`[info] ${composeFile} not found, skipping Docker`)
     return
   }
 

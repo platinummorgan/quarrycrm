@@ -51,7 +51,10 @@ export async function requireOrg() {
   }
 
   // Auto-provision a personal org for first-time users
-  const created = await ensureOrgForUser(prisma, { id: session.user.id, email: session.user.email || null })
+  const created = await ensureOrgForUser(prisma, {
+    id: session.user.id,
+    email: session.user.email || null,
+  })
 
   return {
     session,

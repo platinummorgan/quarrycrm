@@ -71,7 +71,9 @@ export class OutboxManager {
 
     try {
       const outbox = await OfflineStorage.getOutbox()
-      const pendingMutations = outbox.filter(m => !m.error || m.retryCount < BACKOFF_CONFIG.maxRetries)
+      const pendingMutations = outbox.filter(
+        (m) => !m.error || m.retryCount < BACKOFF_CONFIG.maxRetries
+      )
 
       for (const mutation of pendingMutations) {
         if (this.abortController.signal.aborted) break
@@ -84,7 +86,7 @@ export class OutboxManager {
         }
 
         // Small delay between mutations
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
     } finally {
       this.isProcessing = false
@@ -128,7 +130,10 @@ export class OutboxManager {
   }
 
   // Handle mutation errors with backoff
-  private async handleMutationError(mutation: QueuedMutation, error: Error): Promise<void> {
+  private async handleMutationError(
+    mutation: QueuedMutation,
+    error: Error
+  ): Promise<void> {
     const retryCount = mutation.retryCount + 1
 
     if (retryCount >= BACKOFF_CONFIG.maxRetries) {
@@ -141,7 +146,8 @@ export class OutboxManager {
     } else {
       // Schedule retry with backoff
       const delay = Math.min(
-        BACKOFF_CONFIG.initialDelay * Math.pow(BACKOFF_CONFIG.multiplier, retryCount - 1),
+        BACKOFF_CONFIG.initialDelay *
+          Math.pow(BACKOFF_CONFIG.multiplier, retryCount - 1),
         BACKOFF_CONFIG.maxDelay
       )
 
@@ -161,7 +167,9 @@ export class OutboxManager {
   }
 
   // Invalidate related caches after successful mutation
-  private async invalidateRelatedCaches(mutation: QueuedMutation): Promise<void> {
+  private async invalidateRelatedCaches(
+    mutation: QueuedMutation
+  ): Promise<void> {
     const { QueryCache } = await import('@/lib/query-cache')
 
     // Invalidate entity-specific caches
@@ -189,7 +197,9 @@ export class OutboxManager {
   // Retry failed mutations
   async retryFailedMutations(): Promise<void> {
     const outbox = await OfflineStorage.getOutbox()
-    const failedMutations = outbox.filter(m => m.error && m.retryCount < BACKOFF_CONFIG.maxRetries)
+    const failedMutations = outbox.filter(
+      (m) => m.error && m.retryCount < BACKOFF_CONFIG.maxRetries
+    )
 
     for (const mutation of failedMutations) {
       await OfflineStorage.updateMutationInOutbox(mutation.id, {
@@ -214,12 +224,18 @@ export class OutboxManager {
 
   // Trigger background sync
   private async triggerBackgroundSync(): Promise<void> {
-    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+    if (
+      'serviceWorker' in navigator &&
+      'sync' in window.ServiceWorkerRegistration.prototype
+    ) {
       try {
         const registration = await navigator.serviceWorker.ready
         await registration.sync.register('outbox-sync')
       } catch (error) {
-        console.warn('Background sync not supported or failed to register:', error)
+        console.warn(
+          'Background sync not supported or failed to register:',
+          error
+        )
       }
     }
   }
@@ -249,8 +265,22 @@ export function useOutboxManager() {
   }, [])
 
   const queueMutation = React.useCallback(
-    (procedure: string, args: any[], type: QueuedMutation['type'], entity: QueuedMutation['entity'], data: any, originalData?: any) => {
-      return outboxManager.queueMutation(procedure, args, type, entity, data, originalData)
+    (
+      procedure: string,
+      args: any[],
+      type: QueuedMutation['type'],
+      entity: QueuedMutation['entity'],
+      data: any,
+      originalData?: any
+    ) => {
+      return outboxManager.queueMutation(
+        procedure,
+        args,
+        type,
+        entity,
+        data,
+        originalData
+      )
     },
     []
   )

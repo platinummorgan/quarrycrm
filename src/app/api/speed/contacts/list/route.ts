@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     // Add performance mark
     const startMark = `contacts-list-${Date.now()}`
-    
+
     const skip = (page - 1) * pageSize
 
     const [contacts, total] = await Promise.all([
@@ -42,9 +42,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Contacts list benchmark failed:', error)
-    return NextResponse.json(
-      { error: 'Benchmark failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Benchmark failed' }, { status: 500 })
   }
 }

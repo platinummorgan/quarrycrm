@@ -15,16 +15,16 @@ export async function middleware(request: NextRequest) {
 +  // Check for demo users attempting write operations
 +  const writeMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
 +  if (writeMethods.includes(request.method)) {
-+    const token = await getToken({ 
++    const token = await getToken({
 +      req: request,
-+      secret: process.env.NEXTAUTH_SECRET 
++      secret: process.env.NEXTAUTH_SECRET
 +    })
-+    
++
 +    if (token?.isDemo === true) {
 +      return NextResponse.json(
-+        { 
++        {
 +          code: 'DEMO_READ_ONLY',
-+          message: 'Demo users cannot perform write operations' 
++          message: 'Demo users cannot perform write operations'
 +        },
 +        { status: 403 }
 +      )
@@ -52,17 +52,17 @@ import { authOptions } from '@/lib/auth'
  */
 export async function demoGuard() {
   const session = await getServerSession(authOptions)
-  
+
   if (session?.user?.isDemo) {
     return NextResponse.json(
-      { 
+      {
         code: 'DEMO_READ_ONLY',
-        message: 'Demo users cannot perform write operations' 
+        message: 'Demo users cannot perform write operations',
       },
       { status: 403 }
     )
   }
-  
+
   return null
 }
 ```
@@ -294,6 +294,7 @@ export async function POST(request: NextRequest) {
 ## Summary
 
 **Total Files Modified**: 11
+
 - 1 middleware layer
 - 1 new utility
 - 9 API route handlers

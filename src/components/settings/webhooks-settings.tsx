@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -151,7 +157,8 @@ export function WebhooksSettings() {
   }
 
   const canCreateWebhook = planUsage
-    ? planUsage.limits.webhooks === -1 || planUsage.usage.webhooks < planUsage.limits.webhooks
+    ? planUsage.limits.webhooks === -1 ||
+      planUsage.usage.webhooks < planUsage.limits.webhooks
     : true
 
   if (isLoading) {
@@ -212,10 +219,13 @@ export function WebhooksSettings() {
 
                   <div className="space-y-2">
                     <Label>Subscribe to Events</Label>
-                    <div className="rounded-lg border p-4 max-h-60 overflow-y-auto">
+                    <div className="max-h-60 overflow-y-auto rounded-lg border p-4">
                       <div className="grid grid-cols-2 gap-3">
                         {AVAILABLE_EVENTS.map((event) => (
-                          <div key={event.value} className="flex items-center space-x-2">
+                          <div
+                            key={event.value}
+                            className="flex items-center space-x-2"
+                          >
                             <Checkbox
                               id={event.value}
                               checked={selectedEvents.includes(event.value)}
@@ -223,7 +233,7 @@ export function WebhooksSettings() {
                             />
                             <label
                               htmlFor={event.value}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
                               {event.label}
                             </label>
@@ -240,11 +250,13 @@ export function WebhooksSettings() {
                     <Checkbox
                       id="isActive"
                       checked={isActive}
-                      onCheckedChange={(checked) => setIsActive(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setIsActive(checked as boolean)
+                      }
                     />
                     <label
                       htmlFor="isActive"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       Enable webhook (active)
                     </label>
@@ -279,16 +291,20 @@ export function WebhooksSettings() {
               <Webhook className="h-4 w-4" />
               <span>
                 {planUsage.usage.webhooks} /{' '}
-                {planUsage.limits.webhooks === -1 ? '∞' : planUsage.limits.webhooks} webhooks used
+                {planUsage.limits.webhooks === -1
+                  ? '∞'
+                  : planUsage.limits.webhooks}{' '}
+                webhooks used
               </span>
             </div>
           )}
         </CardHeader>
         <CardContent>
           {!canCreateWebhook && (
-            <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
               <p className="text-sm text-amber-900 dark:text-amber-100">
-                You've reached your plan limit for webhooks. Upgrade to create more.
+                You've reached your plan limit for webhooks. Upgrade to create
+                more.
               </p>
             </div>
           )}
@@ -298,12 +314,12 @@ export function WebhooksSettings() {
               {webhooks.map((webhook: any) => (
                 <div
                   key={webhook.id}
-                  className="rounded-lg border p-4 space-y-3"
+                  className="space-y-3 rounded-lg border p-4"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">
+                        <code className="rounded bg-muted px-2 py-1 text-sm">
                           {webhook.url}
                         </code>
                         {webhook.isActive ? (
@@ -312,8 +328,9 @@ export function WebhooksSettings() {
                           <Badge variant="secondary">Inactive</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Created by {webhook.owner.user.name || webhook.owner.user.email}
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Created by{' '}
+                        {webhook.owner.user.name || webhook.owner.user.email}
                       </p>
                     </div>
 
@@ -369,7 +386,7 @@ export function WebhooksSettings() {
                   </div>
 
                   <div className="rounded bg-muted p-3">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="mb-1 flex items-center justify-between">
                       <p className="text-xs font-medium">Signing Secret</p>
                       <TooltipProvider>
                         <Tooltip>
@@ -378,7 +395,9 @@ export function WebhooksSettings() {
                               variant="ghost"
                               size="sm"
                               className="h-6 px-2"
-                              onClick={() => handleCopySecret(webhook.secret, webhook.id)}
+                              onClick={() =>
+                                handleCopySecret(webhook.secret, webhook.id)
+                              }
                               aria-label="Copy signing secret"
                             >
                               {copiedSecret === webhook.id ? (
@@ -389,15 +408,19 @@ export function WebhooksSettings() {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{copiedSecret === webhook.id ? 'Copied!' : 'Copy secret'}</p>
+                            <p>
+                              {copiedSecret === webhook.id
+                                ? 'Copied!'
+                                : 'Copy secret'}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <code className="text-xs text-muted-foreground break-all">
+                    <code className="break-all text-xs text-muted-foreground">
                       {webhook.secret}
                     </code>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Use this secret to verify webhook signatures
                     </p>
                   </div>
@@ -405,28 +428,38 @@ export function WebhooksSettings() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Webhook className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="py-12 text-center text-muted-foreground">
+              <Webhook className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p>No webhooks configured</p>
-              <p className="text-sm mt-1">Create your first webhook to receive event notifications</p>
+              <p className="mt-1 text-sm">
+                Create your first webhook to receive event notifications
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Delete Webhook Confirmation Dialog */}
-      <AlertDialog open={!!webhookToDelete} onOpenChange={() => setWebhookToDelete(null)}>
+      <AlertDialog
+        open={!!webhookToDelete}
+        onOpenChange={() => setWebhookToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Webhook</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this webhook? You will stop receiving event notifications at this endpoint. This action cannot be undone.
+              Are you sure you want to delete this webhook? You will stop
+              receiving event notifications at this endpoint. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => webhookToDelete && deleteMutation.mutate({ id: webhookToDelete })}
+              onClick={() =>
+                webhookToDelete &&
+                deleteMutation.mutate({ id: webhookToDelete })
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isLoading && (

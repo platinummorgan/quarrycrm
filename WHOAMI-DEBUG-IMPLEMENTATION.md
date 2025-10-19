@@ -14,13 +14,15 @@ Added a `/api/whoami` endpoint for authentication debugging and a visual debug p
 
 **File**: `src/app/api/whoami/route.ts` (NEW)
 
-**Purpose**: 
+**Purpose**:
+
 - Returns current user authentication status
 - Useful for debugging session issues
 - Client-side session validation
 - No caching (no-store headers)
 
 **Response Format**:
+
 ```json
 {
   "authenticated": true,
@@ -36,6 +38,7 @@ Added a `/api/whoami` endpoint for authentication debugging and a visual debug p
 ```
 
 **Features**:
+
 - ✅ No-store cache headers (always fresh data)
 - ✅ Handles unauthenticated users gracefully
 - ✅ Returns org context (id, name, role)
@@ -43,6 +46,7 @@ Added a `/api/whoami` endpoint for authentication debugging and a visual debug p
 - ✅ Error handling with 500 response
 
 **Cache Headers**:
+
 ```http
 Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
 Pragma: no-cache
@@ -56,12 +60,14 @@ Expires: 0
 **File**: `src/components/DebugHeaderPill.tsx` (NEW)
 
 **Purpose**:
+
 - Visual indicator of current session in non-prod
 - Shows `ROLE@ORG_NAME` format
 - Quick debugging without opening DevTools
 - Dismissible (click X to hide)
 
 **Features**:
+
 - ✅ Only visible when `NEXT_PUBLIC_APP_ENV !== 'prod'`
 - ✅ Only shows for authenticated users
 - ✅ Fetches data from `/api/whoami` on mount
@@ -71,6 +77,7 @@ Expires: 0
 - ✅ Fixed position (top-right corner)
 
 **Visual Style**:
+
 - Purple background (`bg-purple-600`)
 - Monospace font for technical feel
 - Shadow for visibility
@@ -83,18 +90,18 @@ Expires: 0
 **File**: `src/app/layout.tsx` (MODIFIED)
 
 **Changes**:
+
 - Added `DebugHeaderPill` import
 - Added `<DebugHeaderPill />` component to body
 
 **Position in DOM**:
+
 ```tsx
 <body>
   <PreviewBanner />
   <DemoBanner />
-  <DebugHeaderPill />  {/* NEW */}
-  <ThemeProvider>
-    ...
-  </ThemeProvider>
+  <DebugHeaderPill /> {/* NEW */}
+  <ThemeProvider>...</ThemeProvider>
 </body>
 ```
 
@@ -107,6 +114,7 @@ Expires: 0
 **When**: `NEXT_PUBLIC_APP_ENV !== "prod"` (development, preview, staging)
 
 **What Shows**:
+
 ```
 ┌─────────────────┬───┐
 │ ADMIN@Acme Corp │ ✕ │  ← Top-right corner
@@ -114,6 +122,7 @@ Expires: 0
 ```
 
 **Hover Tooltip**:
+
 ```
 User: user@example.com
 Org ID: cm1org456abc...
@@ -122,6 +131,7 @@ Demo: false
 ```
 
 **States**:
+
 - Authenticated: Shows pill
 - Unauthenticated: Hidden
 - Dismissed: Hidden (until page refresh)
@@ -172,11 +182,11 @@ function useWhoAmI() {
 // Usage
 function MyComponent() {
   const whoami = useWhoAmI()
-  
+
   if (!whoami?.authenticated) {
     return <div>Not logged in</div>
   }
-  
+
   return <div>Logged in as {whoami.user.email}</div>
 }
 ```
@@ -187,7 +197,7 @@ function MyComponent() {
 async function checkAuth() {
   const response = await fetch('/api/whoami')
   const data = await response.json()
-  
+
   if (!data.authenticated) {
     window.location.href = '/auth/signin'
   }
@@ -221,6 +231,7 @@ curl http://localhost:3000/api/whoami
 ### Debug Pill Appearance
 
 **Authenticated User (ADMIN)**:
+
 ```
 Top-right corner:
 ┌─────────────────┬───┐
@@ -229,6 +240,7 @@ Top-right corner:
 ```
 
 **Demo User**:
+
 ```
 Top-right corner:
 ┌──────────────────┬───┐
@@ -237,6 +249,7 @@ Top-right corner:
 ```
 
 **Member Role**:
+
 ```
 Top-right corner:
 ┌─────────────────┬───┐
@@ -245,6 +258,7 @@ Top-right corner:
 ```
 
 **No Org Name (shows ID)**:
+
 ```
 Top-right corner:
 ┌──────────────────┬───┐
@@ -271,6 +285,7 @@ curl http://localhost:3000/api/whoami
 ### Test Debug Pill
 
 **Test Cases**:
+
 1. ✅ **Non-prod environment**: Pill should appear after login
 2. ✅ **Production environment**: Pill should NOT appear
 3. ✅ **Unauthenticated**: Pill should NOT appear
@@ -278,6 +293,7 @@ curl http://localhost:3000/api/whoami
 5. ✅ **Hover pill**: Should show tooltip with full details
 
 **Manual Test Steps**:
+
 1. Set `NEXT_PUBLIC_APP_ENV="preview"` in `.env.local`
 2. Start dev server: `npm run dev`
 3. Navigate to `/auth/signin`
@@ -292,10 +308,12 @@ curl http://localhost:3000/api/whoami
 ## 📁 Files Created/Modified
 
 ### Created
+
 - ✅ `src/app/api/whoami/route.ts` (92 lines) - API endpoint
 - ✅ `src/components/DebugHeaderPill.tsx` (62 lines) - Debug component
 
 ### Modified
+
 - ✅ `src/app/layout.tsx` - Added DebugHeaderPill import and component
 
 ---
@@ -304,16 +322,16 @@ curl http://localhost:3000/api/whoami
 
 ### `/api/whoami` Response
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `authenticated` | `boolean` | Whether user is logged in | `true` |
-| `user` | `object \| null` | User info (id, email) | `{ id: "...", email: "..." }` |
-| `user.id` | `string` | User ID | `"cm1abc123..."` |
-| `user.email` | `string` | User email | `"user@example.com"` |
-| `orgId` | `string \| null` | Current org ID | `"cm1org456..."` |
-| `orgName` | `string \| null` | Current org name | `"Acme Corp"` |
-| `role` | `string \| null` | User's role in org | `"ADMIN"`, `"MEMBER"`, `"DEMO"` |
-| `isDemo` | `boolean` | Whether user is in demo mode | `false` |
+| Field           | Type             | Description                  | Example                         |
+| --------------- | ---------------- | ---------------------------- | ------------------------------- |
+| `authenticated` | `boolean`        | Whether user is logged in    | `true`                          |
+| `user`          | `object \| null` | User info (id, email)        | `{ id: "...", email: "..." }`   |
+| `user.id`       | `string`         | User ID                      | `"cm1abc123..."`                |
+| `user.email`    | `string`         | User email                   | `"user@example.com"`            |
+| `orgId`         | `string \| null` | Current org ID               | `"cm1org456..."`                |
+| `orgName`       | `string \| null` | Current org name             | `"Acme Corp"`                   |
+| `role`          | `string \| null` | User's role in org           | `"ADMIN"`, `"MEMBER"`, `"DEMO"` |
+| `isDemo`        | `boolean`        | Whether user is in demo mode | `false`                         |
 
 ### Unauthenticated Response
 
@@ -337,6 +355,7 @@ curl http://localhost:3000/api/whoami
 **Scenario**: "Which org am I currently in?"
 
 **Solution**: Glance at top-right corner
+
 ```
 ADMIN@Acme Corp  ← You're in Acme Corp as ADMIN
 ```
@@ -346,6 +365,7 @@ ADMIN@Acme Corp  ← You're in Acme Corp as ADMIN
 **Scenario**: Testing org switching
 
 **Solution**: Switch orgs and see pill update immediately
+
 ```
 Before: MEMBER@Org A
 After:  ADMIN@Org B
@@ -356,6 +376,7 @@ After:  ADMIN@Org B
 **Scenario**: "Am I in demo mode?"
 
 **Solution**: Check pill and hover for details
+
 ```
 DEMO@Quarry Demo
 (hover shows: isDemo: true)
@@ -366,6 +387,7 @@ DEMO@Quarry Demo
 **Scenario**: "Why is my auth not working?"
 
 **Solution**: Check `/api/whoami` endpoint
+
 ```bash
 curl http://localhost:3000/api/whoami
 # If authenticated: false, session is broken
@@ -376,8 +398,9 @@ curl http://localhost:3000/api/whoami
 **Scenario**: Need to verify auth before API call
 
 **Solution**: Use whoami endpoint
+
 ```typescript
-const { authenticated } = await fetch('/api/whoami').then(r => r.json())
+const { authenticated } = await fetch('/api/whoami').then((r) => r.json())
 if (!authenticated) {
   router.push('/auth/signin')
 }
@@ -388,16 +411,19 @@ if (!authenticated) {
 ## 🚀 Deployment Behavior
 
 ### Development
+
 - `NEXT_PUBLIC_APP_ENV="development"`
 - ✅ Debug pill visible
 - ✅ `/api/whoami` available
 
 ### Preview
+
 - `NEXT_PUBLIC_APP_ENV="preview"`
 - ✅ Debug pill visible
 - ✅ `/api/whoami` available
 
 ### Production
+
 - `NEXT_PUBLIC_APP_ENV="prod"`
 - ❌ Debug pill hidden
 - ✅ `/api/whoami` still available (but pill won't show)
@@ -411,6 +437,7 @@ if (!authenticated) {
 ### Keyboard Shortcuts
 
 To quickly check whoami:
+
 ```bash
 # In browser console
 fetch('/api/whoami').then(r => r.json()).then(console.log)
@@ -419,19 +446,22 @@ fetch('/api/whoami').then(r => r.json()).then(console.log)
 ### Custom Styling
 
 To change pill color, edit `DebugHeaderPill.tsx`:
+
 ```tsx
 // Change from purple to blue
-className="... bg-blue-600 hover:bg-blue-700"
+className = '... bg-blue-600 hover:bg-blue-700'
 ```
 
 ### Hide Pill Permanently
 
 Set environment variable:
+
 ```bash
 NEXT_PUBLIC_APP_ENV="prod"
 ```
 
 Or comment out in layout:
+
 ```tsx
 // <DebugHeaderPill />
 ```
@@ -441,6 +471,7 @@ Or comment out in layout:
 ## ✨ Features Summary
 
 ### API Endpoint Features
+
 - ✅ No-store cache headers (always fresh)
 - ✅ Clean JSON response
 - ✅ Error handling
@@ -448,6 +479,7 @@ Or comment out in layout:
 - ✅ Returns complete user context
 
 ### Debug Pill Features
+
 - ✅ Only visible in non-production
 - ✅ Only shows when authenticated
 - ✅ Dismissible

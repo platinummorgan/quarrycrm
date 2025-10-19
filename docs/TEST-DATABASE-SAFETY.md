@@ -20,12 +20,13 @@ const allowUnsafe = process.env.__TEST_DB_ALLOWED === '1'
 if (!isTestDb && !allowUnsafe) {
   throw new Error(
     'Refusing to TRUNCATE: DATABASE_URL must point to a test database. ' +
-    'Expected "_test" in the database URL...'
+      'Expected "_test" in the database URL...'
   )
 }
 ```
 
 **Benefits:**
+
 - ✅ Prevents accidental data loss on prod/dev databases
 - ✅ Clear error messages with actionable instructions
 - ✅ Multiple layers of protection
@@ -48,6 +49,7 @@ if (!process.env.DATABASE_URL?.includes('_test')) {
 ```
 
 **Benefits:**
+
 - ✅ Fails fast before tests run
 - ✅ Loud warning when using production database
 - ✅ Clear documentation in error messages
@@ -55,6 +57,7 @@ if (!process.env.DATABASE_URL?.includes('_test')) {
 ### 3. Documentation in `docs/TESTING.md`
 
 Comprehensive guide covering:
+
 - Test database requirements
 - Local development options
 - CI/CD setup instructions (Neon branches, dedicated databases)
@@ -93,12 +96,12 @@ npm test
 
 ## Behavior Matrix
 
-| DATABASE_URL         | ALLOW_UNSAFE_TEST_DB | Result                          |
-|----------------------|----------------------|---------------------------------|
-| `*_test`             | not set              | ✅ Tests run normally           |
-| `*_test`             | `1`                  | ✅ Tests run normally           |
-| `production_db`      | not set              | ❌ Error: "DATABASE_URL does not contain _test" |
-| `production_db`      | `1`                  | ⚠️ Tests run with warning       |
+| DATABASE_URL    | ALLOW_UNSAFE_TEST_DB | Result                                           |
+| --------------- | -------------------- | ------------------------------------------------ |
+| `*_test`        | not set              | ✅ Tests run normally                            |
+| `*_test`        | `1`                  | ✅ Tests run normally                            |
+| `production_db` | not set              | ❌ Error: "DATABASE_URL does not contain \_test" |
+| `production_db` | `1`                  | ⚠️ Tests run with warning                        |
 
 ## CI Setup Examples
 
@@ -113,20 +116,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       # Option 1: Use Neon branch
       - name: Create Neon branch
         run: |
           # Use Neon API to create test branch
           # Set DATABASE_URL to branch connection string
-      
+
       # Option 2: Use dedicated test database
       - name: Setup test database
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
         run: |
           npx prisma migrate deploy
-      
+
       - name: Run tests
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
@@ -142,7 +145,7 @@ test:
     - npx prisma migrate deploy
     - npm test
   variables:
-    DATABASE_URL_TEST: "postgres://user:pass@host/quarrycrm_test"
+    DATABASE_URL_TEST: 'postgres://user:pass@host/quarrycrm_test'
 ```
 
 ## Test Results

@@ -24,7 +24,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Loader2, Building2, Globe, Briefcase, FileText, AtSign } from 'lucide-react'
+import {
+  Loader2,
+  Building2,
+  Globe,
+  Briefcase,
+  FileText,
+  AtSign,
+} from 'lucide-react'
 
 const companyFormSchema = z.object({
   name: z.string().min(1, 'Company name is required'),
@@ -42,8 +49,15 @@ interface CreateCompanyDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function CreateCompanyDialog({ open, onOpenChange }: CreateCompanyDialogProps) {
-  const [me, setMe] = useState<{ org?: string; role?: string; membershipId?: string } | null>(null)
+export function CreateCompanyDialog({
+  open,
+  onOpenChange,
+}: CreateCompanyDialogProps) {
+  const [me, setMe] = useState<{
+    org?: string
+    role?: string
+    membershipId?: string
+  } | null>(null)
   const [ownerId, setOwnerId] = useState<string | undefined>(undefined)
 
   const form = useForm<CompanyFormData>({
@@ -59,9 +73,12 @@ export function CreateCompanyDialog({ open, onOpenChange }: CreateCompanyDialogP
   })
 
   // Fetch owners for select input
-  const { data: ownerOptions } = trpc.companies.listOwnerOptions.useQuery(undefined, {
-    enabled: open,
-  })
+  const { data: ownerOptions } = trpc.companies.listOwnerOptions.useQuery(
+    undefined,
+    {
+      enabled: open,
+    }
+  )
 
   // Lightweight whoami endpoint to get current membershipId for preselect
   useEffect(() => {
@@ -133,7 +150,7 @@ export function CreateCompanyDialog({ open, onOpenChange }: CreateCompanyDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] overflow-y-auto">
+      <DialogContent className="overflow-y-auto sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
@@ -246,7 +263,11 @@ export function CreateCompanyDialog({ open, onOpenChange }: CreateCompanyDialogP
           {/* Owner */}
           {ownerOptions && ownerOptions.length === 1 ? (
             // If only one owner option, preselect and hide the field
-            <input type="hidden" value={ownerOptions[0].id} {...form.register('ownerId')} />
+            <input
+              type="hidden"
+              value={ownerOptions[0].id}
+              {...form.register('ownerId')}
+            />
           ) : (
             <div className="space-y-2">
               <Label htmlFor="ownerId" className="flex items-center gap-2">

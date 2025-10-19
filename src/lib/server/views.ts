@@ -26,9 +26,10 @@ export class ViewUrlCodec {
     // Encode filters
     if (Object.keys(config.filters).length > 0) {
       const filterParts = Object.entries(config.filters).map(([key, value]) => {
-        const encodedValue = typeof value === 'string'
-          ? encodeURIComponent(value)
-          : encodeURIComponent(JSON.stringify(value))
+        const encodedValue =
+          typeof value === 'string'
+            ? encodeURIComponent(value)
+            : encodeURIComponent(JSON.stringify(value))
         return `${key}${this.FILTER_SEPARATOR}${encodedValue}`
       })
       parts.push(`filters=${filterParts.join(',')}`)
@@ -69,11 +70,16 @@ export class ViewUrlCodec {
         case 'filters':
           const filterPairs = value.split(',')
           for (const pair of filterPairs) {
-            const [filterKey, filterValue] = pair.split(this.FILTER_SEPARATOR, 2)
+            const [filterKey, filterValue] = pair.split(
+              this.FILTER_SEPARATOR,
+              2
+            )
             if (filterKey && filterValue) {
               try {
                 // Try to parse as JSON first, fall back to string
-                config.filters[filterKey] = JSON.parse(decodeURIComponent(filterValue))
+                config.filters[filterKey] = JSON.parse(
+                  decodeURIComponent(filterValue)
+                )
               } catch {
                 config.filters[filterKey] = decodeURIComponent(filterValue)
               }
@@ -113,7 +119,10 @@ export class ViewOperations {
   /**
    * Merges two view configurations, with override taking precedence
    */
-  static mergeConfigs(base: ViewConfig, override: Partial<ViewConfig>): ViewConfig {
+  static mergeConfigs(
+    base: ViewConfig,
+    override: Partial<ViewConfig>
+  ): ViewConfig {
     return {
       filters: { ...base.filters, ...override.filters },
       sortBy: override.sortBy ?? base.sortBy,
@@ -173,7 +182,9 @@ export class ViewOperations {
   /**
    * Gets the default view configuration for an entity type
    */
-  static getDefaultView(entityType: 'CONTACT' | 'COMPANY' | 'DEAL'): ViewConfig {
+  static getDefaultView(
+    entityType: 'CONTACT' | 'COMPANY' | 'DEAL'
+  ): ViewConfig {
     switch (entityType) {
       case 'CONTACT':
         return this.createDefaultContactView()
@@ -261,9 +272,11 @@ export class ViewDatabase {
     const updateData: any = {}
 
     if (updates.name !== undefined) updateData.name = updates.name
-    if (updates.description !== undefined) updateData.description = updates.description
+    if (updates.description !== undefined)
+      updateData.description = updates.description
     if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic
-    if (updates.isStarred !== undefined) updateData.isStarred = updates.isStarred
+    if (updates.isStarred !== undefined)
+      updateData.isStarred = updates.isStarred
 
     // Handle config updates
     if (updates.config) {
@@ -342,10 +355,7 @@ export class ViewDatabase {
 
     return prisma.savedView.findMany({
       where,
-      orderBy: [
-        { isStarred: 'desc' },
-        { updatedAt: 'desc' },
-      ],
+      orderBy: [{ isStarred: 'desc' }, { updatedAt: 'desc' }],
       include: {
         owner: {
           include: {
@@ -387,10 +397,7 @@ export class ViewDatabase {
     const existingView = await prisma.savedView.findFirst({
       where: {
         id: viewId,
-        OR: [
-          { ownerId: userId },
-          { isPublic: true },
-        ],
+        OR: [{ ownerId: userId }, { isPublic: true }],
       },
     })
 

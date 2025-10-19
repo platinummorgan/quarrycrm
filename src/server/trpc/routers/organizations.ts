@@ -1,4 +1,8 @@
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 

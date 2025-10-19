@@ -33,22 +33,22 @@ describe('Audit Chain', () => {
   describe('canonicalizeAuditRecord', () => {
     it('should produce deterministic JSON output', () => {
       const record = createMockAudit()
-      
+
       const canonical1 = canonicalizeAuditRecord(record)
       const canonical2 = canonicalizeAuditRecord(record)
-      
+
       expect(canonical1).toBe(canonical2)
     })
 
     it('should sort keys alphabetically', () => {
       const record = createMockAudit()
       const canonical = canonicalizeAuditRecord(record)
-      
+
       // Parse and check key order
       const parsed = JSON.parse(canonical)
       const keys = Object.keys(parsed)
       const sortedKeys = [...keys].sort()
-      
+
       expect(keys).toEqual(sortedKeys)
     })
 
@@ -57,9 +57,9 @@ describe('Audit Chain', () => {
         prevHash: 'abc123',
         selfHash: 'def456',
       })
-      
+
       const canonical = canonicalizeAuditRecord(record)
-      
+
       expect(canonical).not.toContain('prevHash')
       expect(canonical).not.toContain('selfHash')
       expect(canonical).not.toContain('abc123')
@@ -69,7 +69,7 @@ describe('Audit Chain', () => {
     it('should exclude id field', () => {
       const record = createMockAudit({ id: 'test-id-999' })
       const canonical = canonicalizeAuditRecord(record)
-      
+
       expect(canonical).not.toContain('test-id-999')
     })
 
@@ -79,10 +79,10 @@ describe('Audit Chain', () => {
         ipAddress: null,
         userAgent: null,
       })
-      
+
       const canonical = canonicalizeAuditRecord(record)
       const parsed = JSON.parse(canonical)
-      
+
       expect(parsed.userId).toBe(null)
       expect(parsed.ipAddress).toBe(null)
       expect(parsed.userAgent).toBe(null)
@@ -96,7 +96,7 @@ describe('Audit Chain', () => {
           string: 'test',
         },
       })
-      
+
       const canonical = canonicalizeAuditRecord(record)
       expect(canonical).toContain('"nested"')
       expect(canonical).toContain('"deep"')
@@ -107,47 +107,47 @@ describe('Audit Chain', () => {
     it('should return 64-character hex string (SHA-256)', () => {
       const record = createMockAudit()
       const hash = computeAuditHash(record)
-      
+
       expect(hash).toMatch(/^[0-9a-f]{64}$/)
       expect(hash.length).toBe(64)
     })
 
     it('should be deterministic (same input = same hash)', () => {
       const record = createMockAudit()
-      
+
       const hash1 = computeAuditHash(record)
       const hash2 = computeAuditHash(record)
-      
+
       expect(hash1).toBe(hash2)
     })
 
     it('should change if data changes', () => {
       const record1 = createMockAudit({ eventType: 'contact.created' })
       const record2 = createMockAudit({ eventType: 'contact.updated' })
-      
+
       const hash1 = computeAuditHash(record1)
       const hash2 = computeAuditHash(record2)
-      
+
       expect(hash1).not.toBe(hash2)
     })
 
     it('should not change if hash fields change (excluded)', () => {
       const record1 = createMockAudit({ selfHash: 'abc' })
       const record2 = createMockAudit({ selfHash: 'xyz' })
-      
+
       const hash1 = computeAuditHash(record1)
       const hash2 = computeAuditHash(record2)
-      
+
       expect(hash1).toBe(hash2)
     })
 
     it('should not change if id changes (excluded)', () => {
       const record1 = createMockAudit({ id: 'id-1' })
       const record2 = createMockAudit({ id: 'id-2' })
-      
+
       const hash1 = computeAuditHash(record1)
       const hash2 = computeAuditHash(record2)
-      
+
       expect(hash1).toBe(hash2)
     })
   })
@@ -156,7 +156,7 @@ describe('Audit Chain', () => {
     it('should return prevHash and selfHash', () => {
       const record = createMockAudit()
       const result = computeChainHashes(record, null)
-      
+
       expect(result).toHaveProperty('prevHash')
       expect(result).toHaveProperty('selfHash')
     })
@@ -164,7 +164,7 @@ describe('Audit Chain', () => {
     it('should set prevHash to null for genesis record', () => {
       const record = createMockAudit()
       const result = computeChainHashes(record, null)
-      
+
       expect(result.prevHash).toBe(null)
     })
 
@@ -172,14 +172,14 @@ describe('Audit Chain', () => {
       const record = createMockAudit()
       const prevHashValue = 'abc123def456'
       const result = computeChainHashes(record, prevHashValue)
-      
+
       expect(result.prevHash).toBe(prevHashValue)
     })
 
     it('should compute valid selfHash', () => {
       const record = createMockAudit()
       const result = computeChainHashes(record, null)
-      
+
       expect(result.selfHash).toMatch(/^[0-9a-f]{64}$/)
     })
   })
@@ -187,7 +187,7 @@ describe('Audit Chain', () => {
   describe('verifyAuditChain', () => {
     it('should return valid for empty chain', () => {
       const result = verifyAuditChain([])
-      
+
       expect(result.valid).toBe(true)
       expect(result.totalRecords).toBe(0)
       expect(result.errors).toHaveLength(0)
@@ -198,9 +198,9 @@ describe('Audit Chain', () => {
         prevHash: null,
         selfHash: computeAuditHash(createMockAudit()),
       })
-      
+
       const result = verifyAuditChain([record])
-      
+
       expect(result.valid).toBe(true)
       expect(result.errors).toHaveLength(0)
     })
@@ -210,9 +210,9 @@ describe('Audit Chain', () => {
         prevHash: 'should-be-null',
         selfHash: computeAuditHash(createMockAudit()),
       })
-      
+
       const result = verifyAuditChain([record])
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toHaveLength(1)
       expect(result.errors[0].errorType).toBe('genesis')
@@ -237,7 +237,7 @@ describe('Audit Chain', () => {
       record2.selfHash = hash2
 
       const result = verifyAuditChain([record1, record2])
-      
+
       expect(result.valid).toBe(true)
       expect(result.totalRecords).toBe(2)
       expect(result.errors).toHaveLength(0)
@@ -248,9 +248,9 @@ describe('Audit Chain', () => {
         prevHash: null,
         selfHash: 'tampered-hash-12345',
       })
-      
+
       const result = verifyAuditChain([record])
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toHaveLength(1)
       expect(result.errors[0].errorType).toBe('self_hash')
@@ -268,14 +268,16 @@ describe('Audit Chain', () => {
         id: 'rec-2',
         eventType: 'contact.updated',
         prevHash: 'wrong-hash',
-        selfHash: computeAuditHash(createMockAudit({ 
-          id: 'rec-2',
-          eventType: 'contact.updated',
-        })),
+        selfHash: computeAuditHash(
+          createMockAudit({
+            id: 'rec-2',
+            eventType: 'contact.updated',
+          })
+        ),
       })
 
       const result = verifyAuditChain([record1, record2])
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toHaveLength(1)
       expect(result.errors[0].errorType).toBe('prev_hash')
@@ -287,10 +289,12 @@ describe('Audit Chain', () => {
         id: 'rec-1',
         createdAt: new Date('2025-01-01T00:01:00Z'),
         prevHash: null,
-        selfHash: computeAuditHash(createMockAudit({ 
-          id: 'rec-1',
-          createdAt: new Date('2025-01-01T00:01:00Z'),
-        })),
+        selfHash: computeAuditHash(
+          createMockAudit({
+            id: 'rec-1',
+            createdAt: new Date('2025-01-01T00:01:00Z'),
+          })
+        ),
       })
 
       const record2 = createMockAudit({
@@ -298,17 +302,19 @@ describe('Audit Chain', () => {
         createdAt: new Date('2025-01-01T00:00:00Z'), // Earlier than record1
         eventType: 'contact.updated',
         prevHash: record1.selfHash,
-        selfHash: computeAuditHash(createMockAudit({ 
-          id: 'rec-2',
-          createdAt: new Date('2025-01-01T00:00:00Z'),
-          eventType: 'contact.updated',
-        })),
+        selfHash: computeAuditHash(
+          createMockAudit({
+            id: 'rec-2',
+            createdAt: new Date('2025-01-01T00:00:00Z'),
+            eventType: 'contact.updated',
+          })
+        ),
       })
 
       const result = verifyAuditChain([record1, record2])
-      
+
       expect(result.valid).toBe(false)
-      expect(result.errors.some(e => e.errorType === 'ordering')).toBe(true)
+      expect(result.errors.some((e) => e.errorType === 'ordering')).toBe(true)
     })
 
     it('should detect multiple errors in chain', () => {
@@ -319,7 +325,7 @@ describe('Audit Chain', () => {
       })
 
       const result = verifyAuditChain([record1])
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors.length).toBeGreaterThanOrEqual(2)
     })
@@ -340,17 +346,17 @@ describe('Audit Chain', () => {
           eventType: i % 2 === 0 ? 'contact.created' : 'contact.updated',
           eventData: { index: i },
         })
-        
+
         const selfHash = computeAuditHash(record)
         record.prevHash = prevHash
         record.selfHash = selfHash
-        
+
         records.push(record)
         prevHash = selfHash
       }
 
       const result = verifyAuditChain(records)
-      
+
       expect(result.valid).toBe(true)
       expect(result.totalRecords).toBe(100)
       expect(result.errors).toHaveLength(0)
@@ -386,7 +392,7 @@ describe('Audit Chain', () => {
       records.splice(2, 0, inserted)
 
       const result = verifyAuditChain(records)
-      
+
       expect(result.valid).toBe(false)
       // Should detect broken chain at inserted record and next record
       expect(result.errors.length).toBeGreaterThan(0)
@@ -404,7 +410,7 @@ describe('Audit Chain', () => {
       record.eventData = { modified: 'data' }
 
       const result = verifyAuditChain([record])
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors[0].errorType).toBe('self_hash')
     })
@@ -430,10 +436,10 @@ describe('Audit Chain', () => {
       records.splice(1, 1)
 
       const result = verifyAuditChain(records)
-      
+
       expect(result.valid).toBe(false)
       // Record 2 now has prevHash pointing to deleted record 1's hash
-      expect(result.errors.some(e => e.errorType === 'prev_hash')).toBe(true)
+      expect(result.errors.some((e) => e.errorType === 'prev_hash')).toBe(true)
     })
   })
 })

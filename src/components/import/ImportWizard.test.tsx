@@ -5,7 +5,7 @@ const mockPapaParse = vi.fn()
 vi.mock('papaparse', () => ({
   default: {
     parse: mockPapaParse,
-  }
+  },
 }))
 
 // Mock fetch for API calls
@@ -17,7 +17,7 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
-  }
+  },
 }))
 
 describe('ImportWizard API Integration', () => {
@@ -35,14 +35,14 @@ describe('ImportWizard API Integration', () => {
         created: 2,
         skipped: 0,
         errors: 0,
-        affectedIds: ['contact-1', 'contact-2']
-      })
+        affectedIds: ['contact-1', 'contact-2'],
+      }),
     })
 
     // Test the API call structure
     const testData = [
-      { 'First Name': 'John', 'Last Name': 'Doe', 'Email': 'john@example.com' },
-      { 'First Name': 'Jane', 'Last Name': 'Smith', 'Email': 'jane@example.com' },
+      { 'First Name': 'John', 'Last Name': 'Doe', Email: 'john@example.com' },
+      { 'First Name': 'Jane', 'Last Name': 'Smith', Email: 'jane@example.com' },
     ]
 
     const testMappings = [
@@ -80,16 +80,22 @@ describe('ImportWizard API Integration', () => {
       created: 2,
       skipped: 0,
       errors: 0,
-      affectedIds: ['contact-1', 'contact-2']
+      affectedIds: ['contact-1', 'contact-2'],
     })
   })
 
   it('validates field mapping logic', () => {
     // Test the field mapping confidence logic
-    const csvHeaders = ['First Name', 'Last Name', 'Email', 'Phone', 'Company Name']
+    const csvHeaders = [
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'Company Name',
+    ]
 
     // Simulate the mapping generation logic from the component
-    const mappings = csvHeaders.map(header => {
+    const mappings = csvHeaders.map((header) => {
       const lowerHeader = header.toLowerCase()
 
       let dbField: string | null = null
@@ -134,17 +140,25 @@ describe('ImportWizard API Integration', () => {
     mockPapaParse.mockImplementation((file, config) => {
       config.complete({
         data: [
-          { 'First Name': 'John', 'Last Name': 'Doe', 'Email': 'john@example.com' },
+          {
+            'First Name': 'John',
+            'Last Name': 'Doe',
+            Email: 'john@example.com',
+          },
         ],
         errors: [],
         meta: {
-          fields: ['First Name', 'Last Name', 'Email']
-        }
+          fields: ['First Name', 'Last Name', 'Email'],
+        },
       })
     })
 
     // Mock CSV file
-    const file = new File(['First Name,Last Name,Email\nJohn,Doe,john@example.com'], 'test.csv', { type: 'text/csv' })
+    const file = new File(
+      ['First Name,Last Name,Email\nJohn,Doe,john@example.com'],
+      'test.csv',
+      { type: 'text/csv' }
+    )
 
     // Test that Papa.parse is configured correctly
     mockPapaParse(file, {
@@ -152,13 +166,16 @@ describe('ImportWizard API Integration', () => {
       skipEmptyLines: true,
       complete: () => {
         // Complete callback would validate the data
-      }
+      },
     })
 
     // Verify Papa.parse was called with correct config
-    expect(mockPapaParse).toHaveBeenCalledWith(file, expect.objectContaining({
-      header: true,
-      skipEmptyLines: true,
-    }))
+    expect(mockPapaParse).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({
+        header: true,
+        skipEmptyLines: true,
+      })
+    )
   })
 })

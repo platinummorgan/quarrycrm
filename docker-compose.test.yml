@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: test
       POSTGRES_DB: quarrycrm_test
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
 

@@ -10,25 +10,30 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
 
   // Setup test data before each test
   beforeEach(async () => {
-    if (typeof globalThis.__dbReset === 'function' && typeof globalThis.__withAdvisoryLock === 'function') {
-      await globalThis.__withAdvisoryLock(async (tx: Prisma.TransactionClient) => {
-        await globalThis.__dbReset(tx)
-        ctx = await seedOrgUser(tx)
-        pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
+    if (
+      typeof globalThis.__dbReset === 'function' &&
+      typeof globalThis.__withAdvisoryLock === 'function'
+    ) {
+      await globalThis.__withAdvisoryLock(
+        async (tx: Prisma.TransactionClient) => {
+          await globalThis.__dbReset(tx)
+          ctx = await seedOrgUser(tx)
+          pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
 
-        // Create a test deal in stage 1 inside the same transaction
-        const deal = await tx.deal.create({
-          data: {
-            title: 'Test Deal',
-            value: 10000,
-            organizationId: ctx.org.id,
-            pipelineId: pipelineCtx.pipeline.id,
-            stageId: pipelineCtx.stages[0].id,
-            ownerId: ctx.membership.id,
-          },
-        })
-        testDealId = deal.id
-      })
+          // Create a test deal in stage 1 inside the same transaction
+          const deal = await tx.deal.create({
+            data: {
+              title: 'Test Deal',
+              value: 10000,
+              organizationId: ctx.org.id,
+              pipelineId: pipelineCtx.pipeline.id,
+              stageId: pipelineCtx.stages[0].id,
+              ownerId: ctx.membership.id,
+            },
+          })
+          testDealId = deal.id
+        }
+      )
 
       // No cross-client polling required when reset/seed used the shared prisma
       // singleton; proceed directly.
@@ -270,36 +275,50 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
       })
 
       // Group deals by stage
-      const stage1Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[0].id)
-      const stage2Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[1].id)
+      const stage1Deals = deals.filter(
+        (d) => d.stageId === pipelineCtx.stages[0].id
+      )
+      const stage2Deals = deals.filter(
+        (d) => d.stageId === pipelineCtx.stages[1].id
+      )
 
       // Calculate weighted totals
       // Stage 1: (10000 * 50% = 5000) + (20000 * 75% = 15000) + original deal (10000 * 50% = 5000)
       // Use stage-level probability when computing weighted totals. If a stage has no
       // probability set, fall back to 100%.
       const stage1Weighted = stage1Deals.reduce((sum, deal) => {
-        const stage = pipelineCtx.stages.find((s) => s.id === deal.stageId) as any
+        const stage = pipelineCtx.stages.find(
+          (s) => s.id === deal.stageId
+        ) as any
         const stageProb = stage?.probability ?? 100
         return sum + ((deal.value || 0) * stageProb) / 100
       }, 0)
 
       // Stage 2: (30000 * 100% = 30000)
       const stage2Weighted = stage2Deals.reduce((sum, deal) => {
-        const stage = pipelineCtx.stages.find((s) => s.id === deal.stageId) as any
+        const stage = pipelineCtx.stages.find(
+          (s) => s.id === deal.stageId
+        ) as any
         const stageProb = stage?.probability ?? 100
         return sum + ((deal.value || 0) * stageProb) / 100
       }, 0)
 
-  // Compute expected values from stage probabilities so tests don't rely on
-  // per-deal probability fields (they're now stage-level).
-  const stage0Prob = (pipelineCtx.stages[0] as any).probability ?? 100
-  const stage1Prob = (pipelineCtx.stages[1] as any).probability ?? 100
+      // Compute expected values from stage probabilities so tests don't rely on
+      // per-deal probability fields (they're now stage-level).
+      const stage0Prob = (pipelineCtx.stages[0] as any).probability ?? 100
+      const stage1Prob = (pipelineCtx.stages[1] as any).probability ?? 100
 
-  const expectedStage1 = stage1Deals.reduce((sum, d) => sum + ((d.value || 0) * stage0Prob) / 100, 0)
-  const expectedStage2 = stage2Deals.reduce((sum, d) => sum + ((d.value || 0) * stage1Prob) / 100, 0)
+      const expectedStage1 = stage1Deals.reduce(
+        (sum, d) => sum + ((d.value || 0) * stage0Prob) / 100,
+        0
+      )
+      const expectedStage2 = stage2Deals.reduce(
+        (sum, d) => sum + ((d.value || 0) * stage1Prob) / 100,
+        0
+      )
 
-  expect(stage1Weighted).toBe(expectedStage1)
-  expect(stage2Weighted).toBe(expectedStage2)
+      expect(stage1Weighted).toBe(expectedStage1)
+      expect(stage2Weighted).toBe(expectedStage2)
     })
 
     it('should handle deals with null values and probabilities', async () => {
@@ -341,11 +360,15 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
         },
       })
 
-      const stage1Deals = deals.filter((d) => d.stageId === pipelineCtx.stages[0].id)
+      const stage1Deals = deals.filter(
+        (d) => d.stageId === pipelineCtx.stages[0].id
+      )
 
       // Calculate weighted totals (should handle nulls gracefully)
       const stage1Weighted = stage1Deals.reduce((sum, deal) => {
-        const stage = pipelineCtx.stages.find((s) => s.id === deal.stageId) as any
+        const stage = pipelineCtx.stages.find(
+          (s) => s.id === deal.stageId
+        ) as any
         const stageProb = stage?.probability ?? 100
         return sum + ((deal.value || 0) * stageProb) / 100
       }, 0)
@@ -466,7 +489,10 @@ describe('Deals Board - Stage Movement Unit Tests', () => {
 
       // Verify in database
       const deals = await prisma.deal.findMany({
-        where: { organizationId: ctx.org.id, stageId: pipelineCtx.stages[1].id },
+        where: {
+          organizationId: ctx.org.id,
+          stageId: pipelineCtx.stages[1].id,
+        },
       })
       expect(deals).toHaveLength(2)
 

@@ -1,9 +1,9 @@
 /**
  * PII Masking Utilities for Demo Users
- * 
+ *
  * Masks sensitive information (email, phone) for users with role="demo"
  * or when accessing demo organization data.
- * 
+ *
  * Masking formats:
  * - Email: mike.smith@example.com → m***@example.com
  * - Phone: (404) 555-9231 → ***-***-9231
@@ -12,7 +12,7 @@
 /**
  * Mask email address by hiding most of the local part
  * Shows only first character + *** + domain
- * 
+ *
  * Examples:
  * - mike.smith@example.com → m***@example.com
  * - john@example.com → j***@example.com
@@ -21,13 +21,13 @@
  */
 export function maskEmail(email: string | null | undefined): string {
   if (!email) return ''
-  
+
   const parts = email.split('@')
   if (parts.length !== 2) return email // Invalid email, return as-is
-  
+
   const [localPart, domain] = parts
   if (localPart.length === 0) return email
-  
+
   // Show first character + *** + domain
   const masked = `${localPart[0]}***@${domain}`
   return masked
@@ -36,7 +36,7 @@ export function maskEmail(email: string | null | undefined): string {
 /**
  * Mask phone number with consistent format
  * Always shows: ***-***-9231
- * 
+ *
  * Examples:
  * - (404) 555-9231 → ***-***-9231
  * - 404-555-9231 → ***-***-9231
@@ -45,11 +45,11 @@ export function maskEmail(email: string | null | undefined): string {
  */
 export function maskPhone(phone: string | null | undefined): string {
   if (!phone) return ''
-  
+
   // Remove all non-digit characters to check if we have a valid phone
   const digitsOnly = phone.replace(/\D/g, '')
   if (digitsOnly.length === 0) return phone
-  
+
   // Return consistent masked format
   return '***-***-9231'
 }
@@ -95,10 +95,10 @@ export function isDemoUser(
 ): boolean {
   // Check if user has DEMO role
   if (userRole === 'DEMO') return true
-  
+
   // Check if orgId matches demo organization (if demoOrgId provided)
   if (demoOrgId && orgId === demoOrgId) return true
-  
+
   return false
 }
 
@@ -114,9 +114,9 @@ export function maskPIIFields<T extends Record<string, any>>(
   fields: string[] = ['email', 'phone']
 ): T {
   if (!isDemo) return data
-  
+
   const masked: any = { ...data }
-  
+
   for (const field of fields) {
     if (field in masked) {
       const value = masked[field]
@@ -129,7 +129,7 @@ export function maskPIIFields<T extends Record<string, any>>(
       }
     }
   }
-  
+
   return masked as T
 }
 
@@ -145,8 +145,8 @@ export function maskPIIArray<T extends Record<string, any>>(
   fields?: string[]
 ): T[] {
   if (!isDemo) return data
-  
-  return data.map(item => maskPIIFields(item, isDemo, fields))
+
+  return data.map((item) => maskPIIFields(item, isDemo, fields))
 }
 
 /**
@@ -156,13 +156,13 @@ export function maskPIIArray<T extends Record<string, any>>(
 export function isRequestFromDemo(session: any): boolean {
   // Check if user has demo flag
   if (session?.user?.isDemo === true) return true
-  
+
   // Check if user's current org role is DEMO
   if (session?.user?.currentOrg?.role === 'DEMO') return true
-  
+
   // Check if demoOrgId is set
   if (session?.user?.demoOrgId) return true
-  
+
   return false
 }
 
@@ -178,12 +178,11 @@ export function getDemoOrgId(): string | null {
  * Mask contact data for demo users
  * Applies masking to common contact fields
  */
-export function maskContactData<T extends { email?: string | null; phone?: string | null }>(
-  contact: T,
-  isDemo: boolean
-): T {
+export function maskContactData<
+  T extends { email?: string | null; phone?: string | null },
+>(contact: T, isDemo: boolean): T {
   if (!isDemo) return contact
-  
+
   return {
     ...contact,
     email: contact.email ? maskEmail(contact.email) : contact.email,
@@ -195,16 +194,15 @@ export function maskContactData<T extends { email?: string | null; phone?: strin
  * Mask company data for demo users
  * Applies masking to common company fields
  */
-export function maskCompanyData<T extends { 
-  email?: string | null
-  phone?: string | null
-  website?: string | null
-}>(
-  company: T,
-  isDemo: boolean
-): T {
+export function maskCompanyData<
+  T extends {
+    email?: string | null
+    phone?: string | null
+    website?: string | null
+  },
+>(company: T, isDemo: boolean): T {
   if (!isDemo) return company
-  
+
   return {
     ...company,
     email: company.email ? maskEmail(company.email) : company.email,

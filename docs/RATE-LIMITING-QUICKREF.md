@@ -3,27 +3,29 @@
 ## Quick Setup
 
 ### 1. Wrap API Route Handler
+
 ```typescript
-import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit';
+import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit'
 
 export const POST = withWriteRateLimit(
   async (req) => {
     // Your handler logic
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
   },
-  WriteRateLimits.CONTACTS  // or DEALS, IMPORT, EMAIL_LOG, etc.
-);
+  WriteRateLimits.CONTACTS // or DEALS, IMPORT, EMAIL_LOG, etc.
+)
 ```
 
 ### 2. Use Client Fetch Wrapper
+
 ```typescript
-import { fetchWithRateLimit } from '@/lib/client-rate-limit';
+import { fetchWithRateLimit } from '@/lib/client-rate-limit'
 
 try {
   const response = await fetchWithRateLimit('/api/contacts', {
     method: 'POST',
     body: JSON.stringify(data),
-  });
+  })
   // Rate limit toast shown automatically on 429
 } catch (error) {
   // Error already handled
@@ -33,17 +35,18 @@ try {
 ## Available Rate Limits
 
 ```typescript
-WriteRateLimits.CONTACTS    // 100 writes/min
-WriteRateLimits.DEALS       // 50 writes/min
-WriteRateLimits.COMPANIES   // 50 writes/min
-WriteRateLimits.PIPELINES   // 20 writes/min
-WriteRateLimits.IMPORT      // 5 imports/min (strict!)
-WriteRateLimits.EMAIL_LOG   // 200 emails/min
+WriteRateLimits.CONTACTS // 100 writes/min
+WriteRateLimits.DEALS // 50 writes/min
+WriteRateLimits.COMPANIES // 50 writes/min
+WriteRateLimits.PIPELINES // 20 writes/min
+WriteRateLimits.IMPORT // 5 imports/min (strict!)
+WriteRateLimits.EMAIL_LOG // 200 emails/min
 ```
 
 ## Response Headers
 
 **Success (200):**
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -51,6 +54,7 @@ X-RateLimit-Reset: 1634567890
 ```
 
 **Rate Limited (429):**
+
 ```
 Retry-After: 45
 X-RateLimit-Limit: 100
@@ -61,6 +65,7 @@ X-RateLimit-Reset: 1634567890
 ## API Routes to Update
 
 ### ✅ Pattern
+
 ```typescript
 // Before
 export async function POST(req: NextRequest) {
@@ -68,14 +73,11 @@ export async function POST(req: NextRequest) {
 }
 
 // After
-import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit';
+import { withWriteRateLimit, WriteRateLimits } from '@/lib/rate-limit'
 
-export const POST = withWriteRateLimit(
-  async (req: NextRequest) => {
-    // handler code
-  },
-  WriteRateLimits.CONTACTS
-);
+export const POST = withWriteRateLimit(async (req: NextRequest) => {
+  // handler code
+}, WriteRateLimits.CONTACTS)
 ```
 
 ### 📝 Routes Needing Updates
@@ -93,21 +95,23 @@ export const POST = withWriteRateLimit(
 ## Client Usage Examples
 
 ### Automatic Toast
+
 ```typescript
-import { fetchWithRateLimit } from '@/lib/client-rate-limit';
+import { fetchWithRateLimit } from '@/lib/client-rate-limit'
 
 // Shows toast automatically on 429
-await fetchWithRateLimit('/api/contacts', { method: 'POST' });
+await fetchWithRateLimit('/api/contacts', { method: 'POST' })
 ```
 
 ### Manual Handling
-```typescript
-import { handleRateLimitError, isRateLimitError } from '@/lib/client-rate-limit';
 
-const response = await fetch('/api/contacts', { method: 'POST' });
+```typescript
+import { handleRateLimitError, isRateLimitError } from '@/lib/client-rate-limit'
+
+const response = await fetch('/api/contacts', { method: 'POST' })
 
 if (isRateLimitError(response)) {
-  const error = await handleRateLimitError(response);
+  const error = await handleRateLimitError(response)
   // Toast shown, error contains: { error, message, retryAfter }
 }
 ```
@@ -131,6 +135,7 @@ done
 **Development:** Uses in-memory storage (automatic)
 
 **Production:** Add to `.env`:
+
 ```env
 UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-token
@@ -141,18 +146,21 @@ Get free Redis at: https://upstash.com/
 ## Troubleshooting
 
 **Reset rate limit for IP:**
+
 ```typescript
-import { resetRateLimit } from '@/lib/rate-limit';
-await resetRateLimit('203.0.113.1', 'ratelimit:write:contacts');
+import { resetRateLimit } from '@/lib/rate-limit'
+await resetRateLimit('203.0.113.1', 'ratelimit:write:contacts')
 ```
 
 **Check headers in browser:**
+
 ```javascript
-fetch('/api/contacts', { method: 'POST' })
-  .then(r => console.log({
+fetch('/api/contacts', { method: 'POST' }).then((r) =>
+  console.log({
     limit: r.headers.get('X-RateLimit-Limit'),
     remaining: r.headers.get('X-RateLimit-Remaining'),
-  }))
+  })
+)
 ```
 
 ## Files Modified/Created

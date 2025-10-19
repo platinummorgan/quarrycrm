@@ -10,11 +10,7 @@ export const contactFormSchema = z.object({
     .string()
     .min(1, 'Last name is required')
     .max(100, 'Last name must be less than 100 characters'),
-  email: z
-    .string()
-    .email('Invalid email address')
-    .optional()
-    .or(z.literal('')),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().optional(),
   ownerId: z.string().min(1, 'Owner is required').optional(),
   companyId: z.string().optional(),

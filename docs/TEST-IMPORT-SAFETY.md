@@ -9,14 +9,16 @@ This document tracks the audit of test modules for import-time database connecti
 ### ✅ Safe Modules
 
 #### `tests/utils/seed.ts`
+
 - **Status**: ✅ Safe - Lazy-loaded PrismaClient
-- **Details**: 
+- **Details**:
   - Uses lazy-loaded `getPrismaClient()` instead of import-time instantiation
   - All database operations are inside async functions
   - Accepts optional `client` parameter for transaction support
 - **Functions**: `seedOrgUser()`, `seedPipelines()`, `seedContacts()`
 
 #### `tests/db-reset.ts`
+
 - **Status**: ✅ Safe - Lazy-loaded PrismaClient
 - **Details**:
   - Uses lazy-loaded `getPrismaClient()` to defer connection until first use
@@ -25,6 +27,7 @@ This document tracks the audit of test modules for import-time database connecti
 - **Functions**: `resetPostgresDb()`, `closePrisma()`, `withAdvisoryLock()`
 
 #### `tests/setup.ts`
+
 - **Status**: ✅ Safe - No Prisma imports
 - **Details**:
   - Sets environment variables before any Prisma connections
@@ -32,6 +35,7 @@ This document tracks the audit of test modules for import-time database connecti
   - Registers cleanup in `afterAll` hook
 
 #### `__tests__/setup.ts`
+
 - **Status**: ✅ Safe - No Prisma imports
 - **Details**:
   - Validates and modifies `DATABASE_URL` before any Prisma connections
@@ -41,7 +45,8 @@ This document tracks the audit of test modules for import-time database connecti
 ### ⚠️ Import-Time Connections (Acceptable)
 
 #### Test Files Using `@/lib/prisma`
-- **Files**: 
+
+- **Files**:
   - `src/server/trpc/routers/contacts.smoke.test.ts`
   - `src/server/trpc/routers/deals-board.test.ts`
   - `src/server/contacts.test.ts`
@@ -51,7 +56,7 @@ This document tracks the audit of test modules for import-time database connecti
 - **Status**: ⚠️ Import-time instantiation, but usage is deferred
 - **Details**:
   - Import `prisma` from `@/lib/prisma` which creates client at import time
-  - However, prisma is only *used* inside test hooks/functions
+  - However, prisma is only _used_ inside test hooks/functions
   - Test setup runs before test functions execute
   - `DATABASE_URL` is modified by test setup before first query
 
@@ -75,9 +80,10 @@ This document tracks the audit of test modules for import-time database connecti
 ### ✅ DO
 
 1. **Use lazy-loaded Prisma clients in test utilities**:
+
    ```typescript
    let prisma: PrismaClient | null = null
-   
+
    function getPrismaClient(): PrismaClient {
      if (!prisma) {
        prisma = new PrismaClient()
@@ -87,6 +93,7 @@ This document tracks the audit of test modules for import-time database connecti
    ```
 
 2. **Accept client parameter in test helpers**:
+
    ```typescript
    export async function seedData(client?: PrismaClient) {
      const db = client ?? getPrismaClient()
@@ -95,13 +102,14 @@ This document tracks the audit of test modules for import-time database connecti
    ```
 
 3. **Use prisma inside test hooks, not at import time**:
+
    ```typescript
    describe('My Tests', () => {
      beforeEach(async () => {
        // ✅ Good - inside hook
        await prisma.user.create(...)
      })
-     
+
      it('should work', async () => {
        // ✅ Good - inside test
        const users = await prisma.user.findMany()
@@ -110,10 +118,11 @@ This document tracks the audit of test modules for import-time database connecti
    ```
 
 4. **Modify DATABASE_URL before any imports**:
+
    ```typescript
    // In setup.ts - BEFORE imports
-   process.env.DATABASE_URL = "postgres://...test"
-   
+   process.env.DATABASE_URL = 'postgres://...test'
+
    // THEN import test utilities
    import { resetPostgresDb } from './db-reset'
    ```
@@ -121,30 +130,33 @@ This document tracks the audit of test modules for import-time database connecti
 ### ❌ DON'T
 
 1. **Don't execute Prisma queries at import time**:
+
    ```typescript
    // ❌ Bad - runs at import
    import { prisma } from '@/lib/prisma'
    const users = await prisma.user.findMany()
-   
+
    describe('My Tests', () => { ... })
    ```
 
 2. **Don't create eager PrismaClient in test utilities**:
+
    ```typescript
    // ❌ Bad - creates client at import
    import { PrismaClient } from '@prisma/client'
    const prisma = new PrismaClient() // Connects immediately
-   
+
    export async function seedData() {
      await prisma.user.create(...)
    }
    ```
 
 3. **Don't seed data at module level**:
+
    ```typescript
    // ❌ Bad - seeds at import time
    const testUser = await seedUser()
-   
+
    describe('My Tests', () => {
      it('should use user', () => {
        expect(testUser).toBeDefined()
@@ -155,12 +167,14 @@ This document tracks the audit of test modules for import-time database connecti
 ## Connection Timeline
 
 ### Import Phase (Module Loading)
+
 1. Vitest loads `__tests__/setup.ts`
 2. Setup modifies `DATABASE_URL` (adds `_test` or sets `__TEST_DB_ALLOWED`)
 3. Setup imports `tests/db-reset.ts` (lazy client, no connection yet)
 4. Test files import (may create PrismaClient, but no queries yet)
 
 ### Test Execution Phase
+
 1. `beforeEach` hooks run
 2. `globalThis.__withAdvisoryLock` acquires lock
 3. `globalThis.__dbReset` runs safety checks
@@ -170,6 +184,7 @@ This document tracks the audit of test modules for import-time database connecti
 7. Test body executes
 
 ### Key Safety Points
+
 - **Safety Check Location**: In `resetPostgresDb()` before any TRUNCATE
 - **First Connection**: Happens during `resetPostgresDb()` when checking tables
 - **DATABASE_URL Modification**: Happens in setup before any connections
@@ -180,6 +195,7 @@ This document tracks the audit of test modules for import-time database connecti
 If you need to add new test utilities that use Prisma:
 
 ### Step 1: Use Lazy-Loaded Client
+
 ```typescript
 // tests/utils/my-helper.ts
 import { PrismaClient } from '@prisma/client'
@@ -200,30 +216,29 @@ export async function myHelper(client?: PrismaClient) {
 ```
 
 ### Step 2: Accept Client Parameter
+
 Always accept an optional client parameter so tests can pass transaction clients:
 
 ```typescript
-export async function myHelper(
-  data: any,
-  client?: PrismaClient
-) {
+export async function myHelper(data: any, client?: PrismaClient) {
   const db = client ?? getPrismaClient()
   return await db.myTable.create({ data })
 }
 ```
 
 ### Step 3: Call Inside Test Hooks
+
 Never call helper functions at import time:
 
 ```typescript
 describe('My Tests', () => {
   let myData: any
-  
+
   beforeEach(async () => {
     // ✅ Good - inside hook
     myData = await myHelper({ ... })
   })
-  
+
   it('should work', () => {
     expect(myData).toBeDefined()
   })
@@ -235,6 +250,7 @@ describe('My Tests', () => {
 To verify no import-time connections are happening:
 
 1. **Add debug logging** (temporary):
+
    ```typescript
    // In getPrismaClient()
    console.log('Creating PrismaClient', new Error().stack)
@@ -257,6 +273,7 @@ To verify no import-time connections are happening:
 ⚠️ **Test files import app's prisma client (acceptable - used in hooks only)**
 
 The current setup ensures:
+
 1. Test setup runs first and modifies environment
 2. Prisma clients are created with correct configuration
 3. Safety checks validate before any destructive operations

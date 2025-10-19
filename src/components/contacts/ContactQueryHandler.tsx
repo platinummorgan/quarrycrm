@@ -12,12 +12,12 @@ export function ContactQueryHandler() {
 
   useEffect(() => {
     const openContactId = searchParams?.get('open')
-    
+
     if (openContactId) {
       // Small delay to ensure drawer component is mounted
       setTimeout(() => {
         const event = new CustomEvent('contact:select', {
-          detail: { contactId: openContactId }
+          detail: { contactId: openContactId },
         })
         window.dispatchEvent(event)
       }, 100)

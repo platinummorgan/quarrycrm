@@ -3,6 +3,7 @@
 This document provides a factual summary of QuarryCRM's security practices, subprocessors, and data protection agreements. No marketing language is included.
 
 ## Key Security Facts
+
 - All data is encrypted in transit (TLS 1.2+) and at rest (AES-256).
 - Access to production systems is restricted to authorized personnel only.
 - Multi-factor authentication (MFA) is enforced for all admin accounts.
@@ -15,16 +16,19 @@ This document provides a factual summary of QuarryCRM's security practices, subp
 - Data residency: All customer data is stored in the region selected at onboarding.
 
 ## Subprocessors
-| Name         | Service         | Location      | Purpose                |
-|--------------|----------------|--------------|------------------------|
-| Upstash      | Redis hosting  | US/EU        | Rate limiting, caching |
-| AWS          | Cloud hosting  | US/EU        | Infrastructure         |
-| SendGrid     | Email delivery | US           | Transactional email    |
-| Sentry       | Error tracking | US/EU        | Monitoring             |
-| Stripe       | Payments       | US/EU        | Billing                |
+
+| Name     | Service        | Location | Purpose                |
+| -------- | -------------- | -------- | ---------------------- |
+| Upstash  | Redis hosting  | US/EU    | Rate limiting, caching |
+| AWS      | Cloud hosting  | US/EU    | Infrastructure         |
+| SendGrid | Email delivery | US       | Transactional email    |
+| Sentry   | Error tracking | US/EU    | Monitoring             |
+| Stripe   | Payments       | US/EU    | Billing                |
 
 ## Data Protection Agreement (DPA)
+
 A copy of our Data Protection Agreement (DPA) is available for review:
+
 - [Download DPA PDF](https://quarrycrm.com/legal/dpa.pdf)
 
 For additional details or questions, contact security@quarrycrm.com.

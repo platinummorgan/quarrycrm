@@ -11,10 +11,7 @@ export async function GET(
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user's organization
@@ -47,7 +44,7 @@ export async function GET(
         errorRows: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     })
 
     if (!importHistory) {
@@ -56,15 +53,13 @@ export async function GET(
 
     // Verify the import belongs to the user's organization
     if (importHistory.organizationId !== member.organization.id) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const progress = (importHistory.totalRows ?? 0) > 0
-      ? (importHistory.processedRows / (importHistory.totalRows ?? 1)) * 100
-      : 0
+    const progress =
+      (importHistory.totalRows ?? 0) > 0
+        ? (importHistory.processedRows / (importHistory.totalRows ?? 1)) * 100
+        : 0
 
     return NextResponse.json({
       importId: importHistory.id,

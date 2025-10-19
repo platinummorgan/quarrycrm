@@ -63,10 +63,12 @@ Added `moveToStage` mutation:
 
 ```typescript
 moveToStage: orgProcedure
-  .input(z.object({
-    dealId: z.string(),
-    stageId: z.string(),
-  }))
+  .input(
+    z.object({
+      dealId: z.string(),
+      stageId: z.string(),
+    })
+  )
   .mutation(async ({ ctx, input }) => {
     // Validates:
     // 1. Deal exists and belongs to organization
@@ -76,6 +78,7 @@ moveToStage: orgProcedure
 ```
 
 **Validation Logic:**
+
 - Ensures deal belongs to user's organization
 - Verifies target stage is in the same pipeline as deal
 - Returns detailed error messages for debugging
@@ -92,20 +95,20 @@ const moveDealMutation = trpc.deals.moveToStage.useMutation({
   onMutate: async ({ dealId, stageId }) => {
     // 1. Cancel outgoing queries
     await utils.deals.list.cancel()
-    
+
     // 2. Snapshot current state
     const previousDeals = utils.deals.list.getData(...)
-    
+
     // 3. Optimistically update UI
     utils.deals.list.setData(..., (old) => ({
       ...old,
-      items: old.items.map(deal => 
-        deal.id === dealId 
+      items: old.items.map(deal =>
+        deal.id === dealId
           ? { ...deal, stage: newStage }
           : deal
       )
     }))
-    
+
     return { previousDeals }
   },
   onError: (err, variables, context) => {
@@ -140,17 +143,17 @@ useEffect(() => {
 ```typescript
 const stageTotals = useMemo(() => {
   const totals: Record<string, { count: number; weightedTotal: number }> = {}
-  
+
   stages.forEach((stage) => {
     const stageDeals = dealsByStage[stage.id] || []
     const count = stageDeals.length
     const weightedTotal = stageDeals.reduce((sum, deal) => {
       return sum + ((deal.value || 0) * (deal.probability || 0)) / 100
     }, 0)
-    
+
     totals[stage.id] = { count, weightedTotal }
   })
-  
+
   return totals
 }, [dealsByStage, stages])
 ```
@@ -181,6 +184,7 @@ export default function DealsPage() {
 6. ✅ **Performance** - Stage moves complete in <100ms
 
 **Test Results:**
+
 ```
 ✓ 6 tests passed (6)
 Duration: 6.01s
@@ -196,10 +200,12 @@ Navigate to `/app/deals` in your application.
 ### Interacting with Deals
 
 **Mouse:**
+
 - Drag cards between columns to change stages
 - Click a card to focus it for keyboard navigation
 
 **Keyboard:**
+
 - Tab to focus a deal card
 - Press **H** to move deal left (previous stage)
 - Press **L** to move deal right (next stage)
@@ -237,12 +243,12 @@ Use the dropdown in the header to switch between pipelines.
 
 ## Performance Characteristics
 
-| Operation | Target | Actual |
-|-----------|--------|--------|
-| Stage move (single deal) | <100ms | ~54ms ✅ |
-| Board initial load | <500ms | ~300ms ✅ |
-| Drag & drop animation | 60fps | 60fps ✅ |
-| Skeleton timeout | 400ms max | 400ms ✅ |
+| Operation                | Target    | Actual    |
+| ------------------------ | --------- | --------- |
+| Stage move (single deal) | <100ms    | ~54ms ✅  |
+| Board initial load       | <500ms    | ~300ms ✅ |
+| Drag & drop animation    | 60fps     | 60fps ✅  |
+| Skeleton timeout         | 400ms max | 400ms ✅  |
 
 ## Known Limitations
 
@@ -255,18 +261,21 @@ Use the dropdown in the header to switch between pipelines.
 ## Future Enhancements
 
 ### High Priority
+
 - [ ] Deal creation/edit drawer
 - [ ] Deal detail view with activities
 - [ ] Filters (owner, date range, amount range)
 - [ ] Search deals by title
 
 ### Medium Priority
+
 - [ ] Bulk operations (multi-select, bulk move)
 - [ ] Custom stage colors
 - [ ] Deal templates
 - [ ] Pipeline analytics dashboard
 
 ### Low Priority
+
 - [ ] Card reordering within stages
 - [ ] Swimlanes (group by owner/company)
 - [ ] Board customization (hide columns, etc.)
@@ -275,12 +284,14 @@ Use the dropdown in the header to switch between pipelines.
 ## Files Changed/Created
 
 ### Created
+
 1. `src/components/deals/Board.tsx` - Main board component (730+ lines)
 2. `src/app/(app)/deals/page.tsx` - Route page wrapper
 3. `src/server/trpc/routers/deals-board.test.ts` - Test suite (390 lines)
 4. `docs/deals-board-implementation.md` - This file
 
 ### Modified
+
 1. `src/server/trpc/routers/deals.ts` - Added `moveToStage` mutation
 
 ## Testing
@@ -336,6 +347,7 @@ if (event.key === 'h' || event.key === 'H') {
 ## Browser Compatibility
 
 Tested on:
+
 - Chrome 120+ ✅
 - Edge 120+ ✅
 - Firefox 121+ ✅

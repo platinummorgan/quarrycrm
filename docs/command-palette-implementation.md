@@ -46,6 +46,7 @@ A comprehensive command palette built with `cmdk` that provides keyboard-driven 
 ### Architecture
 
 **Component Structure:**
+
 ```
 CommandKProvider (Layout wrapper)
   ├─ CommandK (Main component)
@@ -65,12 +66,14 @@ CommandKProvider (Layout wrapper)
 ### Files Created/Modified
 
 #### Created
+
 1. **`src/components/CommandK.tsx`** (340 lines)
    - Main command palette component
    - CommandKProvider for global state management
    - Event system for "New Contact" action
 
 #### Modified
+
 1. **`src/app/(app)/layout.tsx`**
    - Added `CommandKProvider` wrapper
    - Wraps entire app layout
@@ -114,6 +117,7 @@ useEffect(() => {
 ```
 
 **Key Points:**
+
 - `e.metaKey` - Detects Cmd key on Mac
 - `e.ctrlKey` - Detects Ctrl key on Windows/Linux
 - `e.preventDefault()` - Prevents browser default behavior
@@ -185,6 +189,7 @@ useEffect(() => {
 ```
 
 **Why Custom Events?**
+
 - Decouples CommandK from page-specific components
 - Allows actions to work even when not on the specific page
 - Follows pub/sub pattern for loosely coupled architecture
@@ -203,9 +208,7 @@ useEffect(() => {
 **2. ARIA Attributes**
 
 ```tsx
-<Command.Item
-  className="aria-selected:bg-accent aria-selected:text-accent-foreground"
->
+<Command.Item className="aria-selected:bg-accent aria-selected:text-accent-foreground">
   {/* Automatically gets aria-selected="true" when focused */}
 </Command.Item>
 ```
@@ -220,7 +223,7 @@ useEffect(() => {
 **4. Visual Focus Indicators**
 
 ```tsx
-className="outline-none aria-selected:bg-accent"
+className = 'outline-none aria-selected:bg-accent'
 // Clear background change on selection
 ```
 
@@ -237,7 +240,6 @@ className="outline-none aria-selected:bg-accent"
 ```tsx
 // Backdrop
 <div className="fixed inset-0 z-50 bg-black/50" onClick={closeHandler}>
-  
   // Centered dialog
   <div className="fixed left-1/2 top-[20%] w-full max-w-2xl -translate-x-1/2">
     <Command>...</Command>
@@ -249,7 +251,7 @@ className="outline-none aria-selected:bg-accent"
 
 ```css
 flex cursor-pointer items-center gap-3 rounded-md px-3 py-2
-outline-none 
+outline-none
 aria-selected:bg-accent aria-selected:text-accent-foreground
 data-[disabled]:pointer-events-none data-[disabled]:opacity-50
 ```
@@ -259,9 +261,11 @@ data-[disabled]:pointer-events-none data-[disabled]:opacity-50
 ### Opening the Command Palette
 
 **Keyboard:**
+
 - Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux) from anywhere
 
 **Mouse:**
+
 - Click the search button in the header (triggers same hotkey)
 
 ### Executing Commands
@@ -274,10 +278,12 @@ data-[disabled]:pointer-events-none data-[disabled]:opacity-50
 ### Available Commands
 
 #### Actions Group
+
 - **New Contact** - Opens create contact drawer
 - **Import CSV** - Navigate to import page
 
 #### Navigation Group
+
 - **Go to Deals** - Navigate to deals board
 - **Go to Contacts** - Navigate to contacts list
 - **Go to Companies** - Navigate to companies list
@@ -310,6 +316,7 @@ npm install -D @axe-core/react
 ```
 
 **Expected Results:**
+
 - ✅ All keyboard interactions work
 - ✅ Focus trap keeps focus within palette
 - ✅ ARIA attributes present and correct
@@ -317,6 +324,7 @@ npm install -D @axe-core/react
 - ✅ Screen reader announces commands properly
 
 **Screen Reader Test:**
+
 ```
 1. Open palette with Cmd+K
 2. Screen reader should announce: "Command palette dialog"
@@ -327,12 +335,14 @@ npm install -D @axe-core/react
 ## Browser Compatibility
 
 Tested on:
+
 - Chrome 120+ ✅
 - Edge 120+ ✅
 - Firefox 121+ ✅
 - Safari 17+ ✅
 
 **Known Issues:**
+
 - None
 
 ## Performance
@@ -345,18 +355,21 @@ Tested on:
 ## Future Enhancements
 
 ### High Priority
+
 - [ ] Global search with results (contacts, deals, companies)
 - [ ] Recent commands/history
 - [ ] Custom keyboard shortcuts for commands
 - [ ] Add "New Deal", "New Company" actions
 
 ### Medium Priority
+
 - [ ] Command palette theming
 - [ ] Fuzzy search scoring
 - [ ] Command groups can be collapsed
 - [ ] Quick actions based on current page
 
 ### Low Priority
+
 - [ ] Command chaining (multi-step commands)
 - [ ] User-defined custom commands
 - [ ] Command analytics/usage tracking
@@ -376,7 +389,7 @@ Tested on:
       router.push('/your/route')
     })
   }
-  className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2..."
+  className="py-2... flex cursor-pointer items-center gap-3 rounded-md px-3"
 >
   <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
     <YourIcon className="h-4 w-4" />
@@ -393,6 +406,7 @@ Tested on:
 **Step 2: Add to Appropriate Group**
 
 Place in either:
+
 - `<Command.Group heading="Actions">` - For create/import actions
 - `<Command.Group heading="Navigation">` - For page navigation
 
@@ -436,6 +450,7 @@ useEffect(() => {
 **No additional steps required!**
 
 The command palette:
+
 - Works out of the box after deployment
 - No environment variables needed
 - No database migrations required
@@ -448,6 +463,7 @@ Just deploy and the hotkey will work globally.
 ## Summary
 
 ✅ **Command Palette implemented with:**
+
 - Cmd/Ctrl+K hotkey registered globally
 - Focus trap and keyboard navigation (↑↓ Enter ESC)
 - All requested actions working (New Contact, Go to Deals, Import CSV)
@@ -455,6 +471,7 @@ Just deploy and the hotkey will work globally.
 - Clean integration with existing components
 
 **Test it:**
+
 1. Press **Cmd+K** (or Ctrl+K) from anywhere
 2. Type "contact" and press Enter → Opens new contact drawer
 3. Type "deal" and press Enter → Navigates to deals board

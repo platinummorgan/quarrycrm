@@ -44,6 +44,7 @@
 ## 🎯 Requirements Met
 
 ### ✅ Table Features
+
 - [x] **Columns**: Name, Email, Company, Owner, Updated
 - [x] **Sticky Header**: Implemented with CSS
 - [x] **Pagination**: 25/page with keyset cursor
@@ -51,6 +52,7 @@
 - [x] **Performance**: Optimized queries, selective fields
 
 ### ✅ Keyboard Navigation
+
 - [x] **↑/↓**: Move selection up/down
 - [x] **Enter**: Open drawer for selected contact
 - [x] **Esc**: Close drawer / blur input
@@ -58,17 +60,20 @@
 - [x] **Ctrl+N**: Create new contact
 
 ### ✅ Drawer
+
 - [x] **Create/Edit**: Single drawer component
 - [x] **Fields**: firstName, lastName, email, phone, companyId
 - [x] **Validation**: Inline with Zod schema
 - [x] **Optimistic Create**: Immediate UI update with rollback
 
 ### ✅ Empty State
+
 - [x] **Message**: "No contacts yet"
 - [x] **Actions**: Add Contact + Import CSV (disabled)
 - [x] **Icon**: Search icon
 
 ### ✅ Performance
+
 - [x] **Target**: <120ms for list on 10k contacts
 - [x] **Optimization**: Select only needed columns
 - [x] **Indexes**: Utilizes existing Prisma indexes
@@ -79,12 +84,14 @@
 ## 🚀 Usage
 
 ### Run the Application
+
 ```bash
 npm run dev
 # Visit http://localhost:3000/contacts
 ```
 
 ### Run Smoke Tests
+
 ```bash
 npm test contacts.smoke.test.ts
 ```
@@ -94,12 +101,14 @@ npm test contacts.smoke.test.ts
 ## 📊 Performance Benchmarks
 
 ### Query Performance
+
 - **List Query** (25 records): ~10-30ms
 - **Search Query**: ~20-50ms (with pg_trgm indexes)
 - **Create Contact**: ~5-15ms
 - **Update Contact**: ~5-15ms
 
 ### UI Performance
+
 - **Initial Render**: <100ms
 - **Search Debounce**: 300ms
 - **Keyboard Navigation**: Instant (<16ms)
@@ -110,6 +119,7 @@ npm test contacts.smoke.test.ts
 ## 🧪 Test Coverage
 
 ### Smoke Tests (9 tests)
+
 1. List with pagination (25/page)
 2. Search by name
 3. Optimized column selection
@@ -125,6 +135,7 @@ npm test contacts.smoke.test.ts
 ## 🎨 UI/UX Features
 
 ### Visual Feedback
+
 - Selected row highlight (ring + background)
 - Hover states on rows
 - Loading skeletons during fetch
@@ -132,6 +143,7 @@ npm test contacts.smoke.test.ts
 - Empty search results state
 
 ### Accessibility
+
 - Keyboard navigation support
 - ARIA labels and roles
 - Focus management (auto-focus first field)
@@ -139,6 +151,7 @@ npm test contacts.smoke.test.ts
 - Keyboard shortcut hints displayed
 
 ### Responsive Design
+
 - Scrollable table with max-height
 - Sticky header stays visible
 - Mobile-friendly drawer
@@ -149,19 +162,23 @@ npm test contacts.smoke.test.ts
 ## 🔧 Technical Details
 
 ### Pagination Strategy
+
 **Keyset Pagination** (not offset-based):
+
 - Cursor format: `{updatedAt}_{id}`
 - Stable ordering with dual sort keys
 - No page drift during inserts/updates
 - Efficient for large datasets
 
 ### Search Implementation
+
 - Client-side debounce (300ms)
 - Server-side full-text search
 - Searches: firstName, lastName, email
 - Case-insensitive matching
 
 ### Optimistic Updates
+
 1. Cancel in-flight queries
 2. Snapshot current data
 3. Apply optimistic update
@@ -186,6 +203,7 @@ npm test contacts.smoke.test.ts
 ## 📝 Zod Schemas
 
 ### Contact Create Schema
+
 ```typescript
 {
   firstName: string (1-100 chars, required)
@@ -197,6 +215,7 @@ npm test contacts.smoke.test.ts
 ```
 
 ### Contact Update Schema
+
 ```typescript
 {
   firstName?: string (1-100 chars)

@@ -1,10 +1,26 @@
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { seedPipelines, seedContacts, seedOrgUser } from '../../../../tests/utils/seed'
+import {
+  seedPipelines,
+  seedContacts,
+  seedOrgUser,
+} from '../../../../tests/utils/seed'
 
 describe('Contacts Feature - Smoke Tests', () => {
-  let ctx: { org: { id: string }; user: { id: string }; membership: { id: string } }
+  let ctx: {
+    org: { id: string }
+    user: { id: string }
+    membership: { id: string }
+  }
   let pipelineCtx: Awaited<ReturnType<typeof seedPipelines>>
 
   // Ensure a minimal organization/user/membership exist for the whole suite
@@ -24,12 +40,20 @@ describe('Contacts Feature - Smoke Tests', () => {
     })
 
     const user = await prisma.user.create({
-      data: { email: `contacts-smoke-${Date.now()}@test.local`, name: 'Contacts Smoke' },
+      data: {
+        email: `contacts-smoke-${Date.now()}@test.local`,
+        name: 'Contacts Smoke',
+      },
       select: { id: true },
     })
 
     const membership = await prisma.orgMember.create({
-      data: { organizationId: org.id, userId: user.id, role: 'OWNER', onboardingProgress: {} },
+      data: {
+        organizationId: org.id,
+        userId: user.id,
+        role: 'OWNER',
+        onboardingProgress: {},
+      },
       select: { id: true },
     })
 
@@ -62,17 +86,22 @@ describe('Contacts Feature - Smoke Tests', () => {
     // Reset DB and create a test organization + user + membership for each test.
     // Use the global advisory lock helper when available to avoid races across
     // workers; otherwise run reset + seed sequentially in this worker.
-    if (typeof globalThis.__dbReset === 'function' && typeof globalThis.__withAdvisoryLock === 'function') {
+    if (
+      typeof globalThis.__dbReset === 'function' &&
+      typeof globalThis.__withAdvisoryLock === 'function'
+    ) {
       // Use the shared prisma client for reset/seed to avoid cross-client
       // visibility issues on branch DBs. globalThis.__withAdvisoryLock was
       // re-wired in tests/setup.ts to use the app's prisma singleton by
       // default; the tx passed to the callback is used for atomic seed
       // operations.
-      await globalThis.__withAdvisoryLock(async (tx: Prisma.TransactionClient) => {
-        await globalThis.__dbReset(tx)
-        ctx = await seedOrgUser(tx)
-        pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
-      })
+      await globalThis.__withAdvisoryLock(
+        async (tx: Prisma.TransactionClient) => {
+          await globalThis.__dbReset(tx)
+          ctx = await seedOrgUser(tx)
+          pipelineCtx = await seedPipelines(ctx.org.id, ctx.membership.id, tx)
+        }
+      )
 
       // Because reset/seed used the same shared Prisma instance, there is no
       // need for cross-client visibility polling. Proceed directly.
@@ -393,7 +422,7 @@ describe('Contacts Feature - Smoke Tests', () => {
       // Call seedContacts AFTER the advisory lock has released to ensure the org is committed
       // Use the default prisma client (not tx) since we're outside the advisory lock scope
       const contacts = await seedContacts(ctx.org.id, ctx.membership.id, 100, {
-        client: prisma
+        client: prisma,
       })
 
       expect(contacts.length).toBe(100)
@@ -425,7 +454,7 @@ describe('Contacts Feature - Smoke Tests', () => {
       const duration = performance.now() - start
 
       console.log(`Query took ${duration.toFixed(2)}ms`)
-      
+
       // With proper indexes and remote DB, 100 records should be <300ms
       // The original target of <120ms for 10k records still applies
       // but for 100 records with Neon latency, 300ms is acceptable

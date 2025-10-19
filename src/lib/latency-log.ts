@@ -96,7 +96,10 @@ export function withLatencyLogMiddleware(
       const latency = Date.now() - startTime
 
       if (isDev) {
-        console.error(`[${route}] ${method} ${url} - Failed after ${latency}ms:`, error)
+        console.error(
+          `[${route}] ${method} ${url} - Failed after ${latency}ms:`,
+          error
+        )
       }
 
       throw error

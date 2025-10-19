@@ -11,9 +11,15 @@ export async function GET(request: NextRequest) {
   const rateLimitResult = await checkRateLimit(clientIp, DemoRateLimits.AUTH)
 
   if (!rateLimitResult.success) {
-    const retryAfterStr = rateLimitResult.retryAfter != null
-      ? rateLimitResult.retryAfter.toString()
-      : (rateLimitResult.reset ? Math.max(0, Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))).toString() : undefined)
+    const retryAfterStr =
+      rateLimitResult.retryAfter != null
+        ? rateLimitResult.retryAfter.toString()
+        : rateLimitResult.reset
+          ? Math.max(
+              0,
+              Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))
+            ).toString()
+          : undefined
 
     const headers: Record<string, string> = {
       'X-RateLimit-Limit': rateLimitResult.limit.toString(),
@@ -63,6 +69,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(demoSigninUrl)
   } catch (error) {
     console.error('Demo auth redirect error:', error)
-    return NextResponse.redirect(new URL('/auth/signin?error=demo', request.url))
+    return NextResponse.redirect(
+      new URL('/auth/signin?error=demo', request.url)
+    )
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Workspace Export API
- * 
+ *
  * POST /api/export - Start async export job
  * GET /api/export/:jobId - Get export job status
  */
@@ -21,7 +21,11 @@ export async function POST(request: NextRequest) {
 
     // Get current organization from session or request
     const body = await request.json()
-    const { organizationId, format = 'json', ...options } = body as ExportOptions & { organizationId: string }
+    const {
+      organizationId,
+      format = 'json',
+      ...options
+    } = body as ExportOptions & { organizationId: string }
 
     // Verify user has access to organization
     const membership = await prisma.orgMember.findFirst({
@@ -34,7 +38,10 @@ export async function POST(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Access denied. You must be an owner or admin to export workspace data.' },
+        {
+          error:
+            'Access denied. You must be an owner or admin to export workspace data.',
+        },
         { status: 403 }
       )
     }
@@ -88,7 +95,10 @@ export async function GET(request: NextRequest) {
     const jobId = searchParams.get('jobId')
 
     if (!jobId) {
-      return NextResponse.json({ error: 'jobId parameter required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'jobId parameter required' },
+        { status: 400 }
+      )
     }
 
     // Get job

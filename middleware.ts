@@ -9,12 +9,12 @@ export default withAuth(
       const url = new URL(req.url)
       const host = url.host
       const isAuthRoute = url.pathname.startsWith('/api/auth/')
-      
+
       // Don't redirect auth callbacks - let NextAuth handle them completely
       if (url.pathname.startsWith('/api/auth/callback')) {
         return NextResponse.next()
       }
-      
+
       if (host === 'quarrycrm.vercel.app' && !isAuthRoute) {
         url.host = 'www.quarrycrm.com'
         return NextResponse.redirect(url, 308)
@@ -41,7 +41,7 @@ export default withAuth(
       const response = new NextResponse(
         JSON.stringify({
           error: 'POST requests are not allowed on demo environment',
-          code: 'DEMO_READONLY'
+          code: 'DEMO_READONLY',
         }),
         {
           status: 403,
@@ -50,25 +50,31 @@ export default withAuth(
           },
         }
       )
-      
+
       // Add X-Robots-Tag for non-production
       if (!isProduction) {
         response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
-      
+
       return response
     }
 
     // Force demo auto-login flow for demo subdomain
-    if (isDemoSubdomain && !isAuth && !isAuthPage && !isApiAuthRoute && !isDemoRoute) {
+    if (
+      isDemoSubdomain &&
+      !isAuth &&
+      !isAuthPage &&
+      !isApiAuthRoute &&
+      !isDemoRoute
+    ) {
       // Redirect to /demo for auto-login
       const response = NextResponse.redirect(new URL('/demo', req.url))
-      
+
       // Add X-Robots-Tag for non-production
       if (!isProduction) {
         response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
-      
+
       return response
     }
 
@@ -78,12 +84,12 @@ export default withAuth(
       const hasError = req.nextUrl.searchParams.has('error')
       if (!hasError) {
         const response = NextResponse.redirect(new URL('/app', req.url))
-        
+
         // Add X-Robots-Tag for non-production
         if (!isProduction) {
           response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
-        
+
         return response
       }
     }
@@ -91,12 +97,12 @@ export default withAuth(
     // Allow access to auth routes and demo route
     if (isApiAuthRoute || isAuthPage || isDemoRoute) {
       const response = NextResponse.next()
-      
+
       // Add X-Robots-Tag for non-production
       if (!isProduction) {
         response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
-      
+
       return response
     }
 
@@ -104,23 +110,23 @@ export default withAuth(
     if (req.nextUrl.pathname.startsWith('/app')) {
       if (!isAuth) {
         const response = NextResponse.redirect(new URL('/auth/signin', req.url))
-        
+
         // Add X-Robots-Tag for non-production
         if (!isProduction) {
           response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
-        
+
         return response
       }
     }
 
     // Default response with X-Robots-Tag for non-production
     const response = NextResponse.next()
-    
+
     if (!isProduction) {
       response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     }
-    
+
     return response
   },
   {

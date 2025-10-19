@@ -1,17 +1,20 @@
 /**
  * Admin Audit Chain Verification Route
- * 
+ *
  * Development-only endpoint to verify audit trail integrity
- * 
+ *
  * GET /admin/audit-verify
- * 
+ *
  * Query params:
  * - organizationId (optional): Verify specific organization
  * - all (optional): Verify all organizations
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyOrganizationAuditChain, verifyAllAuditChains } from '@/lib/audit/chain'
+import {
+  verifyOrganizationAuditChain,
+  verifyAllAuditChains,
+} from '@/lib/audit/chain'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
@@ -31,14 +34,16 @@ export async function GET(request: NextRequest) {
     // Verify all organizations
     if (verifyAll) {
       const resultsMap = await verifyAllAuditChains(prisma)
-      
-      const results = Array.from(resultsMap.entries()).map(([orgId, result]) => ({
-        organizationId: orgId,
-        ...result,
-      }))
+
+      const results = Array.from(resultsMap.entries()).map(
+        ([orgId, result]) => ({
+          organizationId: orgId,
+          ...result,
+        })
+      )
 
       const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0)
-      const allValid = results.every(r => r.valid)
+      const allValid = results.every((r) => r.valid)
 
       return NextResponse.json({
         summary: {

@@ -1,5 +1,9 @@
 import React from 'react'
-import { OfflineStorage, CachedQuery, QueryCacheOptions } from '@/lib/offline-storage'
+import {
+  OfflineStorage,
+  CachedQuery,
+  QueryCacheOptions,
+} from '@/lib/offline-storage'
 export function generateCacheKey(procedure: string, args: any[]): string {
   return `${procedure}:${JSON.stringify(args)}`
 }
@@ -38,7 +42,9 @@ export class QueryCache {
     } else if (procedure) {
       // Invalidate all queries for a procedure
       const cache = await OfflineStorage.getQueryCache()
-      const keysToRemove = Object.keys(cache).filter(key => key.startsWith(`${procedure}:`))
+      const keysToRemove = Object.keys(cache).filter((key) =>
+        key.startsWith(`${procedure}:`)
+      )
 
       for (const key of keysToRemove) {
         await OfflineStorage.invalidateQueryCache(key)
@@ -95,10 +101,13 @@ export function useCachedQuery<T>(
     loadCachedData()
   }, [procedure, JSON.stringify(args), JSON.stringify(options)])
 
-  const updateCache = React.useCallback(async (data: T) => {
-    await QueryCache.set(procedure, args, data, options)
-    setCachedData(data)
-  }, [procedure, args, options])
+  const updateCache = React.useCallback(
+    async (data: T) => {
+      await QueryCache.set(procedure, args, data, options)
+      setCachedData(data)
+    },
+    [procedure, args, options]
+  )
 
   const invalidateCache = React.useCallback(async () => {
     await QueryCache.invalidate(procedure, args)

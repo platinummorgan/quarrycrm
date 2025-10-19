@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { TRPCError } from '@trpc/server'
 import { nanoid } from 'nanoid'
@@ -42,10 +46,7 @@ export const savedViewsRouter = createTRPCRouter({
 
       return prisma.savedView.findMany({
         where,
-        orderBy: [
-          { isStarred: 'desc' },
-          { updatedAt: 'desc' },
-        ],
+        orderBy: [{ isStarred: 'desc' }, { updatedAt: 'desc' }],
         include: {
           owner: {
             include: {
@@ -68,10 +69,7 @@ export const savedViewsRouter = createTRPCRouter({
         where: {
           id: input.id,
           organizationId: orgId,
-          OR: [
-            { ownerId: userId },
-            { isPublic: true },
-          ],
+          OR: [{ ownerId: userId }, { isPublic: true }],
         },
         include: {
           owner: {
@@ -198,11 +196,12 @@ export const savedViewsRouter = createTRPCRouter({
       }
 
       // Generate new URL if making public and doesn't have one
-      const viewUrl = updateData.isPublic && !existingView.viewUrl
-        ? nanoid(10)
-        : updateData.isPublic === false
-        ? null
-        : existingView.viewUrl
+      const viewUrl =
+        updateData.isPublic && !existingView.viewUrl
+          ? nanoid(10)
+          : updateData.isPublic === false
+            ? null
+            : existingView.viewUrl
 
       return prisma.savedView.update({
         where: { id },
@@ -262,10 +261,7 @@ export const savedViewsRouter = createTRPCRouter({
         where: {
           id: input.id,
           organizationId: orgId,
-          OR: [
-            { ownerId: userId },
-            { isPublic: true },
-          ],
+          OR: [{ ownerId: userId }, { isPublic: true }],
         },
         select: {
           name: true,
@@ -326,10 +322,7 @@ export const savedViewsRouter = createTRPCRouter({
         where: {
           id: input.id,
           organizationId: orgId,
-          OR: [
-            { ownerId: userId },
-            { isPublic: true },
-          ],
+          OR: [{ ownerId: userId }, { isPublic: true }],
         },
       })
 

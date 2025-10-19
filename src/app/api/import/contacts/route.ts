@@ -29,12 +29,12 @@ interface ImportData {
 async function getOrgIdFromRequest(req: NextRequest): Promise<string | null> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return null
-  
+
   const member = await prisma.orgMember.findFirst({
     where: { userId: session.user.id },
     select: { organizationId: true },
   })
-  
+
   return member?.organizationId || null
 }
 
@@ -47,10 +47,7 @@ const importHandler = async (request: NextRequest) => {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user's organization
@@ -200,25 +197,25 @@ const importHandler = async (request: NextRequest) => {
         const createdContactRecords = await prisma.contact.findMany({
           where: {
             organizationId: orgId,
-            firstName: { in: batchContacts.map(c => c.firstName) },
-            lastName: { in: batchContacts.map(c => c.lastName) },
+            firstName: { in: batchContacts.map((c) => c.firstName) },
+            lastName: { in: batchContacts.map((c) => c.lastName) },
           },
           select: { id: true },
         })
 
-        affectedIds.push(...createdContactRecords.map(c => c.id))
+        affectedIds.push(...createdContactRecords.map((c) => c.id))
         created += createdContacts.count
 
         // Create rollback entries for undo functionality
         if (createdContactRecords.length > 0) {
           await prisma.importRollback.createMany({
-            data: createdContactRecords.map(contact => ({
+            data: createdContactRecords.map((contact) => ({
               importHistoryId: importHistory.id,
               recordType: 'CONTACT',
               recordId: contact.id,
               originalData: {},
               action: 'CREATE',
-            }))
+            })),
           })
         }
       }
@@ -258,10 +255,7 @@ const importHandler = async (request: NextRequest) => {
     })
   } catch (error) {
     console.error('Import error:', error)
-    return NextResponse.json(
-      { error: 'Import failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Import failed' }, { status: 500 })
   }
 }
 

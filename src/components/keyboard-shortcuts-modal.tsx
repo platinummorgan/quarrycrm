@@ -27,7 +27,7 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ['Ctrl', 'K'], description: 'Open Spotlight Search' },
       { keys: ['Shift', '?'], description: 'Show Keyboard Shortcuts' },
       { keys: ['Esc'], description: 'Close Dialog / Clear Search' },
-      { keys: ['/', ], description: 'Focus Search Input' },
+      { keys: ['/'], description: 'Focus Search Input' },
     ],
   },
   {
@@ -93,38 +93,44 @@ export function KeyboardShortcutsModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="h-5 w-5" />
             Keyboard Shortcuts
           </DialogTitle>
           <DialogDescription>
-            Use these shortcuts to navigate and interact with the app more efficiently
+            Use these shortcuts to navigate and interact with the app more
+            efficiently
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="mt-4 space-y-6">
           {shortcutGroups.map((group, groupIndex) => (
             <div key={group.title}>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-3 uppercase tracking-wide">
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 {group.title}
               </h3>
               <div className="space-y-2">
                 {group.shortcuts.map((shortcut, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-muted/50"
                   >
                     <span className="text-sm">{shortcut.description}</span>
                     <div className="flex items-center gap-1">
                       {shortcut.keys.map((key, keyIndex) => (
-                        <span key={keyIndex} className="flex items-center gap-1">
-                          <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 min-w-[2rem] text-center">
+                        <span
+                          key={keyIndex}
+                          className="flex items-center gap-1"
+                        >
+                          <kbd className="min-w-[2rem] rounded-md border border-gray-200 bg-gray-100 px-2 py-1 text-center text-xs font-semibold text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                             {key}
                           </kbd>
                           {keyIndex < shortcut.keys.length - 1 && (
-                            <span className="text-xs text-muted-foreground">+</span>
+                            <span className="text-xs text-muted-foreground">
+                              +
+                            </span>
                           )}
                         </span>
                       ))}
@@ -139,14 +145,14 @@ export function KeyboardShortcutsModal() {
           ))}
         </div>
 
-        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+        <div className="mt-6 rounded-lg bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium">Tip:</span> Press{' '}
-            <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-background border rounded">
+            <kbd className="rounded border bg-background px-1.5 py-0.5 text-xs font-semibold">
               Shift
             </kbd>{' '}
             +{' '}
-            <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-background border rounded">
+            <kbd className="rounded border bg-background px-1.5 py-0.5 text-xs font-semibold">
               ?
             </kbd>{' '}
             anytime to view this dialog

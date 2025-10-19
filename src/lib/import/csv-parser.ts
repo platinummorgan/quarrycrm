@@ -40,7 +40,10 @@ export function parseCSV(file: File): Promise<ParseResult> {
 /**
  * Validate CSV file constraints
  */
-export function validateCSVFile(file: File): { valid: boolean; error?: string } {
+export function validateCSVFile(file: File): {
+  valid: boolean
+  error?: string
+} {
   // Check file type
   if (!file.name.toLowerCase().endsWith('.csv')) {
     return { valid: false, error: 'File must be a CSV file' }

@@ -101,6 +101,7 @@ Member: Slate (#64748b)   - Standard user
 ### Empty States
 
 **Structure**:
+
 1. Icon (muted, in circle background)
 2. Heading (concise, action-focused)
 3. Description (helpful, guides next action)
@@ -114,12 +115,14 @@ Member: Slate (#64748b)   - Standard user
 ### Confirmation Dialogs
 
 Used for **all destructive actions**:
+
 - Deleting members
 - Revoking API keys
 - Removing webhooks
 - Changing critical settings
 
 **Structure**:
+
 1. Clear title describing action
 2. Explanation of consequences
 3. Cancel button (outline, left-aligned)
@@ -130,6 +133,7 @@ Used for **all destructive actions**:
 ### Tooltips
 
 Added to **all icon-only buttons** for:
+
 - Accessibility (screen reader labels via `aria-label`)
 - Discoverability (hover reveals function)
 - Contrast (ensure 4.5:1 ratio on tooltip text)
@@ -222,7 +226,7 @@ Used for: dialogs (slideIn), tooltips (fadeIn), dropdown menus (scaleIn).
 
 - **Labels**: Always visible, positioned above input
 - **Placeholders**: Example values, not instructions (labels serve that purpose)
-- **Required indicators**: Asterisk (*) next to label
+- **Required indicators**: Asterisk (\*) next to label
 - **Help text**: Below input in muted color
 - **Error text**: Below input in error color, with icon
 

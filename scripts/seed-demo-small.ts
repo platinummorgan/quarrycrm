@@ -162,7 +162,7 @@ async function createDemoOrganization() {
         isDefault: true,
         ownerId: member.id,
         stages: {
-          create: SALES_PIPELINE.stages.map(stage => ({
+          create: SALES_PIPELINE.stages.map((stage) => ({
             name: stage.name,
             order: stage.order,
             color: stage.color,
@@ -186,14 +186,20 @@ async function createDemoOrganization() {
 /**
  * Generate companies in batches
  */
-async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> {
+async function seedCompanies(
+  orgId: string,
+  ownerId: string
+): Promise<string[]> {
   console.log(`🏢 Seeding ${CONFIG.COMPANIES} companies...`)
 
   const companyIds: string[] = []
   const totalBatches = Math.ceil(CONFIG.COMPANIES / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.COMPANIES - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.COMPANIES - batch * CONFIG.BATCH_SIZE
+    )
     const companies = []
 
     for (let i = 0; i < batchSize; i++) {
@@ -220,10 +226,12 @@ async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> 
       take: batchSize,
     })
 
-    companyIds.push(...batchCompanies.map(c => c.id))
+    companyIds.push(...batchCompanies.map((c) => c.id))
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${companyIds.length} / ${CONFIG.COMPANIES})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${companyIds.length} / ${CONFIG.COMPANIES})\r`
+    )
   }
 
   console.log(`\n✅ Created ${companyIds.length} companies\n`)
@@ -233,21 +241,29 @@ async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> 
 /**
  * Generate contacts in batches with PII masking
  */
-async function seedContacts(orgId: string, companyIds: string[], ownerId: string): Promise<string[]> {
+async function seedContacts(
+  orgId: string,
+  companyIds: string[],
+  ownerId: string
+): Promise<string[]> {
   console.log(`👥 Seeding ${CONFIG.CONTACTS} contacts with masked PII...`)
 
   const contactIds: string[] = []
   const totalBatches = Math.ceil(CONFIG.CONTACTS / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.CONTACTS - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.CONTACTS - batch * CONFIG.BATCH_SIZE
+    )
     const contacts = []
 
     for (let i = 0; i < batchSize; i++) {
       const firstName = faker.person.firstName()
       const lastName = faker.person.lastName()
       // 70% of contacts linked to companies
-      const companyId = Math.random() > 0.3 ? faker.helpers.arrayElement(companyIds) : null
+      const companyId =
+        Math.random() > 0.3 ? faker.helpers.arrayElement(companyIds) : null
 
       contacts.push({
         firstName,
@@ -272,10 +288,12 @@ async function seedContacts(orgId: string, companyIds: string[], ownerId: string
       take: batchSize,
     })
 
-    contactIds.push(...batchContacts.map(c => c.id))
+    contactIds.push(...batchContacts.map((c) => c.id))
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${contactIds.length} / ${CONFIG.CONTACTS})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${contactIds.length} / ${CONFIG.CONTACTS})\r`
+    )
   }
 
   console.log(`\n✅ Created ${contactIds.length} contacts\n`)
@@ -285,14 +303,24 @@ async function seedContacts(orgId: string, companyIds: string[], ownerId: string
 /**
  * Generate deals in batches
  */
-async function seedDeals(orgId: string, companyIds: string[], contactIds: string[], pipelineId: string, stageIds: string[], ownerId: string): Promise<void> {
+async function seedDeals(
+  orgId: string,
+  companyIds: string[],
+  contactIds: string[],
+  pipelineId: string,
+  stageIds: string[],
+  ownerId: string
+): Promise<void> {
   console.log(`💰 Seeding ${CONFIG.DEALS} deals...`)
 
   let dealsCreated = 0
   const totalBatches = Math.ceil(CONFIG.DEALS / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.DEALS - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.DEALS - batch * CONFIG.BATCH_SIZE
+    )
     const deals = []
 
     for (let i = 0; i < batchSize; i++) {
@@ -332,8 +360,10 @@ async function seedDeals(orgId: string, companyIds: string[], contactIds: string
 
     dealsCreated += batchSize
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${dealsCreated} / ${CONFIG.DEALS})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${dealsCreated} / ${CONFIG.DEALS})\r`
+    )
   }
 
   console.log(`\n✅ Created ${dealsCreated} deals\n`)
@@ -342,16 +372,25 @@ async function seedDeals(orgId: string, companyIds: string[], contactIds: string
 /**
  * Generate activities
  */
-async function seedActivities(orgId: string, companyIds: string[], contactIds: string[], dealIds: string[], ownerId: string): Promise<void> {
+async function seedActivities(
+  orgId: string,
+  companyIds: string[],
+  contactIds: string[],
+  dealIds: string[],
+  ownerId: string
+): Promise<void> {
   console.log(`📝 Seeding ${CONFIG.ACTIVITIES} activities...`)
 
   const activities = []
 
   for (let i = 0; i < CONFIG.ACTIVITIES; i++) {
     // Randomly link to contact, deal, or company
-    const contactId = Math.random() > 0.4 ? faker.helpers.arrayElement(contactIds) : null
-    const dealId = Math.random() > 0.6 ? faker.helpers.arrayElement(dealIds) : null
-    const companyId = Math.random() > 0.8 ? faker.helpers.arrayElement(companyIds) : null
+    const contactId =
+      Math.random() > 0.4 ? faker.helpers.arrayElement(contactIds) : null
+    const dealId =
+      Math.random() > 0.6 ? faker.helpers.arrayElement(dealIds) : null
+    const companyId =
+      Math.random() > 0.8 ? faker.helpers.arrayElement(companyIds) : null
 
     const type = faker.helpers.arrayElement(ACTIVITY_TYPES)
     const isTask = type === 'TASK'
@@ -360,7 +399,8 @@ async function seedActivities(orgId: string, companyIds: string[], contactIds: s
       type: type as any,
       description: faker.lorem.sentence(),
       subject: type === 'EMAIL' ? faker.lorem.sentence() : null,
-      body: type === 'EMAIL' || type === 'NOTE' ? faker.lorem.paragraph() : null,
+      body:
+        type === 'EMAIL' || type === 'NOTE' ? faker.lorem.paragraph() : null,
       dueDate: isTask ? faker.date.future() : null,
       isCompleted: isTask ? faker.datatype.boolean() : false,
       contactId,
@@ -390,7 +430,9 @@ function printSummary(startTime: number) {
   console.log('📊 Data Summary:')
   console.log(`   • Organization: Quarry Demo`)
   console.log(`   • User: Demo User (DEMO role)`)
-  console.log(`   • Pipeline: ${SALES_PIPELINE.name} (${SALES_PIPELINE.stages.length} stages)`)
+  console.log(
+    `   • Pipeline: ${SALES_PIPELINE.name} (${SALES_PIPELINE.stages.length} stages)`
+  )
   console.log(`   • Companies: ${CONFIG.COMPANIES.toLocaleString()}`)
   console.log(`   • Contacts: ${CONFIG.CONTACTS.toLocaleString()}`)
   console.log(`   • Deals: ${CONFIG.DEALS.toLocaleString()}`)
@@ -423,20 +465,26 @@ async function main() {
     // Seed data in dependency order
     const companyIds = await seedCompanies(org.id, member.id)
     const contactIds = await seedContacts(org.id, companyIds, member.id)
-    await seedDeals(org.id, companyIds, contactIds, pipeline.id, pipeline.stages.map(s => s.id), member.id)
+    await seedDeals(
+      org.id,
+      companyIds,
+      contactIds,
+      pipeline.id,
+      pipeline.stages.map((s) => s.id),
+      member.id
+    )
 
     // Get deal IDs for linking activities
     const deals = await prisma.deal.findMany({
       where: { organizationId: org.id },
       select: { id: true },
     })
-    const dealIds = deals.map(d => d.id)
+    const dealIds = deals.map((d) => d.id)
 
     await seedActivities(org.id, companyIds, contactIds, dealIds, member.id)
 
     // Print summary
     printSummary(startTime)
-
   } catch (error) {
     console.error('\n❌ Seeding failed:', error)
     process.exit(1)

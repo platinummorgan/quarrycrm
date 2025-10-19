@@ -7,7 +7,10 @@ import { z } from 'zod'
 
 // Schema for updating workspace
 const updateWorkspaceSchema = z.object({
-  name: z.string().min(1, 'Workspace name is required').max(100, 'Name too long'),
+  name: z
+    .string()
+    .min(1, 'Workspace name is required')
+    .max(100, 'Name too long'),
   logo: z.string().url().optional().nullable(),
 })
 
@@ -37,7 +40,9 @@ export async function getWorkspace() {
 }
 
 // Update workspace
-export async function updateWorkspace(data: z.infer<typeof updateWorkspaceSchema>) {
+export async function updateWorkspace(
+  data: z.infer<typeof updateWorkspaceSchema>
+) {
   const { orgId } = await requireOrg()
 
   // Validate input

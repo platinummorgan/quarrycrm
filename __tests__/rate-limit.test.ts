@@ -4,7 +4,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, resetRateLimit, getClientIp, DemoRateLimits } from '@/lib/rate-limit'
+import {
+  checkRateLimit,
+  resetRateLimit,
+  getClientIp,
+  DemoRateLimits,
+} from '@/lib/rate-limit'
 import { getRedisClient } from '@/lib/redis'
 
 // Mock Redis
@@ -39,13 +44,22 @@ describe('Rate Limiter', () => {
   beforeEach(async () => {
     // Clear Redis store by resetting all test identifiers
     const testIps = [
-      '192.168.1.1', '192.168.1.2', '192.168.1.3', '192.168.1.4',
-      '192.168.1.5', '192.168.1.6', '192.168.1.7', '192.168.1.8',
-      '192.168.1.9', '192.168.1.10', '192.168.1.11', '192.168.1.12',
+      '192.168.1.1',
+      '192.168.1.2',
+      '192.168.1.3',
+      '192.168.1.4',
+      '192.168.1.5',
+      '192.168.1.6',
+      '192.168.1.7',
+      '192.168.1.8',
+      '192.168.1.9',
+      '192.168.1.10',
+      '192.168.1.11',
+      '192.168.1.12',
     ]
-    
-  const prefixes = ['test', 'auth', 'api', 'ratelimit']
-    
+
+    const prefixes = ['test', 'auth', 'api', 'ratelimit']
+
     for (const ip of testIps) {
       for (const prefix of prefixes) {
         await resetRateLimit(ip, prefix)
@@ -90,9 +104,9 @@ describe('Rate Limiter', () => {
 
       await checkRateLimit(ip, config)
       await checkRateLimit(ip, config)
-      
+
       const result = await checkRateLimit(ip, config)
-      
+
       expect(result.success).toBe(false)
       expect(result.remaining).toBe(0)
       expect(result.retryAfter).toBeGreaterThan(0)
@@ -144,7 +158,7 @@ describe('Rate Limiter', () => {
       expect(result2.success).toBe(false)
 
       // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise((resolve) => setTimeout(resolve, 150))
 
       const result3 = await checkRateLimit(ip, config)
       expect(result3.success).toBe(true)
@@ -183,7 +197,7 @@ describe('Rate Limiter', () => {
     it('should return correct reset timestamp', async () => {
       const now = Date.now()
       const windowMs = 60000
-      
+
       const result = await checkRateLimit('192.168.1.9', {
         limit: 5,
         windowMs,
@@ -191,7 +205,9 @@ describe('Rate Limiter', () => {
       })
 
       expect(result.reset).toBeGreaterThan(Math.floor(now / 1000))
-      expect(result.reset).toBeLessThanOrEqual(Math.floor((now + windowMs + 1000) / 1000))
+      expect(result.reset).toBeLessThanOrEqual(
+        Math.floor((now + windowMs + 1000) / 1000)
+      )
     })
   })
 
@@ -202,7 +218,7 @@ describe('Rate Limiter', () => {
 
       await checkRateLimit(ip, config)
       await checkRateLimit(ip, config)
-      
+
       let result = await checkRateLimit(ip, config)
       expect(result.success).toBe(false)
 
@@ -358,7 +374,9 @@ describe('Rate Limiter', () => {
       const { WriteRateLimits } = await import('@/lib/rate-limit')
       expect(WriteRateLimits.CONTACTS).toBeDefined()
       expect(WriteRateLimits.CONTACTS.limit).toBe(100)
-      expect(WriteRateLimits.CONTACTS.keyPrefix).toBe('ratelimit:write:contacts')
+      expect(WriteRateLimits.CONTACTS.keyPrefix).toBe(
+        'ratelimit:write:contacts'
+      )
     })
 
     it('should have DEALS configuration', async () => {
@@ -386,9 +404,9 @@ describe('Rate Limiter', () => {
   describe('withWriteRateLimit middleware', () => {
     it('should allow requests within limit', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
-      
-      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
-        NextResponse.json({ success: true })
+
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(
+        async () => NextResponse.json({ success: true })
       )
 
       const config = { limit: 5, windowMs: 60000, keyPrefix: 'test-write' }
@@ -408,9 +426,9 @@ describe('Rate Limiter', () => {
 
     it('should block requests exceeding limit', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
-      
-      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
-        NextResponse.json({ success: true })
+
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(
+        async () => NextResponse.json({ success: true })
       )
 
       const config = { limit: 2, windowMs: 60000, keyPrefix: 'test-write2' }
@@ -437,9 +455,9 @@ describe('Rate Limiter', () => {
 
     it('should not call handler when rate limited', async () => {
       const { withWriteRateLimit } = await import('@/lib/rate-limit')
-      
-      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(async () =>
-        NextResponse.json({ success: true })
+
+      const mockHandler = vi.fn<(req: NextRequest) => Promise<NextResponse>>(
+        async () => NextResponse.json({ success: true })
       )
 
       const config = { limit: 1, windowMs: 60000, keyPrefix: 'test-write3' }

@@ -51,7 +51,13 @@ interface KanbanCardProps {
   onBlur?: () => void
 }
 
-export function KanbanCard({ deal, isDragging = false, isFocused = false, onFocus, onBlur }: KanbanCardProps) {
+export function KanbanCard({
+  deal,
+  isDragging = false,
+  isFocused = false,
+  onFocus,
+  onBlur,
+}: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -76,7 +82,9 @@ export function KanbanCard({ deal, isDragging = false, isFocused = false, onFocu
   }
 
   const getAgeBadgeVariant = (createdAt: Date) => {
-    const days = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
+    const days = Math.floor(
+      (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    )
     if (days <= 7) return 'default'
     if (days <= 30) return 'secondary'
     return 'outline'
@@ -132,16 +140,22 @@ export function KanbanCard({ deal, isDragging = false, isFocused = false, onFocu
             </div>
 
             <div className="flex items-center justify-between">
-              <Badge variant={getAgeBadgeVariant(deal.createdAt)} className="text-xs">
+              <Badge
+                variant={getAgeBadgeVariant(deal.createdAt)}
+                className="text-xs"
+              >
                 {formatDistanceToNow(deal.createdAt, { addSuffix: true })}
               </Badge>
 
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs">
                   {deal.owner.user.name
-                    ? deal.owner.user.name.split(' ').map(n => n[0]).join('').toUpperCase()
-                    : deal.owner.user.email[0].toUpperCase()
-                  }
+                    ? deal.owner.user.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : deal.owner.user.email[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </div>

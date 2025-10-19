@@ -31,7 +31,7 @@ export type ContactField = keyof typeof CONTACT_DB_FIELDS
  * Generate automatic field mappings based on CSV headers
  */
 export function generateFieldMappings(csvHeaders: string[]): FieldMapping[] {
-  return csvHeaders.map(header => {
+  return csvHeaders.map((header) => {
     const lowerHeader = header.toLowerCase().trim()
 
     // Guess mappings based on common patterns
@@ -65,13 +65,17 @@ export function generateFieldMappings(csvHeaders: string[]): FieldMapping[] {
       lowerHeader === 'contact name'
     ) {
       // Check if we already have first/last name mappings
-      const hasFirstName = csvHeaders.some(h =>
-        (h.toLowerCase().includes('first') && h.toLowerCase().includes('name')) ||
-        h.toLowerCase() === 'firstname'
+      const hasFirstName = csvHeaders.some(
+        (h) =>
+          (h.toLowerCase().includes('first') &&
+            h.toLowerCase().includes('name')) ||
+          h.toLowerCase() === 'firstname'
       )
-      const hasLastName = csvHeaders.some(h =>
-        (h.toLowerCase().includes('last') && h.toLowerCase().includes('name')) ||
-        h.toLowerCase() === 'lastname'
+      const hasLastName = csvHeaders.some(
+        (h) =>
+          (h.toLowerCase().includes('last') &&
+            h.toLowerCase().includes('name')) ||
+          h.toLowerCase() === 'lastname'
       )
 
       if (!hasFirstName) {
@@ -148,8 +152,8 @@ export function validateFieldMappings(mappings: FieldMapping[]): {
   const errors: string[] = []
 
   // Check required fields
-  const hasFirstName = mappings.some(m => m.dbField === 'firstName')
-  const hasLastName = mappings.some(m => m.dbField === 'lastName')
+  const hasFirstName = mappings.some((m) => m.dbField === 'firstName')
+  const hasLastName = mappings.some((m) => m.dbField === 'lastName')
 
   if (!hasFirstName) {
     errors.push('First Name field mapping is required')
@@ -160,11 +164,11 @@ export function validateFieldMappings(mappings: FieldMapping[]): {
   }
 
   // Check for duplicate mappings
-  const dbFields = mappings
-    .filter(m => m.dbField)
-    .map(m => m.dbField)
+  const dbFields = mappings.filter((m) => m.dbField).map((m) => m.dbField)
 
-  const duplicates = dbFields.filter((field, index) => dbFields.indexOf(field) !== index)
+  const duplicates = dbFields.filter(
+    (field, index) => dbFields.indexOf(field) !== index
+  )
   if (duplicates.length > 0) {
     errors.push(`Duplicate field mappings found: ${duplicates.join(', ')}`)
   }

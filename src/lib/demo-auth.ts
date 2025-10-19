@@ -63,7 +63,10 @@ function normalizeHost(h: string): string {
  * @param orgId - Organization ID
  * @param host - Optional host for host pinning (may be a URL or hostname)
  */
-export async function generateDemoToken(orgId: string, host?: string): Promise<string> {
+export async function generateDemoToken(
+  orgId: string,
+  host?: string
+): Promise<string> {
   const key = getHmacKey(DEMO_TOKEN_SECRET)
   const jti = randomBytes(16).toString('hex')
   const now = Math.floor(Date.now() / 1000)
@@ -141,7 +144,9 @@ export async function verifyDemoToken(
     }
 
     // replay protection
-    const isUsed = adapter?.isTokenUsed ? await adapter.isTokenUsed(payload.jti) : await isTokenUsed(payload.jti)
+    const isUsed = adapter?.isTokenUsed
+      ? await adapter.isTokenUsed(payload.jti)
+      : await isTokenUsed(payload.jti)
     if (isUsed) {
       throw new Error('Token has already been used (replay attack detected)')
     }
@@ -157,7 +162,9 @@ export async function verifyDemoToken(
 
     // store JTI to prevent replay; TTL = remaining seconds
     const remaining = payload.exp - now
-    await (adapter?.storeTokenJti ? adapter.storeTokenJti(payload.jti, remaining) : storeTokenJti(payload.jti, remaining))
+    await (adapter?.storeTokenJti
+      ? adapter.storeTokenJti(payload.jti, remaining)
+      : storeTokenJti(payload.jti, remaining))
 
     return {
       orgId: payload.orgId,
@@ -183,7 +190,11 @@ function base64UrlEncode(buf: Buffer | Uint8Array | string): string {
   let b: Buffer
   if (typeof buf === 'string') b = Buffer.from(buf, 'utf8')
   else b = Buffer.from(buf)
-  return b.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+  return b
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
 }
 
 function base64UrlDecode(s: string): Buffer {
@@ -192,7 +203,11 @@ function base64UrlDecode(s: string): Buffer {
   return Buffer.from(s, 'base64')
 }
 
-export function signHs256(header: object, payload: object, key: Uint8Array | Buffer | string) {
+export function signHs256(
+  header: object,
+  payload: object,
+  key: Uint8Array | Buffer | string
+) {
   const headerStr = JSON.stringify(header)
   const payloadStr = JSON.stringify(payload)
   const signingInput = `${base64UrlEncode(headerStr)}.${base64UrlEncode(payloadStr)}`
@@ -213,7 +228,10 @@ function verifyHs256(token: string, key: Uint8Array | Buffer | string) {
   hmac.update(signingInput)
   const expected = hmac.digest()
 
-  if (expected.length !== signature.length || !timingSafeEqual(expected, signature)) {
+  if (
+    expected.length !== signature.length ||
+    !timingSafeEqual(expected, signature)
+  ) {
     throw new Error('Invalid signature')
   }
 

@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,7 +46,15 @@ import {
 } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Users, Loader2, Mail, UserPlus, Trash2, Copy, Check } from 'lucide-react'
+import {
+  Users,
+  Loader2,
+  Mail,
+  UserPlus,
+  Trash2,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export function MembersSettings() {
@@ -48,13 +62,18 @@ export function MembersSettings() {
   const utils = trpc.useUtils()
 
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'MEMBER' | 'ADMIN' | 'OWNER'>('MEMBER')
+  const [inviteRole, setInviteRole] = useState<'MEMBER' | 'ADMIN' | 'OWNER'>(
+    'MEMBER'
+  )
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [inviteUrl, setInviteUrl] = useState('')
   const [copied, setCopied] = useState(false)
 
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null)
-  const [memberToChangeRole, setMemberToChangeRole] = useState<{ id: string; role: string } | null>(null)
+  const [memberToChangeRole, setMemberToChangeRole] = useState<{
+    id: string
+    role: string
+  } | null>(null)
 
   const inviteMutation = trpc.settings.inviteMember.useMutation({
     onSuccess: (data) => {
@@ -188,7 +207,10 @@ export function MembersSettings() {
 
                     <div className="space-y-2">
                       <Label htmlFor="role">Role</Label>
-                      <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as any)}>
+                      <Select
+                        value={inviteRole}
+                        onValueChange={(v) => setInviteRole(v as any)}
+                      >
                         <SelectTrigger id="role">
                           <SelectValue />
                         </SelectTrigger>
@@ -199,26 +221,31 @@ export function MembersSettings() {
                         </SelectContent>
                       </Select>
                       <p className="text-sm text-muted-foreground">
-                        {inviteRole === 'OWNER' && 'Full access to all workspace settings'}
-                        {inviteRole === 'ADMIN' && 'Can manage members and most settings'}
-                        {inviteRole === 'MEMBER' && 'Can view and edit contacts, companies, deals'}
+                        {inviteRole === 'OWNER' &&
+                          'Full access to all workspace settings'}
+                        {inviteRole === 'ADMIN' &&
+                          'Can manage members and most settings'}
+                        {inviteRole === 'MEMBER' &&
+                          'Can view and edit contacts, companies, deals'}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-sm font-medium mb-2">Invitation Link</p>
+                      <p className="mb-2 text-sm font-medium">
+                        Invitation Link
+                      </p>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs bg-background p-2 rounded border break-all">
+                        <code className="flex-1 break-all rounded border bg-background p-2 text-xs">
                           {inviteUrl}
                         </code>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={handleCopyInvite}
                                 aria-label="Copy invitation link"
                               >
@@ -237,7 +264,8 @@ export function MembersSettings() {
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      This link will expire in 7 days. Share it with <strong>{inviteEmail}</strong> to join your workspace.
+                      This link will expire in 7 days. Share it with{' '}
+                      <strong>{inviteEmail}</strong> to join your workspace.
                     </p>
                   </div>
                 )}
@@ -245,7 +273,10 @@ export function MembersSettings() {
                 <DialogFooter>
                   {!inviteUrl ? (
                     <>
-                      <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setInviteDialogOpen(false)}
+                      >
                         Cancel
                       </Button>
                       <Button
@@ -284,14 +315,19 @@ export function MembersSettings() {
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarFallback>
-                      {member.user.name?.[0]?.toUpperCase() || member.user.email[0].toUpperCase()}
+                      {member.user.name?.[0]?.toUpperCase() ||
+                        member.user.email[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{member.user.name || 'Unnamed'}</p>
+                    <p className="font-medium">
+                      {member.user.name || 'Unnamed'}
+                    </p>
                     <div className="flex items-center gap-2">
                       <Mail className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {member.user.email}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -299,7 +335,9 @@ export function MembersSettings() {
                 <div className="flex items-center gap-3">
                   <Select
                     value={member.role}
-                    onValueChange={(value) => handleRoleChange(member.id, value)}
+                    onValueChange={(value) =>
+                      handleRoleChange(member.id, value)
+                    }
                   >
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -336,12 +374,17 @@ export function MembersSettings() {
       </Card>
 
       {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
+      <AlertDialog
+        open={!!memberToRemove}
+        onOpenChange={() => setMemberToRemove(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this member from your workspace? They will lose access to all data and settings. This action cannot be undone.
+              Are you sure you want to remove this member from your workspace?
+              They will lose access to all data and settings. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -360,12 +403,17 @@ export function MembersSettings() {
       </AlertDialog>
 
       {/* Change Role Confirmation Dialog */}
-      <AlertDialog open={!!memberToChangeRole} onOpenChange={() => setMemberToChangeRole(null)}>
+      <AlertDialog
+        open={!!memberToChangeRole}
+        onOpenChange={() => setMemberToChangeRole(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Change Member Role</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change this member's role to <strong>{memberToChangeRole?.role}</strong>? This will modify their permissions immediately.
+              Are you sure you want to change this member's role to{' '}
+              <strong>{memberToChangeRole?.role}</strong>? This will modify
+              their permissions immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

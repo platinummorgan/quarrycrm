@@ -1,6 +1,6 @@
 /**
  * S3-compatible storage for exports (AWS S3 or Cloudflare R2)
- * 
+ *
  * Features:
  * - Upload workspace exports to object storage
  * - Generate signed URLs for secure downloads (24h expiry)
@@ -8,7 +8,11 @@
  * - Automatic file cleanup after expiry
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 // Storage configuration from environment
@@ -53,7 +57,7 @@ function getS3Client(): S3Client {
 
 /**
  * Upload export file to storage
- * 
+ *
  * @param key - File key/path (e.g., "exports/org-123/export-2025-01-01.json")
  * @param data - File content (Buffer or string)
  * @param contentType - MIME type (e.g., "application/json", "text/csv")
@@ -74,7 +78,9 @@ export async function uploadExport(
     // Auto-delete after 30 days (S3 lifecycle rule should handle this, but set metadata too)
     Metadata: {
       'uploaded-at': new Date().toISOString(),
-      'expires-at': new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      'expires-at': new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
     },
   })
 
@@ -88,7 +94,7 @@ export async function uploadExport(
 
 /**
  * Generate signed URL for downloading export
- * 
+ *
  * @param key - File key/path
  * @param expiresIn - URL expiry time in seconds (default: 24 hours)
  * @returns Signed URL valid for specified duration
@@ -111,12 +117,15 @@ export async function generateSignedDownloadUrl(
 
 /**
  * Generate export file key
- * 
+ *
  * @param organizationId - Organization ID
  * @param format - Export format (json, csv)
  * @returns S3 key path
  */
-export function generateExportKey(organizationId: string, format: string): string {
+export function generateExportKey(
+  organizationId: string,
+  format: string
+): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   return `exports/${organizationId}/export-${timestamp}.${format}`
 }

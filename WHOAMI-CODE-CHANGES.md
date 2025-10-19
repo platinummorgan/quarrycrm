@@ -21,10 +21,10 @@ export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/whoami
- * 
+ *
  * Returns current user authentication status and basic info.
  * Useful for debugging and client-side session checks.
- * 
+ *
  * Response:
  * {
  *   authenticated: boolean,
@@ -51,9 +51,10 @@ export async function GET() {
         },
         {
           headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
+            'Cache-Control':
+              'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
           },
         }
       )
@@ -73,9 +74,10 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'Cache-Control':
+            'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       }
     )
@@ -94,9 +96,10 @@ export async function GET() {
       {
         status: 500,
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'Cache-Control':
+            'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       }
     )
@@ -126,7 +129,7 @@ interface WhoAmIResponse {
 
 /**
  * DebugHeaderPill
- * 
+ *
  * Shows a small pill in the top-right corner with role@org for debugging.
  * Only visible in non-production environments.
  * Fetches data from /api/whoami endpoint.
@@ -184,7 +187,7 @@ export function DebugHeaderPill() {
  import { PreviewBanner } from '@/components/PreviewBanner'
 +import { DebugHeaderPill } from '@/components/DebugHeaderPill'
  import dynamic from 'next/dynamic'
- 
+
  const inter = Inter({ subsets: ['latin'] })
 ```
 
@@ -203,15 +206,21 @@ export function DebugHeaderPill() {
 ```tsx
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { PreviewBanner } from '@/components/PreviewBanner'
-import { DebugHeaderPill } from '@/components/DebugHeaderPill'  // NEW
+import { DebugHeaderPill } from '@/components/DebugHeaderPill' // NEW
 import dynamic from 'next/dynamic'
 
 const inter = Inter({ subsets: ['latin'] })
 
 // Dynamically import DemoBanner to avoid SSR issues
-const DemoBanner = dynamic(() => import('@/components/DemoBanner').then(mod => ({ default: mod.DemoBanner })), {
-  ssr: false,
-})
+const DemoBanner = dynamic(
+  () =>
+    import('@/components/DemoBanner').then((mod) => ({
+      default: mod.DemoBanner,
+    })),
+  {
+    ssr: false,
+  }
+)
 
 // ... metadata generation ...
 
@@ -224,12 +233,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
       </head>
       <body className={inter.className}>
         <PreviewBanner />
         <DemoBanner />
-        <DebugHeaderPill />  {/* NEW */}
+        <DebugHeaderPill /> {/* NEW */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -238,9 +251,7 @@ export default function RootLayout({
         >
           <SessionProvider>
             <TRPCProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
+              <ToastProvider>{children}</ToastProvider>
             </TRPCProvider>
           </SessionProvider>
         </ThemeProvider>
@@ -255,13 +266,16 @@ export default function RootLayout({
 ## 🎯 Summary of Changes
 
 ### Files Created (2)
+
 1. ✅ `src/app/api/whoami/route.ts` - API endpoint (92 lines)
 2. ✅ `src/components/DebugHeaderPill.tsx` - Debug component (62 lines)
 
 ### Files Modified (1)
+
 1. ✅ `src/app/layout.tsx` - Added import and component (2 lines changed)
 
 ### Total Lines Added
+
 - ~156 new lines of code
 - 2 lines modified in existing file
 
@@ -363,6 +377,7 @@ npm run dev
 ### Debug Pill Examples
 
 **Admin User**:
+
 ```
 ┌─────────────────────┬───┐
 │ ADMIN@Acme Corp     │ ✕ │
@@ -370,6 +385,7 @@ npm run dev
 ```
 
 **Demo User**:
+
 ```
 ┌─────────────────────┬───┐
 │ DEMO@Quarry Demo    │ ✕ │
@@ -377,6 +393,7 @@ npm run dev
 ```
 
 **Member**:
+
 ```
 ┌─────────────────────┬───┐
 │ MEMBER@Tech Startup │ ✕ │
@@ -390,6 +407,7 @@ npm run dev
 All files created and tested. The debug pill provides instant visual feedback of your session state in non-production environments, while the `/api/whoami` endpoint is available for programmatic session checks.
 
 **Key Features**:
+
 - ✅ No-store cache headers on API responses
 - ✅ Debug pill only visible in non-prod
 - ✅ Clean JSON response format

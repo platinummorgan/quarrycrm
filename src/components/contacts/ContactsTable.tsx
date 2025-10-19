@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { contactListResponseSchema, type ContactListResponse } from '@/lib/zod/contacts'
+import {
+  contactListResponseSchema,
+  type ContactListResponse,
+} from '@/lib/zod/contacts'
 import {
   Table,
   TableBody,
@@ -38,12 +41,15 @@ export function ContactsTable({
   const searchParams = useSearchParams()
   const sessionResult = useSession()
   const session = sessionResult?.data
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [searchQuery, setSearchQuery] = useState(initialQuery || '')
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery || '')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [cursor, setCursor] = useState<string | undefined>(initialCursor)
-  const [data, setData] = useState<ContactListResponse | null>(initialData || null)
+  const [data, setData] = useState<ContactListResponse | null>(
+    initialData || null
+  )
   const [isLoading, setIsLoading] = useState(!initialData)
   const tableRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -61,19 +67,23 @@ export function ContactsTable({
     const viewParam = searchParams.get('view')
     if (viewParam) {
       // Try to load shared view
-      trpc.savedViews.getByUrl.useQuery({ viewUrl: viewParam }, {
-        enabled: !!viewParam,
-        onSuccess: (view) => {
-          if (view) {
-            setCurrentView({
-              filters: view.filters as any,
-              sortBy: (view as any).sortBy || 'updatedAt',
-              sortOrder: ((view as any).sortOrder as 'asc' | 'desc') || 'desc',
-              visibleColumns: currentView.visibleColumns,
-            })
-          }
+      trpc.savedViews.getByUrl.useQuery(
+        { viewUrl: viewParam },
+        {
+          enabled: !!viewParam,
+          onSuccess: (view) => {
+            if (view) {
+              setCurrentView({
+                filters: view.filters as any,
+                sortBy: (view as any).sortBy || 'updatedAt',
+                sortOrder:
+                  ((view as any).sortOrder as 'asc' | 'desc') || 'desc',
+                visibleColumns: currentView.visibleColumns,
+              })
+            }
+          },
         }
-      })
+      )
     }
   }, [searchParams, trpc])
 
@@ -93,7 +103,9 @@ export function ContactsTable({
     if (debouncedQuery) params.set('q', debouncedQuery)
     if (cursor) params.set('cursor', cursor)
 
-    const newUrl = params.toString() ? `/app/contacts?${params.toString()}` : '/app/contacts'
+    const newUrl = params.toString()
+      ? `/app/contacts?${params.toString()}`
+      : '/app/contacts'
     router.replace(newUrl, { scroll: false })
   }, [debouncedQuery, cursor, router])
 
@@ -107,7 +119,11 @@ export function ContactsTable({
     },
     {
       keepPreviousData: true,
-      enabled: !(debouncedQuery === initialQuery && cursor === initialCursor && !!initialData),
+      enabled: !(
+        debouncedQuery === initialQuery &&
+        cursor === initialCursor &&
+        !!initialData
+      ),
     }
   )
 
@@ -142,9 +158,7 @@ export function ContactsTable({
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault()
-          setSelectedIndex((prev) =>
-            Math.min(prev + 1, contacts.length - 1)
-          )
+          setSelectedIndex((prev) => Math.min(prev + 1, contacts.length - 1))
           break
         case 'ArrowUp':
           e.preventDefault()
@@ -154,9 +168,11 @@ export function ContactsTable({
           e.preventDefault()
           if (contacts[selectedIndex]) {
             // Dispatch custom event to open drawer
-            window.dispatchEvent(new CustomEvent('contact:select', {
-              detail: { contactId: contacts[selectedIndex].id }
-            }))
+            window.dispatchEvent(
+              new CustomEvent('contact:select', {
+                detail: { contactId: contacts[selectedIndex].id },
+              })
+            )
           }
           break
         case '/':
@@ -223,9 +239,11 @@ export function ContactsTable({
   }, [])
 
   const handleSelectContact = (contactId: string) => {
-    window.dispatchEvent(new CustomEvent('contact:select', {
-      detail: { contactId }
-    }))
+    window.dispatchEvent(
+      new CustomEvent('contact:select', {
+        detail: { contactId },
+      })
+    )
   }
 
   // Empty state
@@ -273,7 +291,7 @@ export function ContactsTable({
 
       {/* Search and Actions */}
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={searchInputRef}
@@ -298,11 +316,11 @@ export function ContactsTable({
       {/* Table */}
       <div
         ref={tableRef}
-        className="relative rounded-md border overflow-hidden"
+        className="relative overflow-hidden rounded-md border"
       >
-        <div className="overflow-auto max-h-[calc(100vh-300px)]">
+        <div className="max-h-[calc(100vh-300px)] overflow-auto">
           <Table>
-            <TableHeader className="sticky top-0 bg-background z-10 border-b shadow-sm">
+            <TableHeader className="sticky top-0 z-10 border-b bg-background shadow-sm">
               <TableRow>
                 <TableHead className="w-[250px]">Name</TableHead>
                 <TableHead className="w-[250px]">Email</TableHead>
@@ -334,7 +352,9 @@ export function ContactsTable({
                   <TableCell colSpan={4} className="h-32 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Search className="h-8 w-8 opacity-50" />
-                      <p>No contacts found matching &quot;{debouncedQuery}&quot;</p>
+                      <p>
+                        No contacts found matching &quot;{debouncedQuery}&quot;
+                      </p>
                       <Button
                         variant="link"
                         size="sm"
@@ -353,7 +373,7 @@ export function ContactsTable({
                     className={cn(
                       'cursor-pointer transition-colors',
                       selectedIndex === index &&
-                        'bg-muted/50 ring-2 ring-primary ring-inset'
+                        'bg-muted/50 ring-2 ring-inset ring-primary'
                     )}
                     onClick={() => handleSelectContact(contact.id)}
                   >
@@ -361,13 +381,13 @@ export function ContactsTable({
                       {contact.firstName} {contact.lastName}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {isDemo ? maskPII(contact.email) : (contact.email || '—')}
+                      {isDemo ? maskPII(contact.email) : contact.email || '—'}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    <TableCell className="text-sm text-muted-foreground">
                       {contact.owner.user.name ||
                         contact.owner.user.email.split('@')[0]}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    <TableCell className="text-sm text-muted-foreground">
                       {formatDistanceToNow(new Date(contact.updatedAt), {
                         addSuffix: true,
                       })}
@@ -394,7 +414,7 @@ export function ContactsTable({
               onClick={handlePrevPage}
               disabled={!hasPrevPage || isLoading}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="mr-1 h-4 w-4" />
               Previous
             </Button>
             <Button
@@ -404,19 +424,19 @@ export function ContactsTable({
               disabled={!hasNextPage || isLoading}
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
 
       {/* Keyboard shortcuts hint */}
-      <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-        <kbd className="px-2 py-1 bg-muted rounded">↑</kbd>
-        <kbd className="px-2 py-1 bg-muted rounded ml-1">↓</kbd> Navigate •{' '}
-        <kbd className="px-2 py-1 bg-muted rounded">Enter</kbd> Open •{' '}
-        <kbd className="px-2 py-1 bg-muted rounded">/</kbd> Search •{' '}
-        <kbd className="px-2 py-1 bg-muted rounded">Ctrl+N</kbd> New
+      <div className="border-t pt-2 text-center text-xs text-muted-foreground">
+        <kbd className="rounded bg-muted px-2 py-1">↑</kbd>
+        <kbd className="ml-1 rounded bg-muted px-2 py-1">↓</kbd> Navigate •{' '}
+        <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> Open •{' '}
+        <kbd className="rounded bg-muted px-2 py-1">/</kbd> Search •{' '}
+        <kbd className="rounded bg-muted px-2 py-1">Ctrl+N</kbd> New
       </div>
     </div>
   )

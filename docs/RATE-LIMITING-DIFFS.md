@@ -46,7 +46,10 @@ export async function checkCombinedRateLimit(
         limit: config.limit,
         remaining: Math.min(ipResult.remaining, orgResult.remaining),
         reset: Math.max(ipResult.reset, orgResult.reset),
-        retryAfter: Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0),
+        retryAfter: Math.max(
+          ipResult.retryAfter || 0,
+          orgResult.retryAfter || 0
+        ),
       }
     }
 
@@ -77,7 +80,7 @@ export async function checkCombinedRateLimit(
      keyPrefix: 'ratelimit:write:contacts',
 -  } as SlidingWindowConfig,
 +  } as SlidingWindowConfig & { burst: number },
-   
+
    DEALS: {
 -    limit: 50,
 +    limit: 60,
@@ -86,7 +89,7 @@ export async function checkCombinedRateLimit(
      keyPrefix: 'ratelimit:write:deals',
 -  } as SlidingWindowConfig,
 +  } as SlidingWindowConfig & { burst: number },
-   
+
    IMPORT: {
 -    limit: 5,
 +    limit: 60,
@@ -95,7 +98,7 @@ export async function checkCombinedRateLimit(
      keyPrefix: 'ratelimit:write:import',
 -  } as SlidingWindowConfig,
 +  } as SlidingWindowConfig & { burst: number },
-   
+
    EMAIL_LOG: {
 -    limit: 200,
 +    limit: 60,
@@ -113,21 +116,25 @@ export async function checkCombinedRateLimit(
 export function withWriteRateLimit<T = any>(
   handler: (req: NextRequest, context?: any) => Promise<NextResponse<T>>,
   config: SlidingWindowConfig & { burst?: number },
-  getOrgId?: (req: NextRequest) => Promise<string | null>  // NEW: Org ID extractor
+  getOrgId?: (req: NextRequest) => Promise<string | null> // NEW: Org ID extractor
 ) {
   return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
     const clientIp = getClientIp(req)
-    const orgId = getOrgId ? await getOrgId(req) : null  // NEW: Extract org ID
-    
+    const orgId = getOrgId ? await getOrgId(req) : null // NEW: Extract org ID
+
     // Check combined rate limit (IP + Org)
-    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)  // CHANGED
-    
+    const rateLimitResult = await checkCombinedRateLimit(
+      clientIp,
+      orgId,
+      config
+    ) // CHANGED
+
     if (!rateLimitResult.success) {
       return NextResponse.json(
         {
           error: 'Rate limit exceeded',
-          code: 'RATE_LIMIT_EXCEEDED',  // NEW: Error code
-          message: 'Too many requests. Please slow down and try again.',  // NEW: Better message
+          code: 'RATE_LIMIT_EXCEEDED', // NEW: Error code
+          message: 'Too many requests. Please slow down and try again.', // NEW: Better message
           retryAfter: rateLimitResult.retryAfter,
           limit: rateLimitResult.limit,
           reset: rateLimitResult.reset,
@@ -139,20 +146,20 @@ export function withWriteRateLimit<T = any>(
             'X-RateLimit-Limit': rateLimitResult.limit.toString(),
             'X-RateLimit-Remaining': '0',
             'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-            'X-RateLimit-Scope': orgId ? 'ip+org' : 'ip',  // NEW: Scope header
+            'X-RateLimit-Scope': orgId ? 'ip+org' : 'ip', // NEW: Scope header
           },
         }
       )
     }
-    
+
     // Add rate limit headers to successful responses
     const response = await handler(req, context)
     const headers = new Headers(response.headers)
     headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
     headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
     headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString())
-    headers.set('X-RateLimit-Scope', orgId ? 'ip+org' : 'ip')  // NEW
-    
+    headers.set('X-RateLimit-Scope', orgId ? 'ip+org' : 'ip') // NEW
+
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -170,17 +177,27 @@ export function withWriteRateLimit<T = any>(
 
 ```typescript
 // NEW: Import rate limiting utilities
-import { checkCombinedRateLimit, getClientIp, type SlidingWindowConfig } from '@/lib/rate-limit'
+import {
+  checkCombinedRateLimit,
+  getClientIp,
+  type SlidingWindowConfig,
+} from '@/lib/rate-limit'
 
 // NEW: Rate-limited procedure for write operations
-export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: number }) {
+export function rateLimitedProcedure(
+  config: SlidingWindowConfig & { burst?: number }
+) {
   return orgProcedure.use(async ({ ctx, next }) => {
     // Extract IP from request headers
     const clientIp = getClientIp(ctx.req)
     const orgId = ctx.orgId
 
     // Check rate limit
-    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
+    const rateLimitResult = await checkCombinedRateLimit(
+      clientIp,
+      orgId,
+      config
+    )
 
     if (!rateLimitResult.success) {
       throw new TRPCError({
@@ -220,7 +237,7 @@ export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: num
 
  export const contactsRouter = createTRPCRouter({
    // ... list, get endpoints unchanged
-   
+
    // Create contact
 -  create: demoProcedure
 +  create: rateLimitedProcedure(WriteRateLimits.CONTACTS)
@@ -266,7 +283,7 @@ export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: num
 
  export const dealsRouter = createTRPCRouter({
    // ... list, get endpoints unchanged
-   
+
    // Create deal
 -  create: demoProcedure
 +  create: rateLimitedProcedure(WriteRateLimits.DEALS)
@@ -318,12 +335,12 @@ export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: num
 +async function getOrgIdFromRequest(req: NextRequest): Promise<string | null> {
 +  const session = await getServerSession(authOptions)
 +  if (!session?.user?.id) return null
-+  
++
 +  const member = await prisma.orgMember.findFirst({
 +    where: { userId: session.user.id },
 +    select: { organizationId: true },
 +  })
-+  
++
 +  return member?.organizationId || null
 +}
 +
@@ -428,9 +445,12 @@ export function extractRateLimitInfo(error: unknown): RateLimitInfo {
   // Check if it's a TRPCClientError
   if (error instanceof TRPCClientError) {
     const data = error.data as any
-    
+
     // Check for TOO_MANY_REQUESTS error code
-    if (data?.code === 'TOO_MANY_REQUESTS' || error.message.includes('Rate limit exceeded')) {
+    if (
+      data?.code === 'TOO_MANY_REQUESTS' ||
+      error.message.includes('Rate limit exceeded')
+    ) {
       return {
         isRateLimited: true,
         retryAfter: data?.cause?.retryAfter,
@@ -440,7 +460,7 @@ export function extractRateLimitInfo(error: unknown): RateLimitInfo {
       }
     }
   }
-  
+
   return {
     isRateLimited: false,
   }
@@ -453,12 +473,12 @@ export function formatRetryTime(seconds: number): string {
   if (seconds < 60) {
     return `${seconds} second${seconds !== 1 ? 's' : ''}`
   }
-  
+
   const minutes = Math.ceil(seconds / 60)
   if (minutes < 60) {
     return `${minutes} minute${minutes !== 1 ? 's' : ''}`
   }
-  
+
   const hours = Math.ceil(minutes / 60)
   return `${hours} hour${hours !== 1 ? 's' : ''}`
 }
@@ -468,9 +488,9 @@ export function formatRetryTime(seconds: number): string {
  */
 export function formatResetTime(reset: number): string {
   const date = new Date(reset * 1000)
-  return date.toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 ```
@@ -480,6 +500,7 @@ export function formatResetTime(reset: number): string {
 ## 8. NEW: Combined Rate Limit Tests (`__tests__/rate-limit-combined.test.ts`)
 
 355 lines of comprehensive tests covering:
+
 - Combined IP + Org rate limiting
 - Burst capacity behavior
 - Middleware integration
@@ -488,6 +509,7 @@ export function formatResetTime(reset: number): string {
 - Edge cases and error handling
 
 **Test Coverage**:
+
 - ✅ 15+ test cases
 - ✅ Combined rate limiting logic
 - ✅ Burst limits
@@ -500,6 +522,7 @@ export function formatResetTime(reset: number): string {
 ## 9. NEW: Documentation
 
 ### `docs/RATE-LIMITING-SUMMARY.md` (670 lines)
+
 - Complete implementation overview
 - Architecture diagrams
 - API examples
@@ -510,6 +533,7 @@ export function formatResetTime(reset: number): string {
 - Troubleshooting guide
 
 ### `docs/RATE-LIMITING-QUICK-REFERENCE.md` (450 lines)
+
 - Quick start for adding rate limits to new endpoints
 - Client-side error handling examples
 - Testing examples
@@ -573,23 +597,26 @@ curl -v http://localhost:3000/api/import/contacts \
 **Implementation Complete**: ✅
 
 **Endpoints Protected**:
+
 - ✅ POST `/api/import/contacts` - Import rate limiting
 - ✅ POST `/api/email-log/[address]` - Email log rate limiting
 - ✅ tRPC `contacts.create/update/delete` - Contact mutations
 - ✅ tRPC `deals.create/update/delete` - Deal mutations
 
 **Rate Limit Configuration**:
+
 - Normal limit: 60 requests/minute per organization
 - Burst limit: 120 requests/minute per IP
 - Window: 60 seconds sliding window
 - Scope: Combined IP + Organization enforcement
 
 **Features**:
+
 - ✅ Sliding window algorithm (no discrete resets)
 - ✅ Burst capacity for traffic spikes
 - ✅ Per-IP and per-organization tracking
 - ✅ 429 status with Retry-After header
-- ✅ X-RateLimit-* headers on all responses
+- ✅ X-RateLimit-\* headers on all responses
 - ✅ Graceful degradation on Redis errors
 - ✅ UI toast notifications with retry timing
 - ✅ tRPC error extraction and formatting
@@ -597,12 +624,14 @@ curl -v http://localhost:3000/api/import/contacts \
 - ✅ Complete documentation
 
 **Lines of Code**:
+
 - Production code: ~400 lines
 - Tests: ~355 lines
 - Documentation: ~1,120 lines
 - **Total**: ~1,875 lines
 
 **Performance Impact**:
+
 - Redis operations: ~4 per request (2 for IP, 2 for org)
 - Latency: <50ms with Upstash, <5ms with self-hosted
 - Memory: ~100 bytes per unique IP/org

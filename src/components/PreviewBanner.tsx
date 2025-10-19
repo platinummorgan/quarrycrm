@@ -10,7 +10,7 @@ export function PreviewBanner() {
   if (process.env.NEXT_PUBLIC_APP_ENV !== 'preview' || !isVisible) return null
 
   return (
-    <div className="bg-yellow-500 text-yellow-900 px-4 py-2 text-center text-sm font-medium relative">
+    <div className="relative bg-yellow-500 px-4 py-2 text-center text-sm font-medium text-yellow-900">
       <div className="flex items-center justify-center gap-2">
         <span>🚧 Preview Environment - Not for production use</span>
       </div>

@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react'
 export const dynamic = 'force-dynamic'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -72,11 +78,11 @@ export default function BillingPage() {
     return (
       <div className="container max-w-4xl py-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="mb-8 h-8 w-48 rounded bg-gray-200"></div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="h-64 rounded bg-gray-200"></div>
+            <div className="h-64 rounded bg-gray-200"></div>
+            <div className="h-64 rounded bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -87,7 +93,9 @@ export default function BillingPage() {
     return (
       <div className="container max-w-4xl py-8">
         <div className="text-center">
-          <p className="text-muted-foreground">Failed to load billing information.</p>
+          <p className="text-muted-foreground">
+            Failed to load billing information.
+          </p>
         </div>
       </div>
     )
@@ -111,9 +119,15 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                {currentPlan === 'FREE' && <Zap className="h-5 w-5 text-yellow-500" />}
-                {currentPlan === 'PRO' && <Crown className="h-5 w-5 text-purple-500" />}
-                {currentPlan === 'TEAM' && <Users className="h-5 w-5 text-blue-500" />}
+                {currentPlan === 'FREE' && (
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                )}
+                {currentPlan === 'PRO' && (
+                  <Crown className="h-5 w-5 text-purple-500" />
+                )}
+                {currentPlan === 'TEAM' && (
+                  <Users className="h-5 w-5 text-blue-500" />
+                )}
                 Current Plan: {PLAN_NAMES[currentPlan]}
               </CardTitle>
               <CardDescription>
@@ -130,16 +144,20 @@ export default function BillingPage() {
       </Card>
 
       {/* Usage Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Contacts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold">{usage.contacts.toLocaleString()}</span>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-2xl font-bold">
+                {usage.contacts.toLocaleString()}
+              </span>
               <span className="text-sm text-muted-foreground">
-                {limits.contacts === -1 ? 'unlimited' : `of ${limits.contacts.toLocaleString()}`}
+                {limits.contacts === -1
+                  ? 'unlimited'
+                  : `of ${limits.contacts.toLocaleString()}`}
               </span>
             </div>
             {limits.contacts !== -1 && (
@@ -148,11 +166,12 @@ export default function BillingPage() {
                 className="h-2"
               />
             )}
-            {limits.contacts !== -1 && getUsagePercentage(usage.contacts, limits.contacts) >= 90 && (
-              <p className="text-sm text-red-600 mt-2">
-                You're approaching your contact limit
-              </p>
-            )}
+            {limits.contacts !== -1 &&
+              getUsagePercentage(usage.contacts, limits.contacts) >= 90 && (
+                <p className="mt-2 text-sm text-red-600">
+                  You're approaching your contact limit
+                </p>
+              )}
           </CardContent>
         </Card>
 
@@ -161,10 +180,12 @@ export default function BillingPage() {
             <CardTitle className="text-lg">Pipelines</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-2xl font-bold">{usage.pipelines}</span>
               <span className="text-sm text-muted-foreground">
-                {limits.pipelines === -1 ? 'unlimited' : `of ${limits.pipelines}`}
+                {limits.pipelines === -1
+                  ? 'unlimited'
+                  : `of ${limits.pipelines}`}
               </span>
             </div>
             {limits.pipelines !== -1 && (
@@ -173,11 +194,12 @@ export default function BillingPage() {
                 className="h-2"
               />
             )}
-            {limits.pipelines !== -1 && getUsagePercentage(usage.pipelines, limits.pipelines) >= 90 && (
-              <p className="text-sm text-red-600 mt-2">
-                You're approaching your pipeline limit
-              </p>
-            )}
+            {limits.pipelines !== -1 &&
+              getUsagePercentage(usage.pipelines, limits.pipelines) >= 90 && (
+                <p className="mt-2 text-sm text-red-600">
+                  You're approaching your pipeline limit
+                </p>
+              )}
           </CardContent>
         </Card>
 
@@ -186,10 +208,14 @@ export default function BillingPage() {
             <CardTitle className="text-lg">Companies</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold">{usage.companies.toLocaleString()}</span>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-2xl font-bold">
+                {usage.companies.toLocaleString()}
+              </span>
               <span className="text-sm text-muted-foreground">
-                {limits.companies === -1 ? 'unlimited' : `of ${limits.companies.toLocaleString()}`}
+                {limits.companies === -1
+                  ? 'unlimited'
+                  : `of ${limits.companies.toLocaleString()}`}
               </span>
             </div>
             {limits.companies !== -1 && (
@@ -206,10 +232,14 @@ export default function BillingPage() {
             <CardTitle className="text-lg">Deals</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold">{usage.deals.toLocaleString()}</span>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-2xl font-bold">
+                {usage.deals.toLocaleString()}
+              </span>
               <span className="text-sm text-muted-foreground">
-                {limits.deals === -1 ? 'unlimited' : `of ${limits.deals.toLocaleString()}`}
+                {limits.deals === -1
+                  ? 'unlimited'
+                  : `of ${limits.deals.toLocaleString()}`}
               </span>
             </div>
             {limits.deals !== -1 && (
@@ -231,23 +261,28 @@ export default function BillingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Free Plan */}
-            <div className={`border rounded-lg p-4 ${currentPlan === 'FREE' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-              <div className="flex items-center gap-2 mb-2">
+            <div
+              className={`rounded-lg border p-4 ${currentPlan === 'FREE' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+            >
+              <div className="mb-2 flex items-center gap-2">
                 <Zap className="h-5 w-5 text-yellow-500" />
                 <h3 className="font-semibold">Free</h3>
-                {currentPlan === 'FREE' && <Badge variant="secondary">Current</Badge>}
+                {currentPlan === 'FREE' && (
+                  <Badge variant="secondary">Current</Badge>
+                )}
               </div>
-              <p className="text-2xl font-bold mb-4">$0<span className="text-sm font-normal">/month</span></p>
-              <ul className="space-y-2 text-sm mb-4">
+              <p className="mb-4 text-2xl font-bold">
+                $0<span className="text-sm font-normal">/month</span>
+              </p>
+              <ul className="mb-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   2,000 contacts
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  2 pipelines
+                  <CheckCircle className="h-4 w-4 text-green-500" />2 pipelines
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -266,14 +301,20 @@ export default function BillingPage() {
             </div>
 
             {/* Pro Plan */}
-            <div className={`border rounded-lg p-4 ${currentPlan === 'PRO' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}>
-              <div className="flex items-center gap-2 mb-2">
+            <div
+              className={`rounded-lg border p-4 ${currentPlan === 'PRO' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+            >
+              <div className="mb-2 flex items-center gap-2">
                 <Crown className="h-5 w-5 text-purple-500" />
                 <h3 className="font-semibold">Pro</h3>
-                {currentPlan === 'PRO' && <Badge variant="secondary">Current</Badge>}
+                {currentPlan === 'PRO' && (
+                  <Badge variant="secondary">Current</Badge>
+                )}
               </div>
-              <p className="text-2xl font-bold mb-4">$29<span className="text-sm font-normal">/month</span></p>
-              <ul className="space-y-2 text-sm mb-4">
+              <p className="mb-4 text-2xl font-bold">
+                $29<span className="text-sm font-normal">/month</span>
+              </p>
+              <ul className="mb-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   10,000 contacts
@@ -292,9 +333,7 @@ export default function BillingPage() {
                 </li>
               </ul>
               {currentPlan !== 'PRO' && (
-                <Button className="w-full">
-                  Upgrade to Pro
-                </Button>
+                <Button className="w-full">Upgrade to Pro</Button>
               )}
               {currentPlan === 'PRO' && (
                 <Button disabled className="w-full">
@@ -304,14 +343,20 @@ export default function BillingPage() {
             </div>
 
             {/* Team Plan */}
-            <div className={`border rounded-lg p-4 ${currentPlan === 'TEAM' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-              <div className="flex items-center gap-2 mb-2">
+            <div
+              className={`rounded-lg border p-4 ${currentPlan === 'TEAM' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+            >
+              <div className="mb-2 flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-500" />
                 <h3 className="font-semibold">Team</h3>
-                {currentPlan === 'TEAM' && <Badge variant="secondary">Current</Badge>}
+                {currentPlan === 'TEAM' && (
+                  <Badge variant="secondary">Current</Badge>
+                )}
               </div>
-              <p className="text-2xl font-bold mb-4">$99<span className="text-sm font-normal">/month</span></p>
-              <ul className="space-y-2 text-sm mb-4">
+              <p className="mb-4 text-2xl font-bold">
+                $99<span className="text-sm font-normal">/month</span>
+              </p>
+              <ul className="mb-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   Unlimited contacts
@@ -330,9 +375,7 @@ export default function BillingPage() {
                 </li>
               </ul>
               {currentPlan !== 'TEAM' && (
-                <Button className="w-full">
-                  Upgrade to Team
-                </Button>
+                <Button className="w-full">Upgrade to Team</Button>
               )}
               {currentPlan === 'TEAM' && (
                 <Button disabled className="w-full">

@@ -7,30 +7,38 @@ Comprehensive security and SEO protection for the demo subdomain using a **belt-
 ## Protection Layers
 
 ### 1. SEO Protection
+
 **X-Robots-Tag Header**
+
 - Applied via middleware for all demo subdomain requests
 - Prevents search engine indexing
 - Header: `X-Robots-Tag: noindex, nofollow`
 
 ### 2. Write Protection (Middleware)
+
 **Subdomain-level blocking**
+
 - Blocks ALL write operations on `demo.*` subdomain
 - Blocks: POST, PUT, PATCH, DELETE
 - Allows: GET, HEAD, OPTIONS
 - Exceptions: `/api/auth/*`, `/api/admin/demo-reset`
 
 **User-level blocking**
+
 - Secondary check for users with `isDemo` flag or `DEMO` role
 - Works even if user accesses from non-demo subdomain
 - Independent of subdomain check
 
 ### 3. Visual Indicators
+
 **Large Banner**
+
 - Full-width yellow banner at top of every page
 - Text: "Read-only Demo Mode"
 - Call-to-action link to sign up
 
 **Header Pill**
+
 - Small badge next to logo
 - Always visible in navigation
 - Icon: Eye (read-only indicator)
@@ -57,25 +65,31 @@ if (isDemo) {
 if (isDemo && writeMethod && pathname.startsWith('/api/')) {
   // Check allowed paths
   const allowedPaths = ['/api/auth/', '/api/admin/demo-reset']
-  const isAllowed = allowedPaths.some(path => pathname.startsWith(path))
-  
+  const isAllowed = allowedPaths.some((path) => pathname.startsWith(path))
+
   if (!isAllowed) {
-    return NextResponse.json({
-      error: 'Write operations are disabled on demo subdomain',
-      code: 'DEMO_SUBDOMAIN_READ_ONLY'
-    }, { status: 403 })
+    return NextResponse.json(
+      {
+        error: 'Write operations are disabled on demo subdomain',
+        code: 'DEMO_SUBDOMAIN_READ_ONLY',
+      },
+      { status: 403 }
+    )
   }
 }
 
 // Layer 3: User Write Protection (belt-and-suspenders)
 if (writeMethod && pathname.startsWith('/api/')) {
   const token = await getToken({ req: request })
-  
+
   if (token?.isDemo || token?.currentOrg?.role === 'DEMO') {
-    return NextResponse.json({
-      error: 'Demo users have read-only access',
-      code: 'DEMO_USER_READ_ONLY'
-    }, { status: 403 })
+    return NextResponse.json(
+      {
+        error: 'Demo users have read-only access',
+        code: 'DEMO_USER_READ_ONLY',
+      },
+      { status: 403 }
+    )
   }
 }
 ```
@@ -102,7 +116,7 @@ if (writeMethod && pathname.startsWith('/api/')) {
 <div className="min-h-screen bg-background">
   {/* Full-width banner at top */}
   <DemoPill variant="large" />
-  
+
   <header>
     <div className="flex items-center gap-4">
       <Link href="/app">Quarry-CRM</Link>
@@ -216,12 +230,14 @@ Even on demo subdomain, these endpoints remain functional:
 ### X-Robots-Tag Header
 
 **Middleware-based** (not metadata):
+
 - Set on every response from demo subdomain
 - Cannot be cached or bypassed
 - Overrides any meta tags
 - Recognized by all major search engines
 
 **Why middleware instead of metadata?**
+
 - Metadata can be cached by CDN/browser
 - Middleware runs on every request
 - More reliable for dynamic subdomains
@@ -242,6 +258,7 @@ When search engine crawler visits `demo.quarrycrm.com`:
 ### Large Banner (variant="large")
 
 **Appearance**:
+
 - Full-width gradient background (yellow to orange)
 - Border top and bottom
 - Centered content with icon
@@ -249,6 +266,7 @@ When search engine crawler visits `demo.quarrycrm.com`:
 - CTA link to sign up
 
 **Visibility**:
+
 - Top of every page
 - Above header navigation
 - Responsive design
@@ -257,12 +275,14 @@ When search engine crawler visits `demo.quarrycrm.com`:
 ### Small Pill (variant="default")
 
 **Appearance**:
+
 - Compact badge with border
 - Eye icon + "Read-only Demo" text
 - Yellow color scheme
 - Matches design system
 
 **Location**:
+
 - Next to logo in header
 - Always visible
 - Redundant with large banner
@@ -272,6 +292,7 @@ When search engine crawler visits `demo.quarrycrm.com`:
 ### Test Coverage
 
 **Middleware Tests** (`__tests__/demo-subdomain.test.ts`):
+
 - ✅ 16/16 tests passing
 - Demo subdomain detection
 - X-Robots-Tag header
@@ -283,6 +304,7 @@ When search engine crawler visits `demo.quarrycrm.com`:
 ### Manual Testing
 
 **Demo Subdomain**:
+
 ```bash
 # Local testing
 curl -X POST http://demo.localhost:3000/api/contacts \
@@ -293,6 +315,7 @@ curl -X POST http://demo.localhost:3000/api/contacts \
 ```
 
 **SEO Headers**:
+
 ```bash
 curl -I http://demo.quarrycrm.com
 
@@ -300,6 +323,7 @@ curl -I http://demo.quarrycrm.com
 ```
 
 **UI Visibility**:
+
 1. Visit demo subdomain
 2. Should see:
    - Large yellow banner at top
@@ -308,12 +332,12 @@ curl -I http://demo.quarrycrm.com
 
 ## Security Matrix
 
-| Scenario | Subdomain | User | Write Blocked? | Reason |
-|----------|-----------|------|----------------|--------|
-| Demo subdomain + demo user | demo.* | isDemo=true | ✅ Yes | Both checks |
-| Demo subdomain + regular user | demo.* | isDemo=false | ✅ Yes | Subdomain check |
-| Regular subdomain + demo user | app.* | isDemo=true | ✅ Yes | User check |
-| Regular subdomain + regular user | app.* | isDemo=false | ❌ No | No restrictions |
+| Scenario                         | Subdomain | User         | Write Blocked? | Reason          |
+| -------------------------------- | --------- | ------------ | -------------- | --------------- |
+| Demo subdomain + demo user       | demo.\*   | isDemo=true  | ✅ Yes         | Both checks     |
+| Demo subdomain + regular user    | demo.\*   | isDemo=false | ✅ Yes         | Subdomain check |
+| Regular subdomain + demo user    | app.\*    | isDemo=true  | ✅ Yes         | User check      |
+| Regular subdomain + regular user | app.\*    | isDemo=false | ❌ No          | No restrictions |
 
 ## Belt-and-Suspenders Approach
 
@@ -359,6 +383,7 @@ demo.quarrycrm.com → CNAME → your-vercel-deployment.vercel.app
 ### Issue: Demo banner not showing
 
 **Checks**:
+
 1. Is session loaded? Check `useSession()` status
 2. Is hostname correct? Check `window.location.hostname`
 3. Is component imported? Check layout imports
@@ -366,6 +391,7 @@ demo.quarrycrm.com → CNAME → your-vercel-deployment.vercel.app
 ### Issue: Writes not blocked on demo subdomain
 
 **Checks**:
+
 1. Is middleware running? Check console logs
 2. Is host header correct? Check request headers
 3. Is path in allowed list? Check allowed paths array
@@ -373,6 +399,7 @@ demo.quarrycrm.com → CNAME → your-vercel-deployment.vercel.app
 ### Issue: X-Robots-Tag not set
 
 **Checks**:
+
 1. Is middleware executing? Check `middleware.ts`
 2. Is subdomain detection working? Add debug logs
 3. Is response headers inspection correct? Use `curl -I`

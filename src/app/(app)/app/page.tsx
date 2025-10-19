@@ -8,7 +8,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Users, Building2, Target, Activity, TrendingUp } from 'lucide-react'
-import { OverdueTasksWidget, DealsAtRiskWidget } from '@/components/dashboard/widgets'
+import {
+  OverdueTasksWidget,
+  DealsAtRiskWidget,
+} from '@/components/dashboard/widgets'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
@@ -18,7 +21,13 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 async function getDashboardData(orgId: string) {
-  const [contactsCount, companiesCount, dealsCount, activitiesCount, recentActivities] = await Promise.all([
+  const [
+    contactsCount,
+    companiesCount,
+    dealsCount,
+    activitiesCount,
+    recentActivities,
+  ] = await Promise.all([
     prisma.contact.count({
       where: {
         organizationId: orgId,
@@ -91,7 +100,9 @@ async function getDashboardData(orgId: string) {
   // errors in production while still providing a subject string for the UI.
   const recentActivitiesForUi = (recentActivities as any[]).map((a: any) => ({
     ...a,
-    subject: a.deal?.title ?? (a.description ? a.description.slice(0, 120) : 'Activity'),
+    subject:
+      a.deal?.title ??
+      (a.description ? a.description.slice(0, 120) : 'Activity'),
   }))
 
   return {
@@ -178,9 +189,11 @@ export default async function AppDashboard() {
       </div>
 
       {/* Onboarding Checklist */}
-      {onboardingState && !onboardingState.dismissed && !onboardingState.completed && (
-        <OnboardingChecklist initialState={onboardingState} />
-      )}
+      {onboardingState &&
+        !onboardingState.dismissed &&
+        !onboardingState.completed && (
+          <OnboardingChecklist initialState={onboardingState} />
+        )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -237,16 +250,22 @@ export default async function AppDashboard() {
                     <Activity className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">{activity.description}</p>
+                    <p className="text-sm font-medium">
+                      {activity.description}
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Badge variant="outline" className="text-xs">
                         {activity.type}
                       </Badge>
                       {activity.subject && (
-                        <span className="truncate max-w-xs">{activity.subject}</span>
+                        <span className="max-w-xs truncate">
+                          {activity.subject}
+                        </span>
                       )}
                       <span>
-                        {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(activity.createdAt), {
+                          addSuffix: true,
+                        })}
                       </span>
                       {activity.owner.user.name && (
                         <span>by {activity.owner.user.name}</span>
@@ -259,7 +278,8 @@ export default async function AppDashboard() {
                             href={`/app/contacts/${activity.contact.id}`}
                             className="hover:underline"
                           >
-                            {activity.contact.firstName} {activity.contact.lastName}
+                            {activity.contact.firstName}{' '}
+                            {activity.contact.lastName}
                           </Link>
                         )}
                         {activity.deal && (

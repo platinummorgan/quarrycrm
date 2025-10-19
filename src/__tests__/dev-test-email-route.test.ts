@@ -10,7 +10,10 @@ describe('/api/dev/test-email', () => {
   })
 
   it('returns 400 when missing email', async () => {
-    const req = new Request('https://localhost/api/dev/test-email', { method: 'POST', body: JSON.stringify({}) })
+    const req = new Request('https://localhost/api/dev/test-email', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
     // Call the route handler
     // The route expects NextRequest, but our function signature takes NextRequest; for unit test we call POST as exported
     const res = await POST(req as any)
@@ -21,7 +24,10 @@ describe('/api/dev/test-email', () => {
 
   it('returns 200 on success', async () => {
     ;(authEmail.sendMagicLinkEmail as any).mockResolvedValue({ id: 'ok' })
-    const req = new Request('https://localhost/api/dev/test-email', { method: 'POST', body: JSON.stringify({ email: 'user@example.com' }) })
+    const req = new Request('https://localhost/api/dev/test-email', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'user@example.com' }),
+    })
     const res: any = await POST(req as any)
     const body = await res.json()
     expect(res.status).toBe(200)
@@ -29,8 +35,13 @@ describe('/api/dev/test-email', () => {
   })
 
   it('returns 500 on send error', async () => {
-    ;(authEmail.sendMagicLinkEmail as any).mockRejectedValue(new Error('send failed'))
-    const req = new Request('https://localhost/api/dev/test-email', { method: 'POST', body: JSON.stringify({ email: 'user@example.com' }) })
+    ;(authEmail.sendMagicLinkEmail as any).mockRejectedValue(
+      new Error('send failed')
+    )
+    const req = new Request('https://localhost/api/dev/test-email', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'user@example.com' }),
+    })
     const res: any = await POST(req as any)
     const body = await res.json()
     expect(res.status).toBe(500)

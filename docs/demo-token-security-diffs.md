@@ -7,7 +7,7 @@
 ```typescript
 /**
  * Redis client for token replay protection and caching
- * 
+ *
  * For production: Use Upstash Redis or Redis Labs
  * For development: Falls back to in-memory Map (not distributed)
  */
@@ -24,7 +24,7 @@ class InMemoryRedis implements RedisClient {
   async setex(key: string, ttlSeconds: number, value: string): Promise<void> {
     const expiresAt = Date.now() + ttlSeconds * 1000
     this.store.set(key, { value, expiresAt })
-    
+
     setTimeout(() => {
       const entry = this.store.get(key)
       if (entry && Date.now() >= entry.expiresAt) {
@@ -36,12 +36,12 @@ class InMemoryRedis implements RedisClient {
   async get(key: string): Promise<string | null> {
     const entry = this.store.get(key)
     if (!entry) return null
-    
+
     if (Date.now() >= entry.expiresAt) {
       this.store.delete(key)
       return null
     }
-    
+
     return entry.value
   }
 
@@ -103,14 +103,19 @@ export function getRedisClient(): RedisClient {
     console.log('Using Upstash Redis for token storage')
     redisClient = new UpstashRedis(upstashUrl, upstashToken)
   } else {
-    console.warn('Redis not configured, using in-memory store (not suitable for production)')
+    console.warn(
+      'Redis not configured, using in-memory store (not suitable for production)'
+    )
     redisClient = new InMemoryRedis()
   }
 
   return redisClient
 }
 
-export async function storeTokenJti(jti: string, ttlSeconds: number): Promise<void> {
+export async function storeTokenJti(
+  jti: string,
+  ttlSeconds: number
+): Promise<void> {
   const redis = getRedisClient()
   const key = `demo:token:${jti}`
   await redis.setex(key, ttlSeconds, '1')
@@ -131,6 +136,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 **Path**: `src/lib/demo-auth.ts`
 
 ### Imports Section
+
 ```diff
  import { SignJWT, jwtVerify } from 'jose'
 +import { randomBytes } from 'crypto'
@@ -138,6 +144,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 ```
 
 ### Interface Definition
+
 ```diff
  export interface DemoTokenPayload {
    orgId: string
@@ -150,6 +157,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 ```
 
 ### Constants
+
 ```diff
  const DEMO_TOKEN_SECRET = process.env.DEMO_TOKEN_SECRET
 -const DEMO_TOKEN_EXPIRY = 15 * 60 // 15 minutes in seconds
@@ -158,6 +166,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 ```
 
 ### Token Generation
+
 ```diff
 -export async function generateDemoToken(orgId: string): Promise<string> {
 +export async function generateDemoToken(orgId: string, host?: string): Promise<string> {
@@ -189,6 +198,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 ```
 
 ### Token Verification
+
 ```diff
 -export async function verifyDemoToken(token: string): Promise<DemoTokenPayload> {
 +export async function verifyDemoToken(
@@ -284,6 +294,7 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 ```
 
 ### Helper Function
+
 ```diff
  export function isDemoTokenExpired(token: DemoTokenPayload): boolean {
 -  return Date.now() / 1000 > token.exp
@@ -320,11 +331,11 @@ export async function isTokenUsed(jti: string): Promise<boolean> {
 -          const payload = await verifyDemoToken(credentials.token)
 -          console.log('Token verified, orgId:', payload.orgId)
 +          console.log('🔍 Verifying demo token with security checks...')
-+          
++
 +          // Verify the demo token with host pinning if provided
 +          const expectedHost = credentials.host || process.env.NEXTAUTH_URL || undefined
 +          console.log('🔍 Expected host for token:', expectedHost)
-+          
++
 +          const payload = await verifyDemoToken(credentials.token, expectedHost)
 +          console.log('✅ Token verified successfully, orgId:', payload.orgId, 'jti:', payload.jti)
 
@@ -453,14 +464,14 @@ See separate test file (380+ lines, 40+ tests covering all security features)
 
 ## Summary Statistics
 
-| Metric | Count |
-|--------|-------|
-| **Files Modified** | 5 |
-| **New Files** | 2 |
-| **Lines Added** | ~1,100 |
-| **Security Checks Added** | 7 |
-| **Test Cases** | 40+ |
-| **Test Suites** | 9 |
+| Metric                    | Count  |
+| ------------------------- | ------ |
+| **Files Modified**        | 5      |
+| **New Files**             | 2      |
+| **Lines Added**           | ~1,100 |
+| **Security Checks Added** | 7      |
+| **Test Cases**            | 40+    |
+| **Test Suites**           | 9      |
 
 ## Security Validations Added
 

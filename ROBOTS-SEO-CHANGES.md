@@ -15,6 +15,7 @@ Implemented proper robots control to prevent search engine indexing of non-produ
 **Purpose**: Add `X-Robots-Tag: noindex, nofollow` header to ALL responses in non-production environments.
 
 **Key Changes**:
+
 - Added `isProduction` check at the top of middleware
 - Modified ALL NextResponse returns to include X-Robots-Tag header when not in production
 - Ensures every response (redirects, blocks, normal pages) has the header
@@ -52,12 +53,12 @@ Implemented proper robots control to prevent search engine indexing of non-produ
            },
          }
        )
-+      
++
 +      // Add X-Robots-Tag for non-production
 +      if (!isProduction) {
 +        response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +      }
-+      
++
 +      return response
      }
 
@@ -66,12 +67,12 @@ Implemented proper robots control to prevent search engine indexing of non-produ
        // Redirect to /demo for auto-login
 -      return NextResponse.redirect(new URL('/demo', req.url))
 +      const response = NextResponse.redirect(new URL('/demo', req.url))
-+      
++
 +      // Add X-Robots-Tag for non-production
 +      if (!isProduction) {
 +        response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +      }
-+      
++
 +      return response
      }
 
@@ -79,12 +80,12 @@ Implemented proper robots control to prevent search engine indexing of non-produ
      if (isAuthPage && isAuth) {
 -      return NextResponse.redirect(new URL('/app', req.url))
 +      const response = NextResponse.redirect(new URL('/app', req.url))
-+      
++
 +      // Add X-Robots-Tag for non-production
 +      if (!isProduction) {
 +        response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +      }
-+      
++
 +      return response
      }
 
@@ -92,12 +93,12 @@ Implemented proper robots control to prevent search engine indexing of non-produ
      if (isApiAuthRoute || isAuthPage || isDemoRoute) {
 -      return NextResponse.next()
 +      const response = NextResponse.next()
-+      
++
 +      // Add X-Robots-Tag for non-production
 +      if (!isProduction) {
 +        response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +      }
-+      
++
 +      return response
      }
 
@@ -106,12 +107,12 @@ Implemented proper robots control to prevent search engine indexing of non-produ
        if (!isAuth) {
 -        return NextResponse.redirect(new URL('/auth/signin', req.url))
 +        const response = NextResponse.redirect(new URL('/auth/signin', req.url))
-+        
++
 +        // Add X-Robots-Tag for non-production
 +        if (!isProduction) {
 +          response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +        }
-+        
++
 +        return response
        }
      }
@@ -119,11 +120,11 @@ Implemented proper robots control to prevent search engine indexing of non-produ
 -    return NextResponse.next()
 +    // Default response with X-Robots-Tag for non-production
 +    const response = NextResponse.next()
-+    
++
 +    if (!isProduction) {
 +      response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 +    }
-+    
++
 +    return response
    },
 ```
@@ -135,6 +136,7 @@ Implemented proper robots control to prevent search engine indexing of non-produ
 **Status**: ✅ Already correctly implemented (no changes needed)
 
 **Current Implementation**:
+
 - **Non-Production**: Returns `Disallow: /` (blocks all crawlers)
 - **Production**: Returns `Allow: /` with sitemap reference (allows all crawlers)
 
@@ -183,6 +185,7 @@ Sitemap: ${process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'}/sitemap
 **When**: `NEXT_PUBLIC_APP_ENV !== "prod"`
 
 **What Happens**:
+
 1. **Every HTTP response** includes header: `X-Robots-Tag: noindex, nofollow`
    - Tells search engines: "Don't index this page, don't follow links"
    - Works even if they find the URL somehow
@@ -192,6 +195,7 @@ Sitemap: ${process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'}/sitemap
    User-agent: *
    Disallow: /
    ```
+
    - Tells crawlers: "Don't crawl anything on this site"
 
 **Result**: Double protection - site won't be indexed or crawled
@@ -201,17 +205,20 @@ Sitemap: ${process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'}/sitemap
 **When**: `NEXT_PUBLIC_APP_ENV === "prod"`
 
 **What Happens**:
+
 1. **No X-Robots-Tag header** is added
    - Pages are indexable by default
    - Normal SEO behavior
 
 2. **robots.txt** returns:
+
    ```
    User-agent: *
    Allow: /
 
    Sitemap: https://your-domain.com/sitemap.xml
    ```
+
    - Tells crawlers: "Please index everything"
    - Provides sitemap for efficient crawling
 
@@ -226,6 +233,7 @@ Sitemap: ${process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'}/sitemap
 Your `.env.local` shows: `NEXT_PUBLIC_APP_ENV="preview"`
 
 **Check X-Robots-Tag Header**:
+
 ```bash
 # Test any page
 curl -I http://localhost:3000
@@ -235,6 +243,7 @@ curl -I http://localhost:3000
 ```
 
 **Check robots.txt**:
+
 ```bash
 # Test robots.txt
 curl http://localhost:3000/robots.txt
@@ -249,6 +258,7 @@ curl http://localhost:3000/robots.txt
 Set `NEXT_PUBLIC_APP_ENV="prod"` in environment variables.
 
 **Check X-Robots-Tag Header**:
+
 ```bash
 curl -I https://your-production-domain.com
 
@@ -256,6 +266,7 @@ curl -I https://your-production-domain.com
 ```
 
 **Check robots.txt**:
+
 ```bash
 curl https://your-production-domain.com/robots.txt
 
@@ -295,12 +306,12 @@ curl https://your-production-domain.com/robots.txt
 
 ## 📊 Environment Matrix
 
-| Environment | NEXT_PUBLIC_APP_ENV | X-Robots-Tag Header | robots.txt | Indexable? |
-|-------------|---------------------|---------------------|------------|------------|
-| Development | "development" | `noindex, nofollow` | `Disallow: /` | ❌ No |
-| Preview | "preview" | `noindex, nofollow` | `Disallow: /` | ❌ No |
-| Staging | "staging" (if used) | `noindex, nofollow` | `Disallow: /` | ❌ No |
-| **Production** | **"prod"** | **(none)** | **`Allow: /`** | **✅ Yes** |
+| Environment    | NEXT_PUBLIC_APP_ENV | X-Robots-Tag Header | robots.txt     | Indexable? |
+| -------------- | ------------------- | ------------------- | -------------- | ---------- |
+| Development    | "development"       | `noindex, nofollow` | `Disallow: /`  | ❌ No      |
+| Preview        | "preview"           | `noindex, nofollow` | `Disallow: /`  | ❌ No      |
+| Staging        | "staging" (if used) | `noindex, nofollow` | `Disallow: /`  | ❌ No      |
+| **Production** | **"prod"**          | **(none)**          | **`Allow: /`** | **✅ Yes** |
 
 ---
 
@@ -322,6 +333,7 @@ curl https://your-production-domain.com/robots.txt
 ### Why Both?
 
 **Defense in depth**:
+
 - robots.txt prevents crawling
 - X-Robots-Tag prevents indexing if somehow crawled
 - Together they ensure non-prod environments stay out of search results
@@ -331,9 +343,11 @@ curl https://your-production-domain.com/robots.txt
 ## 📝 Files Modified
 
 ### Modified
+
 - ✅ `middleware.ts` - Added X-Robots-Tag header logic
 
 ### Verified (No Changes Needed)
+
 - ✅ `src/app/robots.txt/route.ts` - Already correct
 
 ---
@@ -341,11 +355,13 @@ curl https://your-production-domain.com/robots.txt
 ## ✅ Confirmation
 
 **Non-Production (NEXT_PUBLIC_APP_ENV !== "prod")**:
+
 - ✅ X-Robots-Tag: noindex, nofollow added to ALL responses
 - ✅ robots.txt returns Disallow: /
 - ✅ Site will NOT be indexed
 
 **Production (NEXT_PUBLIC_APP_ENV === "prod")**:
+
 - ✅ No X-Robots-Tag header added
 - ✅ robots.txt returns Allow: / with sitemap
 - ✅ Site WILL be indexed normally

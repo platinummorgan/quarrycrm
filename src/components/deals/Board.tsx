@@ -13,7 +13,12 @@ import {
   closestCorners,
 } from '@dnd-kit/core'
 import { getDeals, getPipelines, moveDealToStage } from '@/server/deals'
-import { dealsListResponseSchema, pipelinesListResponseSchema, type DealsListResponse, type PipelinesListResponse } from '@/lib/zod/deals'
+import {
+  dealsListResponseSchema,
+  pipelinesListResponseSchema,
+  type DealsListResponse,
+  type PipelinesListResponse,
+} from '@/lib/zod/deals'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -236,7 +241,9 @@ function StageColumn({
   return (
     <div className="flex w-80 flex-shrink-0 flex-col">
       {/* Stage Header */}
-      <div className={`mb-4 rounded-lg border p-4 ${isOver ? 'ring-2 ring-primary' : ''}`}>
+      <div
+        className={`mb-4 rounded-lg border p-4 ${isOver ? 'ring-2 ring-primary' : ''}`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {stage.color && (
@@ -260,9 +267,7 @@ function StageColumn({
       <div
         ref={setNodeRef}
         className={`flex-1 space-y-3 rounded-lg border-2 border-dashed p-4 transition-colors ${
-          isOver
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25'
+          isOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
         }`}
         style={{ minHeight: '200px' }}
       >
@@ -324,7 +329,13 @@ function EmptyBoardState({ onCreateDeal }: { onCreateDeal: () => void }) {
   )
 }
 
-function EmptyPipelineState({ onCreateDeal, isDemo }: { onCreateDeal: () => void; isDemo?: boolean }) {
+function EmptyPipelineState({
+  onCreateDeal,
+  isDemo,
+}: {
+  onCreateDeal: () => void
+  isDemo?: boolean
+}) {
   return (
     <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
       <div className="text-center">
@@ -332,7 +343,7 @@ function EmptyPipelineState({ onCreateDeal, isDemo }: { onCreateDeal: () => void
         <p className="mb-4 text-sm text-muted-foreground">
           Get started by creating your first deal
         </p>
-        <Button 
+        <Button
           onClick={onCreateDeal}
           disabled={isDemo}
           title={isDemo ? 'Demo is read-only' : undefined}
@@ -346,7 +357,13 @@ function EmptyPipelineState({ onCreateDeal, isDemo }: { onCreateDeal: () => void
 }
 
 // Error State Component
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
   return (
     <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed border-destructive/50">
       <div className="text-center">
@@ -370,15 +387,21 @@ export function Board({
 }: {
   initialDeals: DealsListResponse
   initialPipelines: PipelinesListResponse
-  onPipelineChangeRef?: React.MutableRefObject<((pipelineId: string) => void) | undefined>
-  onDealFocusRef?: React.MutableRefObject<((dealId: string) => void) | undefined>
+  onPipelineChangeRef?: React.MutableRefObject<
+    ((pipelineId: string) => void) | undefined
+  >
+  onDealFocusRef?: React.MutableRefObject<
+    ((dealId: string) => void) | undefined
+  >
 }) {
   const sessionResult = useSession()
   const session = sessionResult?.data
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [selectedPipeline, setSelectedPipeline] = useState<string>('')
   const [dealsData, setDealsData] = useState<DealsListResponse>(initialDeals)
-  const [pipelinesData, setPipelinesData] = useState<PipelinesListResponse>(initialPipelines)
+  const [pipelinesData, setPipelinesData] =
+    useState<PipelinesListResponse>(initialPipelines)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [focusedDealId, setFocusedDealId] = useState<string | null>(null)
   const [showSkeleton, setShowSkeleton] = useState(false)
@@ -411,17 +434,55 @@ export function Board({
   // Get deals for selected pipeline
   const pipelineDeals = useMemo(() => {
     if (!selectedPipeline) return []
-    return dealsData.items.filter((deal) => deal.pipeline.id === selectedPipeline)
+    return dealsData.items.filter(
+      (deal) => deal.pipeline.id === selectedPipeline
+    )
   }, [dealsData.items, selectedPipeline])
 
   // Default stages for when no pipeline is selected
   const defaultStages = [
-    { id: 'lead', name: 'Lead', order: 0, color: '#3b82f6', _count: { deals: 0 } },
-    { id: 'qualified', name: 'Qualified', order: 1, color: '#10b981', _count: { deals: 0 } },
-    { id: 'proposal', name: 'Proposal', order: 2, color: '#f59e0b', _count: { deals: 0 } },
-    { id: 'negotiation', name: 'Negotiation', order: 3, color: '#8b5cf6', _count: { deals: 0 } },
-    { id: 'closed-won', name: 'Closed Won', order: 4, color: '#22c55e', _count: { deals: 0 } },
-    { id: 'closed-lost', name: 'Closed Lost', order: 5, color: '#ef4444', _count: { deals: 0 } },
+    {
+      id: 'lead',
+      name: 'Lead',
+      order: 0,
+      color: '#3b82f6',
+      _count: { deals: 0 },
+    },
+    {
+      id: 'qualified',
+      name: 'Qualified',
+      order: 1,
+      color: '#10b981',
+      _count: { deals: 0 },
+    },
+    {
+      id: 'proposal',
+      name: 'Proposal',
+      order: 2,
+      color: '#f59e0b',
+      _count: { deals: 0 },
+    },
+    {
+      id: 'negotiation',
+      name: 'Negotiation',
+      order: 3,
+      color: '#8b5cf6',
+      _count: { deals: 0 },
+    },
+    {
+      id: 'closed-won',
+      name: 'Closed Won',
+      order: 4,
+      color: '#22c55e',
+      _count: { deals: 0 },
+    },
+    {
+      id: 'closed-lost',
+      name: 'Closed Lost',
+      order: 5,
+      color: '#ef4444',
+      _count: { deals: 0 },
+    },
   ]
 
   const displayStages = selectedPipelineData ? stages : defaultStages
@@ -458,37 +519,41 @@ export function Board({
   }, [])
 
   // Move deal mutation with optimistic updates
-  const moveDealMutation = useCallback(async (dealId: string, stageId: string) => {
-    // Optimistic update
-    const previousDeals = [...dealsData.items]
-    const dealIndex = previousDeals.findIndex(d => d.id === dealId)
-    if (dealIndex !== -1) {
-      const updatedDeals = [...previousDeals]
-      const stage = stages.find(s => s.id === stageId)
-      if (stage) {
-        updatedDeals[dealIndex] = {
-          ...updatedDeals[dealIndex],
-          stage: {
-            id: stageId,
-            name: stage.name,
-            color: stage.color,
-          },
+  const moveDealMutation = useCallback(
+    async (dealId: string, stageId: string) => {
+      // Optimistic update
+      const previousDeals = [...dealsData.items]
+      const dealIndex = previousDeals.findIndex((d) => d.id === dealId)
+      if (dealIndex !== -1) {
+        const updatedDeals = [...previousDeals]
+        const stage = stages.find((s) => s.id === stageId)
+        if (stage) {
+          updatedDeals[dealIndex] = {
+            ...updatedDeals[dealIndex],
+            stage: {
+              id: stageId,
+              name: stage.name,
+              color: stage.color,
+            },
+          }
+          setDealsData((prev) => ({ ...prev, items: updatedDeals }))
         }
-        setDealsData(prev => ({ ...prev, items: updatedDeals }))
       }
-    }
 
-    try {
-      await moveDealToStage({ dealId, stageId })
-      toast.success('Deal moved successfully')
-    } catch (err) {
-      // Rollback on error
-      setDealsData(prev => ({ ...prev, items: previousDeals }))
-      const message = err instanceof Error ? err.message : 'Failed to move deal'
-      setError(message)
-      toast.error(message)
-    }
-  }, [dealsData.items, stages])
+      try {
+        await moveDealToStage({ dealId, stageId })
+        toast.success('Deal moved successfully')
+      } catch (err) {
+        // Rollback on error
+        setDealsData((prev) => ({ ...prev, items: previousDeals }))
+        const message =
+          err instanceof Error ? err.message : 'Failed to move deal'
+        setError(message)
+        toast.error(message)
+      }
+    },
+    [dealsData.items, stages]
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -658,7 +723,10 @@ export function Board({
 
           {/* Pipeline Selector */}
           {pipelines.length > 0 && (
-            <Select value={selectedPipeline} onValueChange={setSelectedPipeline}>
+            <Select
+              value={selectedPipeline}
+              onValueChange={setSelectedPipeline}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select pipeline" />
               </SelectTrigger>
@@ -678,8 +746,8 @@ export function Board({
             <Settings className="mr-2 h-4 w-4" />
             View Options
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={handleCreateDeal}
             disabled={isDemo}
             title={isDemo ? 'Demo is read-only' : undefined}
@@ -717,15 +785,18 @@ export function Board({
                   $0
                 </div>
               </div>
-              <div className="flex-1 space-y-3 rounded-lg border-2 border-dashed p-4" style={{ minHeight: '200px' }}>
+              <div
+                className="flex-1 space-y-3 rounded-lg border-2 border-dashed p-4"
+                style={{ minHeight: '200px' }}
+              >
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
                     <h4 className="mb-2 text-sm font-medium">No deals yet</h4>
                     <p className="mb-4 text-xs text-muted-foreground">
                       Select a pipeline or create your first deal
                     </p>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={handleCreateDeal}
                       disabled={isDemo}
                       title={isDemo ? 'Demo is read-only' : undefined}
@@ -773,7 +844,8 @@ export function Board({
           <div className="font-semibold">Keyboard shortcuts:</div>
           <div className="mt-1 space-y-1">
             <div>
-              <kbd className="rounded bg-muted px-1.5 py-0.5">H</kbd> - Move left
+              <kbd className="rounded bg-muted px-1.5 py-0.5">H</kbd> - Move
+              left
             </div>
             <div>
               <kbd className="rounded bg-muted px-1.5 py-0.5">L</kbd> - Move

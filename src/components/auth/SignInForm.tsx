@@ -22,11 +22,20 @@ export default function SignInForm() {
       })
 
       if (result?.error) {
-        console.error('Sign-in error:', result.error, 'URL:', window.location.href)
+        console.error(
+          'Sign-in error:',
+          result.error,
+          'URL:',
+          window.location.href
+        )
         if (result.error === 'EmailProviderNotFound') {
-          setMessage('Email authentication is not configured. Please check your email server settings.')
+          setMessage(
+            'Email authentication is not configured. Please check your email server settings.'
+          )
         } else if (result.error === 'EmailSignin') {
-          setMessage('Error sending email. Please check your email server configuration.')
+          setMessage(
+            'Error sending email. Please check your email server configuration.'
+          )
         } else {
           setMessage('Error sending email. Please try again.')
         }
@@ -35,7 +44,12 @@ export default function SignInForm() {
         router.push('/auth/verify-request')
       }
     } catch (error) {
-      console.error('Unexpected sign-in error:', error, 'URL:', window.location.href)
+      console.error(
+        'Unexpected sign-in error:',
+        error,
+        'URL:',
+        window.location.href
+      )
       setMessage('An error occurred. Please try again.')
     } finally {
       setLoading(false)

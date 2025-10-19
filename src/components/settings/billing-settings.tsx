@@ -1,11 +1,25 @@
 'use client'
 
 import { trpc } from '@/lib/trpc'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { CreditCard, Loader2, Check, Zap, Users, Webhook, Key } from 'lucide-react'
+import {
+  CreditCard,
+  Loader2,
+  Check,
+  Zap,
+  Users,
+  Webhook,
+  Key,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export function BillingSettings() {
@@ -145,7 +159,8 @@ export function BillingSettings() {
           <div className="space-y-4">
             {usageItems.map((item) => {
               const percentage = getUsagePercentage(item.used, item.limit)
-              const limitText = item.limit === -1 ? '∞' : item.limit.toLocaleString()
+              const limitText =
+                item.limit === -1 ? '∞' : item.limit.toLocaleString()
 
               return (
                 <div key={item.label} className="space-y-2">
@@ -178,16 +193,14 @@ export function BillingSettings() {
               plan.current
                 ? 'border-primary shadow-lg'
                 : plan.popular
-                ? 'border-primary/50'
-                : ''
+                  ? 'border-primary/50'
+                  : ''
             }
           >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{plan.name}</CardTitle>
-                {plan.current && (
-                  <Badge>Current Plan</Badge>
-                )}
+                {plan.current && <Badge>Current Plan</Badge>}
                 {plan.popular && !plan.current && (
                   <Badge variant="secondary">Popular</Badge>
                 )}
@@ -196,7 +209,9 @@ export function BillingSettings() {
               <div className="mt-4">
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">/{plan.period}</span>
+                  <span className="text-sm text-muted-foreground">
+                    /{plan.period}
+                  </span>
                 </div>
               </div>
             </CardHeader>
@@ -204,7 +219,7 @@ export function BillingSettings() {
               <ul className="space-y-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -219,9 +234,12 @@ export function BillingSettings() {
                   <Button
                     className="w-full"
                     variant={plan.popular ? 'default' : 'outline'}
-                    onClick={() => toast.info('Payment integration coming soon!')}
+                    onClick={() =>
+                      toast.info('Payment integration coming soon!')
+                    }
                   >
-                    {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'} to {plan.name}
+                    {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'} to{' '}
+                    {plan.name}
                   </Button>
                 )}
               </div>
@@ -241,8 +259,9 @@ export function BillingSettings() {
         <CardContent>
           <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
             <p>
-              We're currently working on integrating payment processing. For now, all workspaces
-              start on the Free plan. Contact sales@quarry-crm.com to discuss enterprise plans.
+              We're currently working on integrating payment processing. For
+              now, all workspaces start on the Free plan. Contact
+              sales@quarry-crm.com to discuss enterprise plans.
             </p>
           </div>
         </CardContent>

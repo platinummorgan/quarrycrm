@@ -21,7 +21,8 @@ type EmailSettingsForm = z.infer<typeof emailSettingsSchema>
 export function EmailLoggingSettings() {
   const [isEditing, setIsEditing] = useState(false)
 
-  const { data: organization, isLoading } = trpc.organizations.getCurrent.useQuery()
+  const { data: organization, isLoading } =
+    trpc.organizations.getCurrent.useQuery()
   const updateOrganizationMutation = trpc.organizations.update.useMutation({
     onSuccess: () => {
       setIsEditing(false)
@@ -66,8 +67,8 @@ export function EmailLoggingSettings() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-2">
-            <div className="h-4 bg-muted rounded w-1/4"></div>
-            <div className="h-8 bg-muted rounded"></div>
+            <div className="h-4 w-1/4 rounded bg-muted"></div>
+            <div className="h-8 rounded bg-muted"></div>
           </div>
         </CardContent>
       </Card>
@@ -86,8 +87,9 @@ export function EmailLoggingSettings() {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Configure an email address to automatically log activities when emails are sent to it.
-            This is useful for tracking email conversations and logging customer communications.
+            Configure an email address to automatically log activities when
+            emails are sent to it. This is useful for tracking email
+            conversations and logging customer communications.
           </AlertDescription>
         </Alert>
 
@@ -96,14 +98,13 @@ export function EmailLoggingSettings() {
             <Label>Email Log Address</Label>
             <div className="flex items-center space-x-2">
               <Input
-                value={(organization as any)?.emailLogAddress || 'Not configured'}
+                value={
+                  (organization as any)?.emailLogAddress || 'Not configured'
+                }
                 readOnly
                 className="flex-1"
               />
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(true)}
-              >
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
                 Configure
               </Button>
             </div>
@@ -149,9 +150,13 @@ export function EmailLoggingSettings() {
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Setup Instructions:</strong> Configure your email server to forward emails
-              sent to <code>{(organization as any).emailLogAddress}</code> to{' '}
-              <code>{process.env.NEXT_PUBLIC_APP_URL || 'your-app-url'}/api/email-log/{(organization as any).emailLogAddress}</code>
+              <strong>Setup Instructions:</strong> Configure your email server
+              to forward emails sent to{' '}
+              <code>{(organization as any).emailLogAddress}</code> to{' '}
+              <code>
+                {process.env.NEXT_PUBLIC_APP_URL || 'your-app-url'}
+                /api/email-log/{(organization as any).emailLogAddress}
+              </code>
             </AlertDescription>
           </Alert>
         )}

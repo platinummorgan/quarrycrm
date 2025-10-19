@@ -4,7 +4,9 @@ import { getBaseUrl } from './baseUrl'
 function getResendClient() {
   // Return a fresh Resend client each call. Tests mock the Resend
   // constructor per-test, so caching a client breaks test isolation.
-  return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+  return process.env.RESEND_API_KEY
+    ? new Resend(process.env.RESEND_API_KEY)
+    : null
 }
 
 export async function sendMagicLinkEmail(identifier: string, rawUrl: string) {
@@ -35,7 +37,9 @@ export async function sendMagicLinkEmail(identifier: string, rawUrl: string) {
 
   // Resend returns { id } on success, throws on auth error; safety-check for error
   if ((res as any)?.error) {
-    throw new Error(`Email send failed: ${(res as any).error?.message || JSON.stringify((res as any).error)}`)
+    throw new Error(
+      `Email send failed: ${(res as any).error?.message || JSON.stringify((res as any).error)}`
+    )
   }
 
   return res

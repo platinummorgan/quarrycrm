@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,7 +38,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
-import { Key, Loader2, Plus, Copy, Check, Trash2, AlertTriangle } from 'lucide-react'
+import {
+  Key,
+  Loader2,
+  Plus,
+  Copy,
+  Check,
+  Trash2,
+  AlertTriangle,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -101,7 +115,8 @@ export function ApiKeysSettings() {
   }
 
   const canCreateKey = planUsage
-    ? planUsage.limits.apiKeys === -1 || planUsage.usage.apiKeys < planUsage.limits.apiKeys
+    ? planUsage.limits.apiKeys === -1 ||
+      planUsage.usage.apiKeys < planUsage.limits.apiKeys
     : true
 
   if (isLoading) {
@@ -174,32 +189,33 @@ export function ApiKeysSettings() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
-                      <div className="flex gap-2 items-start mb-2">
-                        <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+                      <div className="mb-2 flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                         <div>
                           <p className="font-medium text-amber-900 dark:text-amber-100">
                             Important: Save this API key now
                           </p>
                           <p className="text-sm text-amber-700 dark:text-amber-300">
-                            You won't be able to see it again after closing this dialog
+                            You won't be able to see it again after closing this
+                            dialog
                           </p>
                         </div>
                       </div>
                     </div>
 
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-sm font-medium mb-2">Your API Key</p>
+                      <p className="mb-2 text-sm font-medium">Your API Key</p>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs bg-background p-3 rounded border break-all font-mono">
+                        <code className="flex-1 break-all rounded border bg-background p-3 font-mono text-xs">
                           {newApiKey}
                         </code>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={handleCopyKey}
                                 aria-label="Copy API key to clipboard"
                               >
@@ -218,9 +234,9 @@ export function ApiKeysSettings() {
                       </div>
                     </div>
 
-                    <div className="text-sm text-muted-foreground space-y-2">
+                    <div className="space-y-2 text-sm text-muted-foreground">
                       <p>Use this key in your API requests:</p>
-                      <code className="block bg-muted p-2 rounded text-xs">
+                      <code className="block rounded bg-muted p-2 text-xs">
                         Authorization: Bearer {newApiKey}
                       </code>
                     </div>
@@ -244,7 +260,9 @@ export function ApiKeysSettings() {
                       </Button>
                     </>
                   ) : (
-                    <Button onClick={closeCreateDialog}>I've Saved My Key</Button>
+                    <Button onClick={closeCreateDialog}>
+                      I've Saved My Key
+                    </Button>
                   )}
                 </DialogFooter>
               </DialogContent>
@@ -255,16 +273,21 @@ export function ApiKeysSettings() {
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Key className="h-4 w-4" />
               <span>
-                {planUsage.usage.apiKeys} / {planUsage.limits.apiKeys === -1 ? '∞' : planUsage.limits.apiKeys} API keys used
+                {planUsage.usage.apiKeys} /{' '}
+                {planUsage.limits.apiKeys === -1
+                  ? '∞'
+                  : planUsage.limits.apiKeys}{' '}
+                API keys used
               </span>
             </div>
           )}
         </CardHeader>
         <CardContent>
           {!canCreateKey && (
-            <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
               <p className="text-sm text-amber-900 dark:text-amber-100">
-                You've reached your plan limit for API keys. Upgrade to create more.
+                You've reached your plan limit for API keys. Upgrade to create
+                more.
               </p>
             </div>
           )}
@@ -279,26 +302,33 @@ export function ApiKeysSettings() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{key.name}</p>
-                      {key.expiresAt && new Date(key.expiresAt) < new Date() && (
-                        <Badge variant="destructive">Expired</Badge>
-                      )}
+                      {key.expiresAt &&
+                        new Date(key.expiresAt) < new Date() && (
+                          <Badge variant="destructive">Expired</Badge>
+                        )}
                     </div>
                     <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                      <code className="bg-muted px-2 py-1 rounded text-xs">
+                      <code className="rounded bg-muted px-2 py-1 text-xs">
                         {key.keyPrefix}...
                       </code>
                       {key.lastUsedAt && (
                         <span>
-                          Last used {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
+                          Last used{' '}
+                          {formatDistanceToNow(new Date(key.lastUsedAt), {
+                            addSuffix: true,
+                          })}
                         </span>
                       )}
                       {key.expiresAt && (
                         <span>
-                          Expires {formatDistanceToNow(new Date(key.expiresAt), { addSuffix: true })}
+                          Expires{' '}
+                          {formatDistanceToNow(new Date(key.expiresAt), {
+                            addSuffix: true,
+                          })}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Created by {key.owner.user.name || key.owner.user.email}
                     </p>
                   </div>
@@ -324,22 +354,29 @@ export function ApiKeysSettings() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="py-12 text-center text-muted-foreground">
+              <Key className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p>No API keys created yet</p>
-              <p className="text-sm mt-1">Create your first API key to get started</p>
+              <p className="mt-1 text-sm">
+                Create your first API key to get started
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Revoke Key Confirmation Dialog */}
-      <AlertDialog open={!!keyToRevoke} onOpenChange={() => setKeyToRevoke(null)}>
+      <AlertDialog
+        open={!!keyToRevoke}
+        onOpenChange={() => setKeyToRevoke(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to revoke this API key? Any applications using this key will immediately lose access. This action cannot be undone.
+              Are you sure you want to revoke this API key? Any applications
+              using this key will immediately lose access. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

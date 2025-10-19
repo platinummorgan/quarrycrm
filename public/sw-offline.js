@@ -1,18 +1,20 @@
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
+importScripts(
+  'https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js'
+)
 
 if (workbox) {
-  workbox.setConfig({ debug: false });
+  workbox.setConfig({ debug: false })
 
   // Skip waiting and claim clients
-  workbox.core.skipWaiting();
-  workbox.core.clientsClaim();
+  workbox.core.skipWaiting()
+  workbox.core.clientsClaim()
 
   // Precache assets
   workbox.precaching.precacheAndRoute([
     { url: '/manifest.json', revision: '1' },
     { url: '/offline.html', revision: '1' },
     // Add other critical assets here
-  ]);
+  ])
 
   // Background sync for outbox mutations
   workbox.routing.registerRoute(
@@ -22,22 +24,24 @@ if (workbox) {
         new workbox.backgroundSync.BackgroundSyncPlugin('outbox-queue', {
           maxRetentionTime: 24 * 60, // Retry for up to 24 hours
           onSync: async ({ queue }) => {
-            console.log('Background sync triggered for outbox queue');
+            console.log('Background sync triggered for outbox queue')
             // Notify the app that sync is happening
-            const clients = await self.clients.matchAll();
-            clients.forEach(client => {
-              client.postMessage({ type: 'SYNC_START' });
-            });
-          }
-        })
-      ]
+            const clients = await self.clients.matchAll()
+            clients.forEach((client) => {
+              client.postMessage({ type: 'SYNC_START' })
+            })
+          },
+        }),
+      ],
     }),
     'POST'
-  );
+  )
 
   // Cache API responses for offline reading
   workbox.routing.registerRoute(
-    ({ url }) => url.pathname.startsWith('/api/') && url.searchParams.get('cache') === 'true',
+    ({ url }) =>
+      url.pathname.startsWith('/api/') &&
+      url.searchParams.get('cache') === 'true',
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'api-cache',
       plugins: [
@@ -47,7 +51,7 @@ if (workbox) {
         }),
       ],
     })
-  );
+  )
 
   // Offline fallback for navigation
   workbox.routing.setDefaultHandler(
@@ -56,26 +60,28 @@ if (workbox) {
         {
           handlerDidError: async ({ request }) => {
             if (request.destination === 'document') {
-              return caches.match('/offline.html');
+              return caches.match('/offline.html')
             }
-            return Response.error();
-          }
-        }
-      ]
+            return Response.error()
+          },
+        },
+      ],
     })
-  );
+  )
 
   // Handle messages from the main thread
   self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
-      self.skipWaiting();
+      self.skipWaiting()
     }
 
     if (event.data && event.data.type === 'SYNC_OUTBOX') {
       // Trigger background sync
-      workbox.backgroundSync.BackgroundSyncPlugin.getQueue('outbox-queue').replayRequests();
+      workbox.backgroundSync.BackgroundSyncPlugin.getQueue(
+        'outbox-queue'
+      ).replayRequests()
     }
-  });
+  })
 
   // Handle push notifications (optional)
   self.addEventListener('push', (event) => {
@@ -85,12 +91,10 @@ if (workbox) {
         body: data.body,
         icon: '/icon-192x192.png',
         badge: '/icon-192x192.png',
-        data: data.url
+        data: data.url,
       }
 
-      event.waitUntil(
-        self.registration.showNotification(data.title, options)
-      )
+      event.waitUntil(self.registration.showNotification(data.title, options))
     }
   })
 
@@ -127,10 +131,10 @@ if (workbox) {
   self.addEventListener('notificationclick', (event) => {
     event.notification.close()
 
-    event.waitUntil(
-      clients.openWindow(event.notification.data || '/')
-    )
+    event.waitUntil(clients.openWindow(event.notification.data || '/'))
   })
 } else {
-  console.log('Workbox could not be loaded. No offline functionality available.');
+  console.log(
+    'Workbox could not be loaded. No offline functionality available.'
+  )
 }

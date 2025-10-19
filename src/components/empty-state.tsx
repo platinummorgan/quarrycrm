@@ -34,48 +34,54 @@ export function EmptyState({
   actions,
   className,
   iconLabel,
-  showCta = true
+  showCta = true,
 }: EmptyStateProps) {
   return (
     <Card className={`border-dashed ${className || ''}`}>
-      <CardContent 
+      <CardContent
         className="flex flex-col items-center justify-center text-center"
-        style={{ 
+        style={{
           paddingTop: designTokens.spacing[16],
           paddingBottom: designTokens.spacing[16],
-          minHeight: '300px'
+          minHeight: '300px',
         }}
       >
         {Icon && (
-          <div 
+          <div
             className="rounded-full bg-muted p-3"
             style={{ marginBottom: designTokens.spacing[4] }}
             aria-label={iconLabel || 'Empty state icon'}
             role="img"
           >
-            <Icon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+            <Icon
+              className="h-8 w-8 text-muted-foreground"
+              aria-hidden="true"
+            />
           </div>
         )}
-        <h3 
+        <h3
           className="font-semibold text-foreground"
-          style={{ 
+          style={{
             fontSize: designTokens.typography.fontSize.lg,
-            marginBottom: designTokens.spacing[2]
+            marginBottom: designTokens.spacing[2],
           }}
         >
           {title}
         </h3>
-        <p 
-          className="text-muted-foreground max-w-sm"
-          style={{ 
+        <p
+          className="max-w-sm text-muted-foreground"
+          style={{
             fontSize: designTokens.typography.fontSize.sm,
-            marginBottom: actions && actions.length > 0 && showCta ? designTokens.spacing[6] : 0
+            marginBottom:
+              actions && actions.length > 0 && showCta
+                ? designTokens.spacing[6]
+                : 0,
           }}
         >
           {description}
         </p>
         {actions && actions.length > 0 && showCta && (
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             {actions.map((action, index) => {
               const ActionIcon = action.icon
               return (
@@ -84,11 +90,15 @@ export function EmptyState({
                   onClick={action.onClick}
                   variant={action.variant || 'default'}
                   className="flex items-center gap-2"
-                  style={{ minHeight: designTokens.accessibility.touchTargetMin }}
+                  style={{
+                    minHeight: designTokens.accessibility.touchTargetMin,
+                  }}
                   disabled={action.disabled}
                   title={action.tooltip}
                 >
-                  {ActionIcon && <ActionIcon className="h-4 w-4" aria-hidden="true" />}
+                  {ActionIcon && (
+                    <ActionIcon className="h-4 w-4" aria-hidden="true" />
+                  )}
                   {action.label}
                 </Button>
               )

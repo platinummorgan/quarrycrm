@@ -3,11 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { 
-  checkCombinedRateLimit, 
-  resetRateLimit, 
+import {
+  checkCombinedRateLimit,
+  resetRateLimit,
   WriteRateLimits,
-  withWriteRateLimit 
+  withWriteRateLimit,
 } from '@/lib/rate-limit'
 import { getRedisClient } from '@/lib/redis'
 import { NextRequest, NextResponse } from 'next/server'
@@ -44,11 +44,11 @@ describe('Combined Rate Limiting (IP + Org)', () => {
     // Clear rate limit state
     const testIps = ['192.168.1.100', '192.168.1.101', '192.168.1.102']
     const testOrgs = ['org-1', 'org-2', 'org-3']
-    
+
     for (const ip of testIps) {
       await resetRateLimit(ip, 'ratelimit:write:test:ip')
     }
-    
+
     for (const org of testOrgs) {
       await resetRateLimit(org, 'ratelimit:write:test:org')
     }
@@ -147,11 +147,7 @@ describe('Combined Rate Limiting (IP + Org)', () => {
         keyPrefix: 'ratelimit:write:test',
       }
 
-      const result = await checkCombinedRateLimit(
-        '192.168.1.104',
-        null,
-        config
-      )
+      const result = await checkCombinedRateLimit('192.168.1.104', null, config)
 
       expect(result.success).toBe(true)
       expect(result.limit).toBe(60)
@@ -187,15 +183,15 @@ describe('Combined Rate Limiting (IP + Org)', () => {
         return NextResponse.json({ success: true })
       })
 
-      const config = { 
-        limit: 60, 
-        burst: 120, 
-        windowMs: 60000, 
-        keyPrefix: 'test-write-middleware' 
+      const config = {
+        limit: 60,
+        burst: 120,
+        windowMs: 60000,
+        keyPrefix: 'test-write-middleware',
       }
-      
+
       const wrapped = withWriteRateLimit(
-        mockHandler, 
+        mockHandler,
         config,
         async () => 'org-test-1'
       )
@@ -220,15 +216,15 @@ describe('Combined Rate Limiting (IP + Org)', () => {
         return NextResponse.json({ success: true })
       })
 
-      const config = { 
-        limit: 60, 
-        burst: 2, 
-        windowMs: 60000, 
-        keyPrefix: 'test-write-burst' 
+      const config = {
+        limit: 60,
+        burst: 2,
+        windowMs: 60000,
+        keyPrefix: 'test-write-burst',
       }
-      
+
       const wrapped = withWriteRateLimit(
-        mockHandler, 
+        mockHandler,
         config,
         async () => 'org-test-2'
       )
@@ -258,15 +254,15 @@ describe('Combined Rate Limiting (IP + Org)', () => {
         return NextResponse.json({ success: true })
       })
 
-      const config = { 
-        limit: 60, 
-        burst: 1, 
-        windowMs: 60000, 
-        keyPrefix: 'test-write-retry' 
+      const config = {
+        limit: 60,
+        burst: 1,
+        windowMs: 60000,
+        keyPrefix: 'test-write-retry',
       }
-      
+
       const wrapped = withWriteRateLimit(
-        mockHandler, 
+        mockHandler,
         config,
         async () => 'org-test-3'
       )
@@ -290,16 +286,16 @@ describe('Combined Rate Limiting (IP + Org)', () => {
         return NextResponse.json({ success: true })
       })
 
-      const config = { 
-        limit: 60, 
-        burst: 120, 
-        windowMs: 60000, 
-        keyPrefix: 'test-write-scope' 
+      const config = {
+        limit: 60,
+        burst: 120,
+        windowMs: 60000,
+        keyPrefix: 'test-write-scope',
       }
-      
+
       // With org ID
       const wrappedWithOrg = withWriteRateLimit(
-        mockHandler, 
+        mockHandler,
         config,
         async () => 'org-test-4'
       )
@@ -314,7 +310,7 @@ describe('Combined Rate Limiting (IP + Org)', () => {
 
       // Without org ID
       const wrappedWithoutOrg = withWriteRateLimit(
-        mockHandler, 
+        mockHandler,
         config,
         async () => null
       )

@@ -103,10 +103,7 @@ describe('Deals Server Actions', () => {
           pipelineId: 'pipeline-1',
         },
         select: expect.any(Object),
-        orderBy: [
-          { updatedAt: 'desc' },
-          { id: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
         take: 26,
       })
     })
@@ -175,10 +172,7 @@ describe('Deals Server Actions', () => {
           deletedAt: null,
         },
         select: expect.any(Object),
-        orderBy: [
-          { isDefault: 'desc' },
-          { name: 'asc' },
-        ],
+        orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
       })
     })
   })
@@ -281,7 +275,9 @@ describe('Deals Server Actions', () => {
           dealId: 'deal-1',
           stageId: 'stage-2',
         })
-      ).rejects.toThrow('Stage not found or does not belong to the deal\'s pipeline')
+      ).rejects.toThrow(
+        "Stage not found or does not belong to the deal's pipeline"
+      )
     })
   })
 })

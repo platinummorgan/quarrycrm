@@ -33,8 +33,8 @@ export function OverdueTasks() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-2">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-4 w-3/4 rounded bg-muted"></div>
+            <div className="h-4 w-1/2 rounded bg-muted"></div>
           </div>
         </CardContent>
       </Card>
@@ -67,15 +67,25 @@ export function OverdueTasks() {
       </CardHeader>
       <CardContent className="space-y-3">
         {overdueTasks.items.map((task) => (
-          <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+          <div
+            key={task.id}
+            className="flex items-center justify-between rounded-lg border p-3"
+          >
             <div className="flex-1">
               <p className="font-medium">{task.description}</p>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span>Due {formatDistanceToNow(new Date(task.dueDate!), { addSuffix: true })}</span>
+                <span>
+                  Due{' '}
+                  {formatDistanceToNow(new Date(task.dueDate!), {
+                    addSuffix: true,
+                  })}
+                </span>
                 {task.contact && (
                   <>
                     <span>•</span>
-                    <span>{task.contact.firstName} {task.contact.lastName}</span>
+                    <span>
+                      {task.contact.firstName} {task.contact.lastName}
+                    </span>
                   </>
                 )}
                 {task.deal && (
@@ -92,7 +102,7 @@ export function OverdueTasks() {
               onClick={() => handleCompleteTask(task.id)}
               disabled={completeTaskMutation.isLoading}
             >
-              <CheckSquare className="h-4 w-4 mr-1" />
+              <CheckSquare className="mr-1 h-4 w-4" />
               Complete
             </Button>
           </div>

@@ -42,22 +42,24 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
     if (!orgMember) return null
 
     // Check actual completion status
-    const [pipelineCount, contactCount, dealCount, viewCount] = await Promise.all([
-      prisma.pipeline.count({
-        where: { organizationId: orgMember.organizationId },
-      }),
-      prisma.contact.count({
-        where: { organizationId: orgMember.organizationId },
-      }),
-      prisma.deal.count({
-        where: { organizationId: orgMember.organizationId },
-      }),
-      prisma.savedView.count({
-        where: { organizationId: orgMember.organizationId },
-      }),
-    ])
+    const [pipelineCount, contactCount, dealCount, viewCount] =
+      await Promise.all([
+        prisma.pipeline.count({
+          where: { organizationId: orgMember.organizationId },
+        }),
+        prisma.contact.count({
+          where: { organizationId: orgMember.organizationId },
+        }),
+        prisma.deal.count({
+          where: { organizationId: orgMember.organizationId },
+        }),
+        prisma.savedView.count({
+          where: { organizationId: orgMember.organizationId },
+        }),
+      ])
 
-    const currentProgress = orgMember.onboardingProgress as Partial<OnboardingProgress> | null
+    const currentProgress =
+      orgMember.onboardingProgress as Partial<OnboardingProgress> | null
 
     const progress: OnboardingProgress = {
       create_pipeline: pipelineCount > 0,
@@ -68,14 +70,15 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
     }
 
     // Update if changed
-    const hasChanged = JSON.stringify(currentProgress) !== JSON.stringify(progress)
+    const hasChanged =
+      JSON.stringify(currentProgress) !== JSON.stringify(progress)
     if (hasChanged) {
       await (prisma.orgMember as any).update({
         where: { id: member.id },
         data: {
-            onboardingProgress: (progress as unknown) as any,
-            onboardingCompleted: Object.values(progress).every(Boolean),
-          },
+          onboardingProgress: progress as unknown as any,
+          onboardingCompleted: Object.values(progress).every(Boolean),
+        },
       })
     }
 
@@ -123,7 +126,8 @@ export async function completeOnboardingTask(
 
     const orgMember = await getOnboardingStatus(member.id)
 
-    const currentProgress = (orgMember?.onboardingProgress as Partial<OnboardingProgress>) || {}
+    const currentProgress =
+      (orgMember?.onboardingProgress as Partial<OnboardingProgress>) || {}
 
     const updatedProgress: OnboardingProgress = {
       create_pipeline: false,
@@ -138,7 +142,7 @@ export async function completeOnboardingTask(
     await (prisma.orgMember as any).update({
       where: { id: member.id },
       data: {
-        onboardingProgress: (updatedProgress as unknown) as any,
+        onboardingProgress: updatedProgress as unknown as any,
         onboardingCompleted: Object.values(updatedProgress).every(Boolean),
       },
     })

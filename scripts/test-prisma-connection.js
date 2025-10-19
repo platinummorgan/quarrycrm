@@ -13,7 +13,10 @@ if (fs.existsSync(envPath)) {
     if (eq === -1) continue
     let key = trimmed.slice(0, eq).trim()
     let val = trimmed.slice(eq + 1).trim()
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
       val = val.slice(1, -1)
     }
     process.env[key] = val
@@ -33,9 +36,15 @@ if (fs.existsSync(envPath)) {
     console.error('Connection test failed:', err)
     // Try a fallback: remove channel_binding parameter which can break some TLS configs
     try {
-      const fallbackUrl = (process.env.DATABASE_URL || '').replace(/&?channel_binding=require/, '')
+      const fallbackUrl = (process.env.DATABASE_URL || '').replace(
+        /&?channel_binding=require/,
+        ''
+      )
       if (!fallbackUrl || fallbackUrl === process.env.DATABASE_URL) throw err
-      console.log('Retrying with fallback URL (removed channel_binding):', fallbackUrl)
+      console.log(
+        'Retrying with fallback URL (removed channel_binding):',
+        fallbackUrl
+      )
       process.env.DATABASE_URL = fallbackUrl
       const { PrismaClient: PrismaClient2 } = require('@prisma/client')
       const prisma2 = new PrismaClient2()

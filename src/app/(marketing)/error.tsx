@@ -11,16 +11,13 @@ export const metadata = makeSEO({
 
 export default function ErrorPage() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Error</h1>
-        <p className="text-muted-foreground mb-8">
+        <h1 className="mb-4 text-4xl font-bold">Error</h1>
+        <p className="mb-8 text-muted-foreground">
           An error occurred while loading this page.
         </p>
-        <Link
-          href="/"
-          className="text-primary hover:text-primary/80 underline"
-        >
+        <Link href="/" className="text-primary underline hover:text-primary/80">
           Go home
         </Link>
       </div>

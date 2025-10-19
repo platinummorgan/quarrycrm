@@ -24,14 +24,10 @@ export async function GET(request: NextRequest) {
 
     const templates = await prisma.importTemplate.findMany({
       where,
-      orderBy: [
-        { isDefault: 'desc' },
-        { updatedAt: 'desc' },
-      ],
+      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
     })
 
     return NextResponse.json({ templates })
-
   } catch (error) {
     console.error('Get templates error:', error)
     return NextResponse.json(
@@ -87,7 +83,6 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ template })
-
   } catch (error) {
     console.error('Create template error:', error)
     return NextResponse.json(
@@ -152,7 +147,6 @@ export async function PUT(request: NextRequest) {
     })
 
     return NextResponse.json({ template })
-
   } catch (error) {
     console.error('Update template error:', error)
     return NextResponse.json(
@@ -192,7 +186,6 @@ export async function DELETE(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-
   } catch (error) {
     console.error('Delete template error:', error)
     return NextResponse.json(

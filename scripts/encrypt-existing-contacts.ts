@@ -1,19 +1,23 @@
 /**
  * Data Migration: Encrypt existing Contact fields
- * 
+ *
  * This script encrypts existing plaintext contact data and generates search hashes.
  * Safe to run multiple times (skips already encrypted records).
- * 
+ *
  * Usage:
  *   tsx scripts/encrypt-existing-contacts.ts
- * 
+ *
  * Options:
  *   --dry-run     Show what would be encrypted without making changes
  *   --batch-size  Number of records to process per batch (default: 100)
  */
 
 import { PrismaClient } from '@prisma/client'
-import { encryptField, makeSearchToken, isEncrypted } from '../src/lib/crypto/fields'
+import {
+  encryptField,
+  makeSearchToken,
+  isEncrypted,
+} from '../src/lib/crypto/fields'
 
 const prisma = new PrismaClient()
 
@@ -74,7 +78,9 @@ async function migrateContactEncryption(
         take: batchSize,
       })
 
-      console.log(`\n📦 Processing batch: ${skip + 1}-${skip + contacts.length} of ${totalContacts}`)
+      console.log(
+        `\n📦 Processing batch: ${skip + 1}-${skip + contacts.length} of ${totalContacts}`
+      )
 
       for (const contact of contacts) {
         try {
@@ -126,9 +132,13 @@ async function migrateContactEncryption(
           }
         } catch (error) {
           stats.failed++
-          const errorMsg = error instanceof Error ? error.message : String(error)
+          const errorMsg =
+            error instanceof Error ? error.message : String(error)
           stats.errors.push({ id: contact.id, error: errorMsg })
-          console.error(`  ❌ Failed to encrypt contact ${contact.id}:`, errorMsg)
+          console.error(
+            `  ❌ Failed to encrypt contact ${contact.id}:`,
+            errorMsg
+          )
         }
 
         processed++
@@ -156,7 +166,7 @@ async function migrateContactEncryption(
 function parseArgs(): { dryRun: boolean; batchSize: number } {
   const args = process.argv.slice(2)
   const dryRun = args.includes('--dry-run')
-  
+
   const batchSizeArg = args.find((arg) => arg.startsWith('--batch-size='))
   const batchSize = batchSizeArg
     ? parseInt(batchSizeArg.split('=')[1], 10)
@@ -183,13 +193,17 @@ async function main() {
   // Validate environment variables
   if (!process.env.ENCRYPTION_KEY) {
     console.error('❌ ERROR: ENCRYPTION_KEY environment variable not set')
-    console.error('   Generate a key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"')
+    console.error(
+      "   Generate a key with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    )
     process.exit(1)
   }
 
   if (!process.env.SEARCH_SALT) {
     console.error('❌ ERROR: SEARCH_SALT environment variable not set')
-    console.error('   Generate a salt with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"')
+    console.error(
+      "   Generate a salt with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    )
     process.exit(1)
   }
 
@@ -229,8 +243,7 @@ async function main() {
   }
 }
 
-main()
-  .catch((error) => {
-    console.error('💥 Fatal error:', error)
-    process.exit(1)
-  })
+main().catch((error) => {
+  console.error('💥 Fatal error:', error)
+  process.exit(1)
+})

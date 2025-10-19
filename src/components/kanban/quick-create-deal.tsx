@@ -15,7 +15,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 
 const createDealSchema = z.object({
@@ -40,7 +46,7 @@ export function QuickCreateDeal({
   pipelineId,
   defaultStageId,
   onSuccess,
-  trigger
+  trigger,
 }: QuickCreateDealProps) {
   const [open, setOpen] = useState(false)
 
@@ -67,15 +73,15 @@ export function QuickCreateDeal({
 
   // Find selected pipeline
   const selectedPipeline = pipelineId
-    ? pipelines.find(p => p.id === pipelineId)
-    : pipelines.find(p => p.isDefault) || pipelines[0]
+    ? pipelines.find((p) => p.id === pipelineId)
+    : pipelines.find((p) => p.isDefault) || pipelines[0]
 
   // Get stages from selected pipeline
   const stages = selectedPipeline?.stages || []
 
   // Default stage is the first stage or the provided defaultStageId
   const defaultStage = defaultStageId
-    ? stages.find(s => s.id === defaultStageId)
+    ? stages.find((s) => s.id === defaultStageId)
     : stages[0]
 
   const createDealMutation = trpc.deals.create.useMutation({
@@ -93,7 +99,9 @@ export function QuickCreateDeal({
       title: data.title,
       value: data.value,
       probability: data.probability,
-      expectedClose: data.expectedClose ? new Date(data.expectedClose) : undefined,
+      expectedClose: data.expectedClose
+        ? new Date(data.expectedClose)
+        : undefined,
       stageId: defaultStage?.id,
       pipelineId: selectedPipeline.id,
       contactId: data.contactId || undefined,
@@ -110,14 +118,13 @@ export function QuickCreateDeal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Deal</DialogTitle>
           <DialogDescription>
-            Add a new deal to your pipeline. It will be placed in the first stage by default.
+            Add a new deal to your pipeline. It will be placed in the first
+            stage by default.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +136,7 @@ export function QuickCreateDeal({
               {...form.register('title')}
             />
             {form.formState.errors.title && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="mt-1 text-sm text-red-500">
                 {form.formState.errors.title.message}
               </p>
             )}
@@ -142,11 +149,11 @@ export function QuickCreateDeal({
                 type="number"
                 placeholder="10000"
                 {...form.register('value', {
-                  setValueAs: (value) => value ? Number(value) : undefined
+                  setValueAs: (value) => (value ? Number(value) : undefined),
                 })}
               />
               {form.formState.errors.value && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {form.formState.errors.value.message}
                 </p>
               )}
@@ -158,11 +165,11 @@ export function QuickCreateDeal({
                 type="number"
                 placeholder="50"
                 {...form.register('probability', {
-                  setValueAs: (value) => Number(value)
+                  setValueAs: (value) => Number(value),
                 })}
               />
               {form.formState.errors.probability && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {form.formState.errors.probability.message}
                 </p>
               )}
@@ -171,12 +178,9 @@ export function QuickCreateDeal({
 
           <div>
             <label className="text-sm font-medium">Expected Close Date</label>
-            <Input
-              type="date"
-              {...form.register('expectedClose')}
-            />
+            <Input type="date" {...form.register('expectedClose')} />
             {form.formState.errors.expectedClose && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="mt-1 text-sm text-red-500">
                 {form.formState.errors.expectedClose.message}
               </p>
             )}
@@ -200,7 +204,7 @@ export function QuickCreateDeal({
               </SelectContent>
             </Select>
             {form.formState.errors.contactId && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="mt-1 text-sm text-red-500">
                 {form.formState.errors.contactId.message}
               </p>
             )}
@@ -224,7 +228,7 @@ export function QuickCreateDeal({
               </SelectContent>
             </Select>
             {form.formState.errors.companyId && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="mt-1 text-sm text-red-500">
                 {form.formState.errors.companyId.message}
               </p>
             )}
@@ -238,10 +242,7 @@ export function QuickCreateDeal({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={createDealMutation.isLoading}
-            >
+            <Button type="submit" disabled={createDealMutation.isLoading}>
               {createDealMutation.isLoading ? 'Creating...' : 'Create Deal'}
             </Button>
           </div>

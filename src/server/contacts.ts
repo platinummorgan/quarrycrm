@@ -2,7 +2,12 @@
 
 import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
-import { contactFiltersSchema, createContactSchema, updateContactSchema, type ContactListResponse } from '@/lib/zod/contacts'
+import {
+  contactFiltersSchema,
+  createContactSchema,
+  updateContactSchema,
+  type ContactListResponse,
+} from '@/lib/zod/contacts'
 import { revalidatePath } from 'next/cache'
 import { PerformanceUtils } from '@/lib/metrics'
 
@@ -12,105 +17,110 @@ export async function getContacts(
   // Optional execution context to avoid request-scoped calls in tests/perf
   ctx?: { orgId: string; userId?: string }
 ): Promise<ContactListResponse> {
-  return PerformanceUtils.measureServerOperation('contacts-list', async () => {
-    const orgContext = ctx ?? (await requireOrg())
-    const { orgId } = orgContext
-    const { q, limit = 25, cursor } = contactFiltersSchema.parse(filters)
+  return PerformanceUtils.measureServerOperation(
+    'contacts-list',
+    async () => {
+      const orgContext = ctx ?? (await requireOrg())
+      const { orgId } = orgContext
+      const { q, limit = 25, cursor } = contactFiltersSchema.parse(filters)
 
-    // Build where clause
-    const where: any = {
-      organizationId: orgId,
-      deletedAt: null,
-    }
+      // Build where clause
+      const where: any = {
+        organizationId: orgId,
+        deletedAt: null,
+      }
 
-    // Add search filter using pg_trgm
-    if (q && q.trim()) {
-      where.OR = [
-        {
-          firstName: {
-            search: q.trim(),
-          },
-        },
-        {
-          lastName: {
-            search: q.trim(),
-          },
-        },
-        {
-          email: {
-            search: q.trim(),
-          },
-        },
-      ]
-    }
-
-    // Keyset pagination using updatedAt + id as cursor
-    if (cursor) {
-      try {
-        const [updatedAtStr, cursorId] = cursor.split('_')
-        const cursorDate = new Date(updatedAtStr)
+      // Add search filter using pg_trgm
+      if (q && q.trim()) {
         where.OR = [
           {
-            updatedAt: { lt: cursorDate },
+            firstName: {
+              search: q.trim(),
+            },
           },
           {
-            updatedAt: cursorDate,
-            id: { lt: cursorId },
+            lastName: {
+              search: q.trim(),
+            },
+          },
+          {
+            email: {
+              search: q.trim(),
+            },
           },
         ]
-      } catch (e) {
-        // Invalid cursor, ignore
       }
-    }
 
-    // Get total count for pagination info
-    const total = await prisma.contact.count({ where })
+      // Keyset pagination using updatedAt + id as cursor
+      if (cursor) {
+        try {
+          const [updatedAtStr, cursorId] = cursor.split('_')
+          const cursorDate = new Date(updatedAtStr)
+          where.OR = [
+            {
+              updatedAt: { lt: cursorDate },
+            },
+            {
+              updatedAt: cursorDate,
+              id: { lt: cursorId },
+            },
+          ]
+        } catch (e) {
+          // Invalid cursor, ignore
+        }
+      }
 
-    // Get contacts with optimized select
-    const items = await prisma.contact.findMany({
-      where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        owner: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+      // Get total count for pagination info
+      const total = await prisma.contact.count({ where })
+
+      // Get contacts with optimized select
+      const items = await prisma.contact.findMany({
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          owner: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
             },
           },
+          updatedAt: true,
+          createdAt: true,
         },
-        updatedAt: true,
-        createdAt: true,
-      },
-      orderBy: [
-        { updatedAt: 'desc' },
-        { id: 'desc' }, // Secondary sort for stable pagination
-      ],
-      take: limit + 1, // Take one extra to check if there are more
-    })
+        orderBy: [
+          { updatedAt: 'desc' },
+          { id: 'desc' }, // Secondary sort for stable pagination
+        ],
+        take: limit + 1, // Take one extra to check if there are more
+      })
 
-    const hasMore = items.length > limit
-    const actualItems = hasMore ? items.slice(0, limit) : items
-    const nextCursor = hasMore && actualItems.length > 0
-      ? `${actualItems[actualItems.length - 1].updatedAt.toISOString()}_${actualItems[actualItems.length - 1].id}`
-      : null
+      const hasMore = items.length > limit
+      const actualItems = hasMore ? items.slice(0, limit) : items
+      const nextCursor =
+        hasMore && actualItems.length > 0
+          ? `${actualItems[actualItems.length - 1].updatedAt.toISOString()}_${actualItems[actualItems.length - 1].id}`
+          : null
 
-    return {
-      items: actualItems,
-      nextCursor,
-      hasMore,
-      total,
-    }
-  }, { query: filters.q, limit: filters.limit }).then(({ result }) => result)
-}// Server action to get a single contact
+      return {
+        items: actualItems,
+        nextCursor,
+        hasMore,
+        total,
+      }
+    },
+    { query: filters.q, limit: filters.limit }
+  ).then(({ result }) => result)
+} // Server action to get a single contact
 export async function getContactById(id: string) {
   const { orgId } = await requireOrg()
 

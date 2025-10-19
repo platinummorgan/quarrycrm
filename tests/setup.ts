@@ -39,7 +39,10 @@ const loadEnvTest = () => {
       if (eq === -1) continue
       let key = trimmed.slice(0, eq).trim()
       let val = trimmed.slice(eq + 1).trim()
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
         val = val.slice(1, -1)
       }
       // Force override so test runner workers always use .env.test values
@@ -54,7 +57,8 @@ loadEnvTest()
 
 // Set deterministic test encryption key early (32 bytes hex, 64 chars)
 if (!process.env.ENCRYPTION_KEY) {
-  process.env.ENCRYPTION_KEY = '000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f'
+  process.env.ENCRYPTION_KEY =
+    '000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f'
 }
 
 import { resetPostgresDb, closePrisma, withAdvisoryLock } from './db-reset'
@@ -69,7 +73,10 @@ const mask = (v?: string) => (v ? v.replace(/(.{10}).+/, '$1…') : v)
 // eslint-disable-next-line no-console
 console.log('tests/setup.ts: DATABASE_URL=', mask(process.env.DATABASE_URL))
 // eslint-disable-next-line no-console
-console.log('tests/setup.ts: TEST_DATABASE_URL=', mask(process.env.TEST_DATABASE_URL))
+console.log(
+  'tests/setup.ts: TEST_DATABASE_URL=',
+  mask(process.env.TEST_DATABASE_URL)
+)
 
 // Minimal env defaults for tests
 const ensureEnv = (key: keyof NodeJS.ProcessEnv, value: string) => {
@@ -104,7 +111,9 @@ if (process.env.TEST_DATABASE_URL) {
 // Safety guard: ensure the URL's database name ends with _test
 const url = process.env.DATABASE_URL
 const isClearlyTestDb =
-  !!url && /\/[^/?#]+/i.test(url) && /_test$/i.test(url.split('?')[0].split('/').pop() || '')
+  !!url &&
+  /\/[^/?#]+/i.test(url) &&
+  /_test$/i.test(url.split('?')[0].split('/').pop() || '')
 
 if (!isClearlyTestDb && process.env.ALLOW_UNSAFE_TEST_DB !== '1') {
   throw new Error(
@@ -127,7 +136,9 @@ globalThis.__dbReset = (client?: any) => {
   }
 
   if (typeof globalThis.__withAdvisoryLock === 'function') {
-    return globalThis.__withAdvisoryLock(async (tx: typeof prisma) => resetPostgresDb(tx))
+    return globalThis.__withAdvisoryLock(async (tx: typeof prisma) =>
+      resetPostgresDb(tx)
+    )
   }
 
   return resetPostgresDb(prisma)

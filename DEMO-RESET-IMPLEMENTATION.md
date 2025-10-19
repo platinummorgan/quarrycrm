@@ -15,12 +15,14 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 **File**: `src/app/api/admin/demo-reset/route.ts` (NEW - 228 lines)
 
 **Purpose**:
+
 - Truncate and reseed demo organization data
 - Idempotent operation (can be run multiple times safely)
 - OWNER-only access
 - Non-production only
 
 **Security Checks**:
+
 1. ✅ Environment check: Only works when `NEXT_PUBLIC_APP_ENV !== 'prod'`
 2. ✅ Authentication: Requires valid session
 3. ✅ Organization check: Verifies "Quarry Demo" organization exists
@@ -28,6 +30,7 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 5. ✅ Role check: User must have OWNER role
 
 **Process Flow**:
+
 ```
 1. Validate environment (non-prod only)
 2. Authenticate user
@@ -36,7 +39,7 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 5. Get "before" stats
 6. Delete all demo data:
    - Activities
-   - Deals  
+   - Deals
    - Contacts
    - Companies
 7. Run seed-demo script
@@ -45,6 +48,7 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 ```
 
 **Response Format**:
+
 ```json
 {
   "success": true,
@@ -74,17 +78,20 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 **File**: `src/components/settings/DemoResetButton.tsx` (NEW - 148 lines)
 
 **Purpose**:
+
 - Provide UI to trigger demo reset
 - Confirmation dialog before reset
 - Loading states and feedback
 
 **Visibility Rules**:
+
 - ❌ Hidden in production (`NEXT_PUBLIC_APP_ENV === 'prod'`)
 - ❌ Hidden for non-demo users
 - ❌ Hidden for non-OWNER roles
 - ✅ Visible only for demo org OWNER in non-prod
 
 **Features**:
+
 - ✅ Confirmation dialog with warning
 - ✅ Shows what will be regenerated (3k contacts, 500 companies, etc.)
 - ✅ Loading spinner during reset
@@ -94,6 +101,7 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 - ✅ Error handling
 
 **Visual States**:
+
 ```
 [Default]  Reset Demo Data
 [Loading]  Resetting... (with spinner)
@@ -109,11 +117,13 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 **File**: `src/app/(app)/settings/page.tsx` (MODIFIED)
 
 **Changes**:
+
 - Added `DemoResetButton` import
 - Added "Demo Data Management" card
 - Card only appears when button is visible (same rules)
 
 **Card Features**:
+
 - Yellow border to indicate special/warning state
 - Database icon
 - Description of what gets reset
@@ -154,6 +164,7 @@ Created `/api/admin/demo-reset` endpoint and integrated a reset button in the se
 ### Multi-Layer Protection
 
 **Layer 1: Environment Check**
+
 ```typescript
 const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'prod'
 if (isProduction) {
@@ -162,6 +173,7 @@ if (isProduction) {
 ```
 
 **Layer 2: Authentication**
+
 ```typescript
 const session = await getServerSession(authOptions)
 if (!session?.user) {
@@ -170,9 +182,10 @@ if (!session?.user) {
 ```
 
 **Layer 3: Organization Verification**
+
 ```typescript
 const demoOrg = await prisma.organization.findFirst({
-  where: { name: 'Quarry Demo' }
+  where: { name: 'Quarry Demo' },
 })
 if (!demoOrg) {
   return 404 // Demo org doesn't exist
@@ -180,14 +193,15 @@ if (!demoOrg) {
 ```
 
 **Layer 4: Membership Check**
+
 ```typescript
 const membership = await prisma.orgMember.findUnique({
   where: {
     organizationId_userId: {
       organizationId: demoOrg.id,
       userId: session.user.id,
-    }
-  }
+    },
+  },
 })
 if (!membership) {
   return 403 // Not a member
@@ -195,6 +209,7 @@ if (!membership) {
 ```
 
 **Layer 5: Role Check**
+
 ```typescript
 if (membership.role !== 'OWNER') {
   return 403 // Only owners can reset
@@ -239,6 +254,7 @@ if (membership.role !== 'OWNER') {
 ### Error Responses
 
 **Production Environment**:
+
 ```json
 {
   "success": false,
@@ -248,6 +264,7 @@ if (membership.role !== 'OWNER') {
 ```
 
 **Not Authenticated**:
+
 ```json
 {
   "success": false,
@@ -257,6 +274,7 @@ if (membership.role !== 'OWNER') {
 ```
 
 **Demo Org Not Found**:
+
 ```json
 {
   "success": false,
@@ -266,6 +284,7 @@ if (membership.role !== 'OWNER') {
 ```
 
 **Not a Member**:
+
 ```json
 {
   "success": false,
@@ -275,6 +294,7 @@ if (membership.role !== 'OWNER') {
 ```
 
 **Insufficient Permissions**:
+
 ```json
 {
   "success": false,
@@ -285,6 +305,7 @@ if (membership.role !== 'OWNER') {
 ```
 
 **Seed Script Failed**:
+
 ```json
 {
   "success": false,
@@ -369,11 +390,13 @@ Failed to reset demo data: [error message]
 ### Test as Demo Owner
 
 **Prerequisites**:
+
 1. Environment: `NEXT_PUBLIC_APP_ENV="preview"` or `"development"`
 2. User: Logged in as demo org OWNER
 3. Organization: "Quarry Demo" exists
 
 **Steps**:
+
 1. Navigate to `/app/settings`
 2. Verify "Demo Data Management" card is visible
 3. Click "Reset Demo Data" button
@@ -398,6 +421,7 @@ curl -X POST http://localhost:3000/api/admin/demo-reset \
 ### Test Security
 
 **Test 1: Production Environment**
+
 ```bash
 # Set NEXT_PUBLIC_APP_ENV="prod"
 # Visit /app/settings
@@ -409,12 +433,14 @@ curl -X POST http://localhost:3000/api/admin/demo-reset
 ```
 
 **Test 2: Not Authenticated**
+
 ```bash
 curl -X POST http://localhost:3000/api/admin/demo-reset
 # Expected: 401 Unauthorized
 ```
 
 **Test 3: Regular Member (Not Owner)**
+
 ```bash
 # Log in as MEMBER or ADMIN (not OWNER)
 # Visit /app/settings
@@ -425,6 +451,7 @@ curl -X POST http://localhost:3000/api/admin/demo-reset
 ```
 
 **Test 4: Non-Demo Organization**
+
 ```bash
 # Log in as OWNER of different organization
 # Visit /app/settings
@@ -439,10 +466,12 @@ curl -X POST http://localhost:3000/api/admin/demo-reset
 ## 📁 Files Created/Modified
 
 ### Created (2 files)
+
 - ✅ `src/app/api/admin/demo-reset/route.ts` (228 lines) - API endpoint
 - ✅ `src/components/settings/DemoResetButton.tsx` (148 lines) - UI component
 
 ### Modified (1 file)
+
 - ✅ `src/app/(app)/settings/page.tsx` - Added demo reset card
 
 **Total**: ~400 new lines of code
@@ -454,12 +483,14 @@ curl -X POST http://localhost:3000/api/admin/demo-reset
 ### Environment Variables
 
 No new environment variables needed. Uses existing:
+
 - `NEXT_PUBLIC_APP_ENV` - Already set
 - Session/auth - Already configured
 
 ### Production Behavior
 
 **When `NEXT_PUBLIC_APP_ENV="prod"`**:
+
 - ❌ Button is hidden in UI
 - ❌ Card doesn't appear in settings
 - ❌ API returns 403 if called directly
@@ -469,6 +500,7 @@ No new environment variables needed. Uses existing:
 ### Non-Production Behavior
 
 **When `NEXT_PUBLIC_APP_ENV !== "prod"`**:
+
 - ✅ Button visible for demo org owners
 - ✅ Card appears in settings
 - ✅ API endpoint functional
@@ -508,6 +540,7 @@ Seed script output: [stdout from seed-demo.ts]
 **Scenario**: Demo data becomes corrupted or unrealistic
 
 **Solution**:
+
 ```
 1. Navigate to Settings
 2. Click "Reset Demo Data"
@@ -521,6 +554,7 @@ Seed script output: [stdout from seed-demo.ts]
 **Scenario**: Testing seed script modifications
 
 **Solution**:
+
 1. Modify `scripts/seed-demo.ts`
 2. Use reset button to regenerate
 3. Verify changes immediately
@@ -531,6 +565,7 @@ Seed script output: [stdout from seed-demo.ts]
 **Scenario**: Keep demo environment fresh
 
 **Solution**:
+
 - Reset weekly/monthly
 - Ensures consistent demo experience
 - Removes any test pollution
@@ -540,6 +575,7 @@ Seed script output: [stdout from seed-demo.ts]
 **Scenario**: Preparing for demo or training
 
 **Solution**:
+
 - Reset before demo starts
 - Ensures predictable data
 - Known quantities for demos
@@ -589,6 +625,7 @@ Seed script output: [stdout from seed-demo.ts]
 ## 📊 Stats Comparison
 
 ### Before Reset
+
 ```
 Companies:  500
 Contacts:   3,000
@@ -597,6 +634,7 @@ Activities: 300
 ```
 
 ### After Reset
+
 ```
 Companies:  500  (fresh IDs)
 Contacts:   3,000  (fresh IDs)

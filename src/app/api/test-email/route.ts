@@ -8,19 +8,22 @@ export async function GET(request: NextRequest) {
     const emailFrom = process.env.EMAIL_FROM?.trim()
 
     if (!apiKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'RESEND_API_KEY not found',
-        env: {
-          hasApiKey: false,
-          hasEmailFrom: !!emailFrom,
-          nodeEnv: process.env.NODE_ENV,
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'RESEND_API_KEY not found',
+          env: {
+            hasApiKey: false,
+            hasEmailFrom: !!emailFrom,
+            nodeEnv: process.env.NODE_ENV,
+          },
         },
-      }, { status: 500 })
+        { status: 500 }
+      )
     }
 
     const resend = new Resend(apiKey)
-    
+
     const result = await resend.emails.send({
       from: emailFrom || 'noreply@mail.quarrycrm.com',
       to: 'mdorminey79@gmail.com',
@@ -29,16 +32,19 @@ export async function GET(request: NextRequest) {
     })
 
     if (result.error) {
-      return NextResponse.json({
-        success: false,
-        error: result.error,
-        env: {
-          hasApiKey: true,
-          hasEmailFrom: !!emailFrom,
-          emailFrom: emailFrom,
-          apiKeyPrefix: apiKey.substring(0, 10),
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error,
+          env: {
+            hasApiKey: true,
+            hasEmailFrom: !!emailFrom,
+            emailFrom: emailFrom,
+            apiKeyPrefix: apiKey.substring(0, 10),
+          },
         },
-      }, { status: 500 })
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
@@ -51,10 +57,13 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      stack: error.stack,
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        stack: error.stack,
+      },
+      { status: 500 }
+    )
   }
 }

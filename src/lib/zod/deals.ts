@@ -6,15 +6,17 @@ export const pipelineSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   isDefault: z.boolean(),
-  stages: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    order: z.number(),
-    color: z.string().nullable(),
-    _count: z.object({
-      deals: z.number(),
-    }),
-  })),
+  stages: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      order: z.number(),
+      color: z.string().nullable(),
+      _count: z.object({
+        deals: z.number(),
+      }),
+    })
+  ),
 })
 
 export const dealSchema = z.object({
@@ -23,25 +25,31 @@ export const dealSchema = z.object({
   value: z.number().nullable(),
   probability: z.number().nullable(),
   expectedClose: z.date().nullable(),
-  stage: z.object({
-    id: z.string(),
-    name: z.string(),
-    color: z.string().nullable(),
-  }).nullable(),
+  stage: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      color: z.string().nullable(),
+    })
+    .nullable(),
   pipeline: z.object({
     id: z.string(),
     name: z.string(),
   }),
-  contact: z.object({
-    id: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string().nullable(),
-  }).nullable(),
-  company: z.object({
-    id: z.string(),
-    name: z.string(),
-  }).nullable(),
+  contact: z
+    .object({
+      id: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      email: z.string().nullable(),
+    })
+    .nullable(),
+  company: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   owner: z.object({
     id: z.string(),
     user: z.object({

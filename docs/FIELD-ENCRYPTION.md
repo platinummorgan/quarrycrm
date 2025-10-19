@@ -18,11 +18,11 @@ Field-level encryption for sensitive Contact data using **AES-256-GCM AEAD** (Au
 
 ### Contact Model
 
-| Field | Encrypted | Searchable | Notes |
-|-------|-----------|------------|-------|
-| `email` | ✅ | ✅ | Exact match via `email_hash` |
-| `phone` | ✅ | ✅ | Exact match via `phone_hash` |
-| `notes` | ✅ | ❌ | Full encryption only |
+| Field   | Encrypted | Searchable | Notes                        |
+| ------- | --------- | ---------- | ---------------------------- |
+| `email` | ✅        | ✅         | Exact match via `email_hash` |
+| `phone` | ✅        | ✅         | Exact match via `phone_hash` |
+| `notes` | ✅        | ❌         | Full encryption only         |
 
 ## Architecture
 
@@ -34,6 +34,7 @@ v1:a1b2c3d4e5f6...789abc:1a2b3c4d5e6f...890abc:9f8e7d6c5b4a...321098
 ```
 
 **Components**:
+
 - **version**: Key version (e.g., `v1`, `v2`) - enables rotation
 - **nonce**: 96-bit random nonce (12 bytes = 24 hex chars)
 - **ciphertext**: Encrypted data (variable length)
@@ -46,6 +47,7 @@ BLAKE2b-256(salt + normalize(value))
 ```
 
 **Properties**:
+
 - Deterministic: Same input → same hash
 - Case-insensitive: Values normalized before hashing
 - Fast: BLAKE2b is faster than SHA-256
@@ -84,6 +86,7 @@ ENCRYPTION_KEY_V2=abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567
 ```
 
 ⚠️ **CRITICAL**: Store keys securely:
+
 - Use environment variables (never commit to git)
 - Use secret management (AWS Secrets Manager, Vault, etc.)
 - Back up keys securely (lost keys = lost data)
@@ -100,6 +103,7 @@ npx prisma migrate dev
 ```
 
 This adds:
+
 - `notes` column (TEXT)
 - `email_hash` column (TEXT)
 - `phone_hash` column (TEXT)
@@ -151,8 +155,8 @@ const contact = await prisma.contact.create({
     firstName: 'John',
     lastName: 'Doe',
     email: 'john@example.com', // Encrypted automatically
-    phone: '+1234567890',       // Encrypted automatically
-    notes: 'Important notes',   // Encrypted automatically
+    phone: '+1234567890', // Encrypted automatically
+    notes: 'Important notes', // Encrypted automatically
     organizationId: 'org123',
     ownerId: 'user123',
   },
@@ -328,28 +332,32 @@ const KEY_VERSION = 'v2' // Change from v1 to v2
 
 ```typescript
 import { prisma } from '@/lib/db'
-import { rotateFieldKey, isEncrypted, getEncryptionVersion } from '@/lib/crypto/fields'
+import {
+  rotateFieldKey,
+  isEncrypted,
+  getEncryptionVersion,
+} from '@/lib/crypto/fields'
 
 async function rotateContactKeys() {
   const contacts = await prisma.contact.findMany()
-  
+
   for (const contact of contacts) {
     const updates: any = {}
-    
+
     if (contact.email && getEncryptionVersion(contact.email) === 'v1') {
       updates.email = rotateFieldKey(contact.email, 'v2')
       updates.email_hash = makeSearchToken(decryptField(contact.email))
     }
-    
+
     if (contact.phone && getEncryptionVersion(contact.phone) === 'v1') {
       updates.phone = rotateFieldKey(contact.phone, 'v2')
       updates.phone_hash = makeSearchToken(decryptField(contact.phone))
     }
-    
+
     if (contact.notes && getEncryptionVersion(contact.notes) === 'v1') {
       updates.notes = rotateFieldKey(contact.notes, 'v2')
     }
-    
+
     if (Object.keys(updates).length > 0) {
       await prisma.contact.update({
         where: { id: contact.id },
@@ -395,12 +403,12 @@ ENCRYPTION_KEY_V2=newkey...
 
 ### Encryption Overhead
 
-| Operation | Overhead | Notes |
-|-----------|----------|-------|
-| INSERT | ~0.5-1ms | Per contact (3 fields) |
-| SELECT | ~0.3-0.7ms | Per contact (3 fields) |
-| SEARCH | ~0ms | Uses indexed hash |
-| UPDATE | ~0.5-1ms | Only encrypted fields |
+| Operation | Overhead   | Notes                  |
+| --------- | ---------- | ---------------------- |
+| INSERT    | ~0.5-1ms   | Per contact (3 fields) |
+| SELECT    | ~0.3-0.7ms | Per contact (3 fields) |
+| SEARCH    | ~0ms       | Uses indexed hash      |
+| UPDATE    | ~0.5-1ms   | Only encrypted fields  |
 
 **Batching**: Process 100-1000 records per batch for optimal performance.
 
@@ -461,11 +469,13 @@ npx vitest watch __tests__/field-encryption.test.ts
 **Symptoms**: "Field decryption failed" error
 
 **Causes**:
+
 1. Wrong encryption key
 2. Corrupted data
 3. Key version mismatch
 
 **Solutions**:
+
 ```typescript
 // Check key version
 import { getEncryptionVersion } from '@/lib/crypto/fields'
@@ -484,11 +494,13 @@ console.log(decryptField(test)) // Should print 'test'
 **Symptoms**: `findMany` with email filter returns no results
 
 **Causes**:
+
 1. Hash not generated
 2. Case mismatch
 3. Whitespace differences
 
 **Solutions**:
+
 ```typescript
 // Manually check hash
 import { makeSearchToken } from '@/lib/crypto/fields'
@@ -508,24 +520,28 @@ console.log(contact ? '✅ Found' : '❌ Not found')
 **Symptoms**: Slow queries after encryption
 
 **Solutions**:
+
 1. Verify indexes exist:
+
    ```sql
    SELECT * FROM pg_indexes WHERE tablename = 'contacts';
    ```
 
 2. Check query uses hash:
+
    ```typescript
    // Enable query logging
    const prisma = new PrismaClient({ log: ['query'] })
    ```
 
 3. Batch operations:
+
    ```typescript
    // Instead of N queries
    for (const contact of contacts) {
      await prisma.contact.update({ where: { id: contact.id }, data: {...} })
    }
-   
+
    // Use bulk update
    await prisma.contact.updateMany({
      where: { id: { in: contactIds } },

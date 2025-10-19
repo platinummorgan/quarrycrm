@@ -3,7 +3,7 @@ name: Migrate Deploy
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   migrate-deploy:

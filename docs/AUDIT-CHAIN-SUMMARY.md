@@ -9,6 +9,7 @@ Blockchain-style audit trail with cryptographic chain verification using SHA-256
 ### 1. Database Schema Changes (`prisma/schema.prisma`)
 
 Added to `EventAudit` model:
+
 ```prisma
 prevHash       String?     // SHA-256 of previous record's self_hash (null for genesis)
 selfHash       String      // SHA-256 of canonicalized payload (this record)
@@ -68,6 +69,7 @@ GET /admin/audit-verify?all=true
 ```
 
 **Response Format:**
+
 ```json
 {
   "valid": true,
@@ -77,6 +79,7 @@ GET /admin/audit-verify?all=true
 ```
 
 **Error Format:**
+
 ```json
 {
   "valid": false,
@@ -141,11 +144,11 @@ GET /admin/audit-verify?all=true
 Record 1 (Genesis):
   prevHash: null
   selfHash: hash(record1_data)
-  
+
 Record 2:
   prevHash: hash(record1_data)
   selfHash: hash(record2_data)
-  
+
 Record 3:
   prevHash: hash(record2_data)
   selfHash: hash(record3_data)
@@ -210,7 +213,7 @@ if (result.valid) {
   console.log(`✅ Chain valid: ${result.totalRecords} records`)
 } else {
   console.log(`❌ Chain invalid: ${result.errors.length} errors`)
-  result.errors.forEach(error => {
+  result.errors.forEach((error) => {
     console.log(`  - Record ${error.recordIndex}: ${error.message}`)
   })
 }
@@ -326,6 +329,7 @@ Computes chain hashes for new record.
 Verifies chronologically-ordered audit records.
 
 **Returns:**
+
 ```typescript
 {
   valid: boolean
@@ -372,12 +376,14 @@ Verifies audit chains for all organizations.
 ## Status
 
 ✅ **Implementation Complete**
+
 - Schema updated
 - Library implemented
 - Admin route created
 - 67 tests written
 
 ⏸️ **Pending Setup**
+
 - Migration not applied (to avoid DB reset)
 - Prisma client not regenerated (TypeScript errors expected)
 - Tests not run (waiting for Prisma types)
@@ -393,6 +399,7 @@ Verifies audit chains for all organizations.
 ---
 
 **Note**: This implementation provides tamper-evident audit trails but does not prevent tampering. For production use, consider adding:
+
 - Digital signatures for non-repudiation
 - External timestamp authorities
 - Periodic blockchain anchoring

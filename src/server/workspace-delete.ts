@@ -1,16 +1,16 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma'
 
 /**
  * Soft delete a workspace (organization)
  */
 export async function softDeleteWorkspace(params: {
-  organizationId: string;
-  deletedBy: string;
+  organizationId: string
+  deletedBy: string
 }) {
-  const { organizationId, deletedBy } = params;
+  const { organizationId, deletedBy } = params
 
-  const purgeDate = new Date();
-  purgeDate.setDate(purgeDate.getDate() + 30); // 30 days retention
+  const purgeDate = new Date()
+  purgeDate.setDate(purgeDate.getDate() + 30) // 30 days retention
 
   await prisma.organization.update({
     where: { id: organizationId },
@@ -19,9 +19,9 @@ export async function softDeleteWorkspace(params: {
       scheduledPurgeAt: purgeDate,
       deletedBy,
     },
-  });
+  })
 
-  return { success: true, purgeDate };
+  return { success: true, purgeDate }
 }
 
 /**
@@ -35,40 +35,40 @@ export async function restoreWorkspace(organizationId: string) {
       scheduledPurgeAt: null,
       deletedBy: null,
     },
-  });
+  })
 
-  return { success: true };
+  return { success: true }
 }
 
 /**
  * Permanently delete a workspace (irreversible)
  */
 export async function purgeWorkspace(params: {
-  organizationId: string;
-  confirmationPhrase: string;
+  organizationId: string
+  confirmationPhrase: string
 }) {
-  const { organizationId, confirmationPhrase } = params;
+  const { organizationId, confirmationPhrase } = params
 
   // Verify confirmation phrase
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
-  });
+  })
 
   if (!org) {
-    throw new Error('Organization not found');
+    throw new Error('Organization not found')
   }
 
-  const expectedPhrase = `delete ${org.name}`;
+  const expectedPhrase = `delete ${org.name}`
   if (confirmationPhrase !== expectedPhrase) {
-    throw new Error('Confirmation phrase does not match');
+    throw new Error('Confirmation phrase does not match')
   }
 
   // Delete all related data (cascade deletes should handle most of this)
   await prisma.organization.delete({
     where: { id: organizationId },
-  });
+  })
 
-  return { success: true };
+  return { success: true }
 }
 
 /**
@@ -84,16 +84,18 @@ export async function getWorkspaceDeleteStatus(organizationId: string) {
       scheduledPurgeAt: true,
       deletedBy: true,
     },
-  });
+  })
 
   if (!org) {
-    throw new Error('Organization not found');
+    throw new Error('Organization not found')
   }
 
-  const isDeleted = !!org.deletedAt;
+  const isDeleted = !!org.deletedAt
   const daysUntilPurge = org.scheduledPurgeAt
-    ? Math.ceil((org.scheduledPurgeAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
+    ? Math.ceil(
+        (org.scheduledPurgeAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+    : null
 
   return {
     isDeleted,
@@ -102,5 +104,5 @@ export async function getWorkspaceDeleteStatus(organizationId: string) {
     deletedBy: org.deletedBy,
     daysUntilPurge,
     canRestore: isDeleted && daysUntilPurge && daysUntilPurge > 0,
-  };
+  }
 }

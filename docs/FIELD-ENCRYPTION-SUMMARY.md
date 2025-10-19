@@ -9,13 +9,15 @@ Comprehensive field-level encryption system for Contact data using **AES-256-GCM
 ### 1. Core Encryption Library (`src/lib/crypto/fields.ts`)
 
 **Features:**
+
 - ✅ **AES-256-GCM** encryption (industry standard, FIPS-compliant)
 - ✅ **AEAD** - Authenticated Encryption with Associated Data
-- ✅ **Key Versioning** - Support for seamless key rotation  
+- ✅ **Key Versioning** - Support for seamless key rotation
 - ✅ **Search Tokens** - BLAKE2b hashed fields for encrypted field lookups
 - ✅ **Batch Operations** - Encrypt/decrypt multiple fields at once
 
 **Key Functions:**
+
 - `encryptField(plaintext, version)` - Encrypt a single value
 - `decryptField(encrypted)` - Decrypt a value
 - `makeSearchToken(value)` - Create deterministic hash for search
@@ -26,6 +28,7 @@ Comprehensive field-level encryption system for Contact data using **AES-256-GCM
 - `generateSearchSalt()` - Generate secure salt
 
 **Encryption Format:**
+
 ```
 {version}:{nonce}:{ciphertext}:{authTag}
 v1:a1b2c3d4...:ciphertext...:authtag...
@@ -34,12 +37,14 @@ v1:a1b2c3d4...:ciphertext...:authtag...
 ### 2. Prisma Middleware (`src/lib/crypto/middleware.ts`)
 
 **Features:**
+
 - ✅ Automatic encryption on write (create/update/upsert)
 - ✅ Automatic decryption on read (find operations)
 - ✅ Search token generation for `email_hash` and `phone_hash`
 - ✅ Transparent query transformation (use plaintext in queries)
 
 **Encrypted Fields:**
+
 - `email` → `email_hash` (searchable)
 - `phone` → `phone_hash` (searchable)
 - `notes` → No hash (full encryption only)
@@ -47,6 +52,7 @@ v1:a1b2c3d4...:ciphertext...:authtag...
 ### 3. Database Migration (`prisma/migrations/20251016115136_add_contact_encryption/`)
 
 **Changes:**
+
 - ✅ Added `notes` TEXT column
 - ✅ Added `email_hash` TEXT column (searchable index)
 - ✅ Added `phone_hash` TEXT column (searchable index)
@@ -56,6 +62,7 @@ v1:a1b2c3d4...:ciphertext...:authtag...
 ### 4. Data Migration Script (`scripts/encrypt-existing-contacts.ts`)
 
 **Features:**
+
 - ✅ Batch processing (configurable batch size)
 - ✅ Dry-run mode (`--dry-run`)
 - ✅ Progress tracking
@@ -63,6 +70,7 @@ v1:a1b2c3d4...:ciphertext...:authtag...
 - ✅ Idempotent (safe to run multiple times)
 
 **Usage:**
+
 ```bash
 # Preview changes
 tsx scripts/encrypt-existing-contacts.ts --dry-run
@@ -77,6 +85,7 @@ tsx scripts/encrypt-existing-contacts.ts --batch-size=50
 ### 5. Test Suite (`__tests__/field-encryption.test.ts`)
 
 **Coverage (41 tests):**
+
 - ✅ Encryption/decryption roundtrip
 - ✅ Search token determinism
 - ✅ Key rotation
@@ -90,6 +99,7 @@ tsx scripts/encrypt-existing-contacts.ts --batch-size=50
 ### 6. Documentation (`docs/FIELD-ENCRYPTION.md`)
 
 **Sections:**
+
 - ✅ Setup guide (key generation, environment variables)
 - ✅ Architecture explanation
 - ✅ Usage examples (automatic via middleware, manual API)
@@ -104,6 +114,7 @@ tsx scripts/encrypt-existing-contacts.ts --batch-size=50
 ## Security Properties
 
 ### Encryption
+
 - **Algorithm**: AES-256-GCM (NIST recommended, FIPS 140-2 compliant, TLS 1.3 standard)
 - **Key Size**: 256 bits (32 bytes)
 - **Nonce**: 96 bits (12 bytes), randomly generated per encryption
@@ -111,11 +122,13 @@ tsx scripts/encrypt-existing-contacts.ts --batch-size=50
 - **Hardware Acceleration**: AES-NI support on modern CPUs for optimal performance
 
 ### Search Tokens
+
 - **Algorithm**: BLAKE2b-256 with salt
 - **Properties**: Deterministic, case-insensitive, whitespace-trimmed
 - **Security**: 256-bit output prevents rainbow table attacks
 
 ### Key Management
+
 - **Versioning**: v1, v2, etc. (enables zero-downtime rotation)
 - **Storage**: Environment variables (never in code/git)
 - **Rotation**: Re-encrypt with new version, old keys kept temporarily
@@ -153,8 +166,8 @@ const contact = await prisma.contact.create({
     firstName: 'John',
     lastName: 'Doe',
     email: 'john@example.com', // Automatically encrypted
-    phone: '+1234567890',       // Automatically encrypted
-    notes: 'Sensitive notes',   // Automatically encrypted
+    phone: '+1234567890', // Automatically encrypted
+    notes: 'Sensitive notes', // Automatically encrypted
     organizationId: 'org123',
     ownerId: 'user123',
   },
@@ -193,12 +206,12 @@ const hash = makeSearchToken('john@example.com')
 
 ## Performance Impact
 
-| Operation | Overhead | Notes |
-|-----------|----------|-------|
-| INSERT | ~0.5-1ms | Per contact (3 fields) |
-| SELECT | ~0.3-0.7ms | Per contact (3 fields) |
-| SEARCH | ~0ms | Uses indexed hash |
-| UPDATE | ~0.5-1ms | Only encrypted fields |
+| Operation | Overhead   | Notes                  |
+| --------- | ---------- | ---------------------- |
+| INSERT    | ~0.5-1ms   | Per contact (3 fields) |
+| SELECT    | ~0.3-0.7ms | Per contact (3 fields) |
+| SEARCH    | ~0ms       | Uses indexed hash      |
+| UPDATE    | ~0.5-1ms   | Only encrypted fields  |
 
 ## Key Rotation Process
 
@@ -212,11 +225,13 @@ const hash = makeSearchToken('john@example.com')
 ## Search Capabilities
 
 ### ✅ Supported
+
 - Exact match: `{ email: 'john@example.com' }`
 - Equals: `{ email: { equals: 'john@example.com' } }`
 - IN clause: `{ email: { in: [...] } }`
 
 ### ❌ Not Supported
+
 - Contains: `{ email: { contains: 'example' } }`
 - Starts with: `{ email: { startsWith: 'john' } }`
 - Case-insensitive mode (already case-insensitive by default)
@@ -241,12 +256,14 @@ const hash = makeSearchToken('john@example.com')
 ## Important Notes
 
 ⚠️ **CRITICAL**:
+
 - **Backup keys securely** - Lost keys = lost data permanently
 - **Never commit keys to git** - Use environment variables only
 - **Test key rotation** - Practice in staging before production
 - **Monitor decryption failures** - May indicate key mismatch or corruption
 
 ✅ **Benefits**:
+
 - **Zero-downtime** - Middleware handles everything transparently
 - **Search-friendly** - Hash tokens enable exact-match queries
 - **Audit-ready** - Meets compliance requirements

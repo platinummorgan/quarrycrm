@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { trpc } from '@/lib/trpc'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -112,7 +118,10 @@ export function WorkspaceSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="emailLogAddress" className="flex items-center gap-2">
+            <Label
+              htmlFor="emailLogAddress"
+              className="flex items-center gap-2"
+            >
               <Mail className="h-4 w-4" />
               Email Log Address
             </Label>
@@ -125,7 +134,8 @@ export function WorkspaceSettings() {
               disabled
             />
             <p className="text-sm text-muted-foreground">
-              Forward emails to this address to automatically log them as activities. This feature is coming soon.
+              Forward emails to this address to automatically log them as
+              activities. This feature is coming soon.
             </p>
           </div>
 

@@ -79,10 +79,7 @@ describe('Contacts Server Actions', () => {
           deletedAt: null,
         },
         select: expect.any(Object),
-        orderBy: [
-          { updatedAt: 'desc' },
-          { id: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
         take: 26, // limit + 1
       })
     })

@@ -3,9 +3,14 @@
 ## 📦 New Files
 
 ### 1. `src/lib/onboarding.ts`
+
 ```typescript
 export type OnboardingTaskType =
-  | 'create_pipeline' | 'import_csv' | 'create_deal' | 'save_view' | 'install_pwa'
+  | 'create_pipeline'
+  | 'import_csv'
+  | 'create_deal'
+  | 'save_view'
+  | 'install_pwa'
 
 export interface OnboardingTask {
   id: OnboardingTaskType
@@ -18,21 +23,54 @@ export interface OnboardingTask {
 }
 
 export const ONBOARDING_TASKS: Omit<OnboardingTask, 'completed'>[] = [
-  { id: 'create_pipeline', title: 'Create a pipeline', icon: '🎯', href: '/app/deals' },
-  { id: 'import_csv', title: 'Import sample contacts', icon: '📥', href: '/csv' },
-  { id: 'create_deal', title: 'Create your first deal', icon: '💼', href: '/app/deals' },
-  { id: 'save_view', title: 'Save a custom view', icon: '👁️', href: '/app/contacts' },
-  { id: 'install_pwa', title: 'Install as app', icon: '📱', action: 'installPWA' },
+  {
+    id: 'create_pipeline',
+    title: 'Create a pipeline',
+    icon: '🎯',
+    href: '/app/deals',
+  },
+  {
+    id: 'import_csv',
+    title: 'Import sample contacts',
+    icon: '📥',
+    href: '/csv',
+  },
+  {
+    id: 'create_deal',
+    title: 'Create your first deal',
+    icon: '💼',
+    href: '/app/deals',
+  },
+  {
+    id: 'save_view',
+    title: 'Save a custom view',
+    icon: '👁️',
+    href: '/app/contacts',
+  },
+  {
+    id: 'install_pwa',
+    title: 'Install as app',
+    icon: '📱',
+    action: 'installPWA',
+  },
 ]
 
-export function calculateOnboardingState(dismissed: boolean, progress: Partial<OnboardingProgress> | null): OnboardingState {
+export function calculateOnboardingState(
+  dismissed: boolean,
+  progress: Partial<OnboardingProgress> | null
+): OnboardingState {
   // ... calculates completedCount, percentage, etc.
 }
 ```
 
 ### 2. `src/components/onboarding/OnboardingChecklist.tsx`
+
 ```tsx
-export function OnboardingChecklist({ initialState }: { initialState: OnboardingState }) {
+export function OnboardingChecklist({
+  initialState,
+}: {
+  initialState: OnboardingState
+}) {
   const [state, setState] = useState(initialState)
   const [isPending, startTransition] = useTransition()
 
@@ -45,7 +83,7 @@ export function OnboardingChecklist({ initialState }: { initialState: Onboarding
         <Progress value={state.percentage} />
       </CardHeader>
       <CardContent>
-        {tasks.map(task => (
+        {tasks.map((task) => (
           <Link href={task.href}>
             {task.completed ? <CheckCircle2 /> : <Circle />}
             {task.title}
@@ -58,6 +96,7 @@ export function OnboardingChecklist({ initialState }: { initialState: Onboarding
 ```
 
 ### 3. `src/components/onboarding/OnboardingProgress.tsx`
+
 ```tsx
 export function OnboardingProgress({ state }: { state: OnboardingState }) {
   if (state.dismissed || state.completed) return null
@@ -65,7 +104,9 @@ export function OnboardingProgress({ state }: { state: OnboardingState }) {
   return (
     <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
       <CheckCircle2 className="h-4 w-4" />
-      <span>Setup: {state.completedCount}/{state.totalCount}</span>
+      <span>
+        Setup: {state.completedCount}/{state.totalCount}
+      </span>
       <div className="h-2 w-16 bg-background">
         <div style={{ width: `${state.percentage}%` }} />
       </div>
@@ -75,17 +116,20 @@ export function OnboardingProgress({ state }: { state: OnboardingState }) {
 ```
 
 ### 4. `src/server/onboarding.ts`
+
 ```typescript
 export async function checkOnboardingProgress(): Promise<OnboardingState | null> {
   const member = await getCurrentMember()
-  
+
   // Check actual completion status
-  const [pipelineCount, contactCount, dealCount, viewCount] = await Promise.all([
-    prisma.pipeline.count({ where: { organizationId } }),
-    prisma.contact.count({ where: { organizationId } }),
-    prisma.deal.count({ where: { organizationId } }),
-    prisma.savedView.count({ where: { organizationId } }),
-  ])
+  const [pipelineCount, contactCount, dealCount, viewCount] = await Promise.all(
+    [
+      prisma.pipeline.count({ where: { organizationId } }),
+      prisma.contact.count({ where: { organizationId } }),
+      prisma.deal.count({ where: { organizationId } }),
+      prisma.savedView.count({ where: { organizationId } }),
+    ]
+  )
 
   const progress: OnboardingProgress = {
     create_pipeline: pipelineCount > 0,
@@ -97,18 +141,25 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
 
   await prisma.orgMember.update({
     where: { id: member.id },
-    data: { onboardingProgress: progress, onboardingCompleted: Object.values(progress).every(Boolean) },
+    data: {
+      onboardingProgress: progress,
+      onboardingCompleted: Object.values(progress).every(Boolean),
+    },
   })
 
   return calculateOnboardingState(member.onboardingDismissed, progress)
 }
 
 export async function dismissOnboarding() {
-  await prisma.orgMember.update({ where: { id: member.id }, data: { onboardingDismissed: true } })
+  await prisma.orgMember.update({
+    where: { id: member.id },
+    data: { onboardingDismissed: true },
+  })
 }
 ```
 
 ### 5. `public/samples/contacts-sample.csv`
+
 ```csv
 firstName,lastName,email,phone,company,title,notes
 Alice,Johnson,alice.johnson@example.com,+1-555-0101,Acme Corp,Sales Director,Interested in enterprise plan
@@ -117,13 +168,14 @@ Bob,Smith,bob.smith@techstart.io,+1-555-0102,TechStart,CTO,Looking for integrati
 ```
 
 ### 6. `__tests__/onboarding.test.ts`
+
 ```typescript
 describe('Onboarding Checklist', () => {
   it('should calculate 0% progress when nothing is complete', () => {
     const state = calculateOnboardingState(false, allFalse)
     expect(state.percentage).toBe(0)
   })
-  
+
   it('should mark as completed when all tasks are done', () => {
     const state = calculateOnboardingState(false, allTrue)
     expect(state.completed).toBe(true)
@@ -135,6 +187,7 @@ describe('Onboarding Checklist', () => {
 ## 🔧 Modified Files
 
 ### 1. `prisma/schema.prisma`
+
 ```diff
  model OrgMember {
    id             String            @id @default(cuid())
@@ -154,6 +207,7 @@ describe('Onboarding Checklist', () => {
 ```
 
 ### 2. `src/lib/auth-helpers.ts`
+
 ```diff
 +// Helper to get the current organization member
 +export async function getCurrentMember() {
@@ -177,6 +231,7 @@ describe('Onboarding Checklist', () => {
 ```
 
 ### 3. `src/app/(app)/app/page.tsx`
+
 ```diff
 +import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 +import { checkOnboardingProgress } from '@/server/onboarding'
@@ -205,6 +260,7 @@ describe('Onboarding Checklist', () => {
 ```
 
 ### 4. `src/app/(app)/layout.tsx`
+
 ```diff
 -import { ReactNode } from 'react'
 +import { ReactNode, Suspense } from 'react'
@@ -223,6 +279,7 @@ describe('Onboarding Checklist', () => {
 ## 📊 Summary
 
 **Files Created:** 7
+
 - Types & logic: `onboarding.ts`
 - Components: `OnboardingChecklist.tsx`, `OnboardingProgress.tsx`, `OnboardingProgressServer.tsx`
 - Server actions: `server/onboarding.ts`
@@ -230,16 +287,19 @@ describe('Onboarding Checklist', () => {
 - Tests: `onboarding.test.ts`
 
 **Files Modified:** 4
+
 - Database: `schema.prisma` (+3 fields)
 - Auth: `auth-helpers.ts` (+1 function)
 - Pages: `app/page.tsx` (+checklist), `layout.tsx` (+progress indicator)
 
 **Database Migration Required:**
+
 ```bash
 npx prisma migrate dev --name add_onboarding_fields
 ```
 
 **Test Results:**
+
 ```
 ✓ 14 tests passing
 ✓ All edge cases covered
@@ -247,6 +307,7 @@ npx prisma migrate dev --name add_onboarding_fields
 ```
 
 **Bundle Impact:**
+
 - Checklist component: ~2KB gzipped
 - Progress indicator: <1KB gzipped
 - Total: ~3KB additional JavaScript

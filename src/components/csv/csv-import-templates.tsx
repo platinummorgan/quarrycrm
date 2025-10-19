@@ -10,11 +10,33 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Save, Trash2, Edit, Plus, FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/lib/toast'
@@ -44,10 +66,15 @@ interface CsvImportTemplatesProps {
   selectedTemplate?: ImportTemplate | null
 }
 
-export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvImportTemplatesProps) {
+export function CsvImportTemplates({
+  onTemplateSelect,
+  selectedTemplate,
+}: CsvImportTemplatesProps) {
   const [templates, setTemplates] = useState<ImportTemplate[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<ImportTemplate | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<ImportTemplate | null>(
+    null
+  )
   const [isLoading, setIsLoading] = useState(true)
 
   const { showSkeleton, showEmptyState } = useLoadingState(isLoading, {
@@ -88,7 +115,9 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
   const onSubmit = async (data: TemplateForm) => {
     try {
       const method = editingTemplate ? 'PUT' : 'POST'
-      const url = editingTemplate ? `/api/csv/templates/${editingTemplate.id}` : '/api/csv/templates'
+      const url = editingTemplate
+        ? `/api/csv/templates/${editingTemplate.id}`
+        : '/api/csv/templates'
 
       const response = await fetch(url, {
         method,
@@ -153,7 +182,7 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
         <CardContent className="p-6">
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="border rounded-lg p-4">
+              <div key={i} className="rounded-lg border p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-48" />
@@ -179,7 +208,7 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <FileText className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p>Still loading templates...</p>
             <p className="text-sm">Please wait a moment longer.</p>
           </div>
@@ -192,7 +221,9 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">Loading templates...</div>
+          <div className="text-center text-muted-foreground">
+            Loading templates...
+          </div>
         </CardContent>
       </Card>
     )
@@ -214,7 +245,7 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                   form.reset()
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 New Template
               </Button>
             </DialogTrigger>
@@ -224,7 +255,10 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                   {editingTemplate ? 'Edit Template' : 'Create Template'}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Template Name</Label>
                   <Input
@@ -233,7 +267,9 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                     placeholder="e.g., Salesforce Contacts"
                   />
                   {form.formState.errors.name && (
-                    <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.name.message}
+                    </p>
                   )}
                 </div>
 
@@ -251,7 +287,9 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                   <Label htmlFor="entityType">Data Type</Label>
                   <Select
                     value={form.watch('entityType')}
-                    onValueChange={(value) => form.setValue('entityType', value as EntityType)}
+                    onValueChange={(value) =>
+                      form.setValue('entityType', value as EntityType)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -273,7 +311,7 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                     Cancel
                   </Button>
                   <Button type="submit">
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="mr-2 h-4 w-4" />
                     {editingTemplate ? 'Update' : 'Save'}
                   </Button>
                 </div>
@@ -284,17 +322,19 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
       </CardHeader>
       <CardContent>
         {templates.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <div className="py-8 text-center text-muted-foreground">
+            <FileText className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p>No templates saved yet</p>
-            <p className="text-sm">Create templates to save your column mappings for future imports</p>
+            <p className="text-sm">
+              Create templates to save your column mappings for future imports
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
             {templates.map((template) => (
               <div
                 key={template.id}
-                className={`border rounded-lg p-4 transition-colors ${
+                className={`rounded-lg border p-4 transition-colors ${
                   selectedTemplate?.id === template.id
                     ? 'border-primary bg-primary/5'
                     : 'hover:bg-muted/50'
@@ -302,7 +342,7 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
+                    <div className="mb-1 flex items-center space-x-2">
                       <h4 className="font-medium">{template.name}</h4>
                       <Badge variant="outline">{template.entityType}</Badge>
                       {selectedTemplate?.id === template.id && (
@@ -310,10 +350,13 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                       )}
                     </div>
                     {template.description && (
-                      <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
+                      <p className="mb-2 text-sm text-muted-foreground">
+                        {template.description}
+                      </p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Updated {new Date(template.updatedAt).toLocaleDateString()}
+                      Updated{' '}
+                      {new Date(template.updatedAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex space-x-1">
@@ -342,7 +385,8 @@ export function CsvImportTemplates({ onTemplateSelect, selectedTemplate }: CsvIm
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Template</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete "{template.name}"? This action cannot be undone.
+                            Are you sure you want to delete "{template.name}"?
+                            This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

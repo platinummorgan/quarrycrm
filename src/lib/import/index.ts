@@ -9,7 +9,7 @@ export {
   generateFieldMappings,
   getConfidenceColor,
   getConfidenceLabel,
-  validateFieldMappings
+  validateFieldMappings,
 } from './field-mapping'
 
 // Validation utilities
@@ -18,7 +18,7 @@ export {
   contactValidationSchema,
   validateContactRow,
   validateContactData,
-  getValidationSummary
+  getValidationSummary,
 } from './validation'
 
 // Re-export Papa Parse for convenience

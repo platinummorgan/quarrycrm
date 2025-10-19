@@ -1,8 +1,8 @@
 /**
  * Workspace Delete API
- * 
+ *
  * DELETE /api/workspace/delete - Soft delete or permanent delete workspace
- * 
+ *
  * Soft delete: Sets deletedAt and schedules purge for 30 days
  * Permanent delete: Requires confirmation phrase and immediately purges
  */
@@ -27,7 +27,10 @@ export async function DELETE(request: NextRequest) {
     const { organizationId, confirmationPhrase, immediate = false } = body
 
     if (!organizationId) {
-      return NextResponse.json({ error: 'organizationId required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'organizationId required' },
+        { status: 400 }
+      )
     }
 
     // Verify user is owner
@@ -41,7 +44,9 @@ export async function DELETE(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Access denied. Only workspace owners can delete workspaces.' },
+        {
+          error: 'Access denied. Only workspace owners can delete workspaces.',
+        },
         { status: 403 }
       )
     }
@@ -62,7 +67,10 @@ export async function DELETE(request: NextRequest) {
     })
 
     if (!organization) {
-      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      )
     }
 
     // Check if already deleted
@@ -104,7 +112,9 @@ export async function DELETE(request: NextRequest) {
 
     // SOFT DELETE - schedule purge for 30 days
     const deletedAt = new Date()
-    const scheduledPurgeAt = new Date(deletedAt.getTime() + PURGE_DELAY_DAYS * 24 * 60 * 60 * 1000)
+    const scheduledPurgeAt = new Date(
+      deletedAt.getTime() + PURGE_DELAY_DAYS * 24 * 60 * 60 * 1000
+    )
 
     await prisma.organization.update({
       where: { id: organizationId },
@@ -151,7 +161,10 @@ export async function POST(request: NextRequest) {
     const { organizationId } = body
 
     if (!organizationId) {
-      return NextResponse.json({ error: 'organizationId required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'organizationId required' },
+        { status: 400 }
+      )
     }
 
     // Verify user is owner

@@ -1,4 +1,9 @@
-import { createTRPCRouter, orgProcedure, demoProcedure, rateLimitedProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+  rateLimitedProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
@@ -164,9 +169,10 @@ export const contactsRouter = createTRPCRouter({
 
       const hasMore = items.length > limit
       const actualItems = hasMore ? items.slice(0, limit) : items
-      const nextCursor = hasMore && actualItems.length > 0
-        ? `${actualItems[actualItems.length - 1].updatedAt.toISOString()}_${actualItems[actualItems.length - 1].id}`
-        : null
+      const nextCursor =
+        hasMore && actualItems.length > 0
+          ? `${actualItems[actualItems.length - 1].updatedAt.toISOString()}_${actualItems[actualItems.length - 1].id}`
+          : null
 
       return {
         items: actualItems,

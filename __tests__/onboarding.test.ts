@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { calculateOnboardingState, ONBOARDING_TASKS, type OnboardingProgress } from '@/lib/onboarding'
+import {
+  calculateOnboardingState,
+  ONBOARDING_TASKS,
+  type OnboardingProgress,
+} from '@/lib/onboarding'
 
 describe('Onboarding Checklist', () => {
   describe('calculateOnboardingState', () => {
@@ -84,7 +88,10 @@ describe('Onboarding Checklist', () => {
         import_csv: true,
       }
 
-      const state = calculateOnboardingState(false, partialProgress as Partial<OnboardingProgress>)
+      const state = calculateOnboardingState(
+        false,
+        partialProgress as Partial<OnboardingProgress>
+      )
 
       expect(state.completedCount).toBe(2)
       expect(state.percentage).toBe(40)
@@ -162,7 +169,7 @@ describe('Onboarding Checklist', () => {
   describe('Progress Tracking', () => {
     it('should track progress incrementally', () => {
       const states = []
-      
+
       // Start with nothing complete
       let progress: Partial<OnboardingProgress> = {}
       states.push(calculateOnboardingState(false, progress))

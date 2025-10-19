@@ -1,6 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect, useOptimistic, useTransition } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useOptimistic,
+  useTransition,
+} from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,7 +46,8 @@ export function WorkspaceCard() {
   // Optimistic updates
   const [optimisticWorkspace, updateOptimisticWorkspace] = useOptimistic(
     workspace,
-    (state, newState: Partial<Workspace>) => state ? { ...state, ...newState } : null
+    (state, newState: Partial<Workspace>) =>
+      state ? { ...state, ...newState } : null
   )
 
   const [isPending, startTransition] = useTransition()
@@ -165,11 +172,13 @@ export function WorkspaceCard() {
 
   // Generate slug from name for log email
   const generateSlug = (orgName: string) => {
-    return orgName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .substring(0, 50) || 'workspace'
+    return (
+      orgName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 50) || 'workspace'
+    )
   }
 
   // Copy log email to clipboard
@@ -336,11 +345,7 @@ export function WorkspaceCard() {
               >
                 Cancel
               </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={isPending}
-              >
+              <Button type="button" onClick={handleSave} disabled={isPending}>
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

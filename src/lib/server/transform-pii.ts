@@ -1,6 +1,6 @@
 /**
  * Server-side PII Transformers
- * 
+ *
  * These utilities automatically mask PII in server responses
  * when serving data to demo users or demo organizations.
  */
@@ -58,8 +58,8 @@ export function transformContacts<T extends ContactWithPII>(
 ): T[] {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return contacts
-  
-  return contacts.map(contact => maskContactData(contact, isDemo))
+
+  return contacts.map((contact) => maskContactData(contact, isDemo))
 }
 
 /**
@@ -83,8 +83,8 @@ export function transformCompanies<T extends CompanyWithPII>(
 ): T[] {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return companies
-  
-  return companies.map(company => maskCompanyData(company, isDemo))
+
+  return companies.map((company) => maskCompanyData(company, isDemo))
 }
 
 /**
@@ -96,7 +96,12 @@ export function transformActivity<T extends Record<string, any>>(
   session: Session | null
 ): T {
   const isDemo = isRequestFromDemo(session)
-  return maskPIIFields(activity, isDemo, ['email', 'phone', 'contactEmail', 'contactPhone'])
+  return maskPIIFields(activity, isDemo, [
+    'email',
+    'phone',
+    'contactEmail',
+    'contactPhone',
+  ])
 }
 
 /**
@@ -107,52 +112,55 @@ export function transformActivities<T extends Record<string, any>>(
   session: Session | null
 ): T[] {
   const isDemo = isRequestFromDemo(session)
-  return maskPIIArray(activities, isDemo, ['email', 'phone', 'contactEmail', 'contactPhone'])
+  return maskPIIArray(activities, isDemo, [
+    'email',
+    'phone',
+    'contactEmail',
+    'contactPhone',
+  ])
 }
 
 /**
  * Transform deal data for demo users
  * Handles nested contact and company data
  */
-export function transformDeal<T extends {
-  contact?: ContactWithPII | null
-  company?: CompanyWithPII | null
-  [key: string]: any
-}>(
-  deal: T,
-  session: Session | null
-): T {
+export function transformDeal<
+  T extends {
+    contact?: ContactWithPII | null
+    company?: CompanyWithPII | null
+    [key: string]: any
+  },
+>(deal: T, session: Session | null): T {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return deal
-  
+
   const transformed = { ...deal }
-  
+
   if (transformed.contact) {
     transformed.contact = maskContactData(transformed.contact, isDemo)
   }
-  
+
   if (transformed.company) {
     transformed.company = maskCompanyData(transformed.company, isDemo)
   }
-  
+
   return transformed
 }
 
 /**
  * Transform array of deals for demo users
  */
-export function transformDeals<T extends {
-  contact?: ContactWithPII | null
-  company?: CompanyWithPII | null
-  [key: string]: any
-}>(
-  deals: T[],
-  session: Session | null
-): T[] {
+export function transformDeals<
+  T extends {
+    contact?: ContactWithPII | null
+    company?: CompanyWithPII | null
+    [key: string]: any
+  },
+>(deals: T[], session: Session | null): T[] {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return deals
-  
-  return deals.map(deal => transformDeal(deal, session))
+
+  return deals.map((deal) => transformDeal(deal, session))
 }
 
 /**
@@ -166,15 +174,15 @@ export function transformData<T>(
 ): T {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return data
-  
+
   if (Array.isArray(data)) {
-    return data.map(item => transformData(item, session, fields)) as any
+    return data.map((item) => transformData(item, session, fields)) as any
   }
-  
+
   if (data && typeof data === 'object') {
     return maskPIIFields(data as any, isDemo, fields) as T
   }
-  
+
   return data
 }
 
@@ -192,21 +200,26 @@ export function transformResponse<T>(
 ): T {
   const isDemo = isRequestFromDemo(session)
   if (!isDemo) return data
-  
-  const fields = options?.fields || ['email', 'phone', 'contactEmail', 'contactPhone']
-  
+
+  const fields = options?.fields || [
+    'email',
+    'phone',
+    'contactEmail',
+    'contactPhone',
+  ]
+
   if (options?.deep) {
     return transformData(data, session, fields)
   }
-  
+
   if (Array.isArray(data)) {
     return maskPIIArray(data as any, isDemo, fields) as any
   }
-  
+
   if (data && typeof data === 'object') {
     return maskPIIFields(data as any, isDemo, fields) as T
   }
-  
+
   return data
 }
 
@@ -216,11 +229,11 @@ export function transformResponse<T>(
  */
 export function isDemoOrganization(orgId: string | undefined | null): boolean {
   if (!orgId) return false
-  
+
   // Check against environment variable if set
   const demoOrgId = process.env.DEMO_ORG_ID
   if (demoOrgId && orgId === demoOrgId) return true
-  
+
   // For now, we check by org name at runtime
   // This is handled by the session isDemo flag
   return false
@@ -236,20 +249,20 @@ export function getMaskingStatus(session: Session | null): {
   if (!session?.user) {
     return { isDemo: false, reason: null }
   }
-  
+
   if (session.user.isDemo === true) {
     return { isDemo: true, reason: 'user.isDemo flag' }
   }
-  
+
   if (session.user.currentOrg?.role === 'DEMO') {
     return { isDemo: true, reason: 'currentOrg.role === DEMO' }
   }
-  
+
   // Check for demoOrgId (may be present in extended session)
   const extendedUser = session.user as any
   if (extendedUser.demoOrgId) {
     return { isDemo: true, reason: 'demoOrgId present' }
   }
-  
+
   return { isDemo: false, reason: null }
 }

@@ -81,30 +81,35 @@ export function GlobalSearch() {
   }, [results])
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (results.length === 0) return
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (results.length === 0) return
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        setSelectedIndex((prev) => (prev + 1) % results.length)
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        setSelectedIndex((prev) => (prev - 1 + results.length) % results.length)
-        break
-      case 'Enter':
-        e.preventDefault()
-        if (results[selectedIndex]) {
-          handleSelect(results[selectedIndex])
-        }
-        break
-      case 'ArrowRight':
-        e.preventDefault()
-        // Quick actions would go here
-        break
-    }
-  }, [results, selectedIndex])
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          setSelectedIndex((prev) => (prev + 1) % results.length)
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          setSelectedIndex(
+            (prev) => (prev - 1 + results.length) % results.length
+          )
+          break
+        case 'Enter':
+          e.preventDefault()
+          if (results[selectedIndex]) {
+            handleSelect(results[selectedIndex])
+          }
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          // Quick actions would go here
+          break
+      }
+    },
+    [results, selectedIndex]
+  )
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false)
@@ -147,19 +152,19 @@ export function GlobalSearch() {
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium truncate">{result.title}</span>
+            <span className="truncate font-medium">{result.title}</span>
             <Badge variant="secondary" className="text-xs">
               {result.type}
             </Badge>
           </div>
           {result.subtitle && (
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="truncate text-sm text-muted-foreground">
               {result.subtitle}
             </p>
           )}
-          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
             {result.metadata?.email && (
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
@@ -198,7 +203,7 @@ export function GlobalSearch() {
                 e.stopPropagation()
                 handleQuickAction('assign-owner', result)
               }}
-              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
               title="Assign owner"
             >
               <UserCheck className="h-4 w-4" />
@@ -208,7 +213,7 @@ export function GlobalSearch() {
                 e.stopPropagation()
                 handleQuickAction('new-task', result)
               }}
-              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
               title="Create task"
             >
               <Plus className="h-4 w-4" />
@@ -232,8 +237,8 @@ export function GlobalSearch() {
           {query.length < 3
             ? 'Type at least 3 characters to search...'
             : isLoading
-            ? 'Searching...'
-            : 'No results found.'}
+              ? 'Searching...'
+              : 'No results found.'}
         </CommandEmpty>
 
         {results.length > 0 && (

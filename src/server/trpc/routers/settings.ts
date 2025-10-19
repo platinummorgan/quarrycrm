@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { TRPCError } from '@trpc/server'
 import { randomBytes, createHmac } from 'crypto'
@@ -47,13 +51,20 @@ const updateWebhookSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-function generateApiKey(): { key: string; keyPrefix: string; hashedKey: string } {
+function generateApiKey(): {
+  key: string
+  keyPrefix: string
+  hashedKey: string
+} {
   const key = `qcrm_${nanoid(32)}`
   const keyPrefix = key.substring(0, 12)
-  const hashedKey = createHmac('sha256', process.env.API_KEY_SECRET || 'default-secret')
+  const hashedKey = createHmac(
+    'sha256',
+    process.env.API_KEY_SECRET || 'default-secret'
+  )
     .update(key)
     .digest('hex')
-  
+
   return { key, keyPrefix, hashedKey }
 }
 
@@ -138,10 +149,7 @@ export const settingsRouter = createTRPCRouter({
           },
         },
       },
-      orderBy: [
-        { role: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
     })
   }),
 
@@ -504,7 +512,10 @@ export const settingsRouter = createTRPCRouter({
       }
 
       // Allow owner of the key or admins to revoke
-      if (apiKey.ownerId !== member.id && !['OWNER', 'ADMIN'].includes(member.role)) {
+      if (
+        apiKey.ownerId !== member.id &&
+        !['OWNER', 'ADMIN'].includes(member.role)
+      ) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Only the key owner or admins can revoke this key',
@@ -656,7 +667,10 @@ export const settingsRouter = createTRPCRouter({
       }
 
       // Allow owner of the webhook or admins to update
-      if (webhook.ownerId !== member.id && !['OWNER', 'ADMIN'].includes(member.role)) {
+      if (
+        webhook.ownerId !== member.id &&
+        !['OWNER', 'ADMIN'].includes(member.role)
+      ) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Only the webhook owner or admins can update this webhook',
@@ -717,7 +731,10 @@ export const settingsRouter = createTRPCRouter({
       }
 
       // Allow owner of the webhook or admins to delete
-      if (webhook.ownerId !== member.id && !['OWNER', 'ADMIN'].includes(member.role)) {
+      if (
+        webhook.ownerId !== member.id &&
+        !['OWNER', 'ADMIN'].includes(member.role)
+      ) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Only the webhook owner or admins can delete this webhook',

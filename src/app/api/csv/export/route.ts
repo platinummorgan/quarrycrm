@@ -12,19 +12,20 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user is demo
-    const isDemo = session.user.isDemo || session.user.currentOrg?.role === 'DEMO'
-    
+    const isDemo =
+      session.user.isDemo || session.user.currentOrg?.role === 'DEMO'
+
     // Apply stricter rate limiting to demo users for exports
     if (isDemo) {
       const clientIp = getClientIp(request)
-      const rateLimitResult = await checkRateLimit(clientIp, DemoRateLimits.EXPORT)
+      const rateLimitResult = await checkRateLimit(
+        clientIp,
+        DemoRateLimits.EXPORT
+      )
 
       if (!rateLimitResult.success) {
         return NextResponse.json(
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       entityType,
       filters = {},
       selectedColumns = [],
-      format = 'csv'
+      format = 'csv',
     }: {
       entityType: EntityType
       filters?: Record<string, any>
@@ -115,7 +116,9 @@ export async function POST(request: NextRequest) {
             ...filters,
           },
           include: {
-            contact: { select: { firstName: true, lastName: true, email: true } },
+            contact: {
+              select: { firstName: true, lastName: true, email: true },
+            },
             company: { select: { name: true } },
             stage: { select: { name: true } },
             pipeline: { select: { name: true } },
@@ -132,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Transform data for export
-    const transformedData = data.map(item => {
+    const transformedData = data.map((item) => {
       const transformed: Record<string, any> = { ...item }
 
       // Flatten relations
@@ -142,7 +145,8 @@ export async function POST(request: NextRequest) {
       }
 
       if (item.contact) {
-        transformed.contactName = `${item.contact.firstName} ${item.contact.lastName}`.trim()
+        transformed.contactName =
+          `${item.contact.firstName} ${item.contact.lastName}`.trim()
         transformed.contactEmail = item.contact.email
         delete transformed.contact
       }
@@ -204,7 +208,6 @@ export async function POST(request: NextRequest) {
     })
 
     return response
-
   } catch (error) {
     console.error('Export error:', error)
     return NextResponse.json(

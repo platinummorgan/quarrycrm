@@ -18,7 +18,7 @@ vi.mock('next/navigation', () => ({
 describe('Query Parameter Routing', () => {
   beforeEach(() => {
     mockUseSearchParams = vi.fn()
-    
+
     // Mock custom events
     vi.spyOn(window, 'dispatchEvent')
   })
@@ -31,14 +31,17 @@ describe('Query Parameter Routing', () => {
     it('should dispatch contact:select event when open param is present', async () => {
       const mockContactId = 'contact-123'
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'open' ? mockContactId : null,
+        get: (key: string) => (key === 'open' ? mockContactId : null),
       })
 
       render(<ContactQueryHandler />)
 
-      await waitFor(() => {
-        expect(window.dispatchEvent).toHaveBeenCalled()
-      }, { timeout: 200 })
+      await waitFor(
+        () => {
+          expect(window.dispatchEvent).toHaveBeenCalled()
+        },
+        { timeout: 200 }
+      )
 
       const dispatchCalls = (window.dispatchEvent as any).mock.calls
       const contactSelectEvent = dispatchCalls.find(
@@ -56,7 +59,7 @@ describe('Query Parameter Routing', () => {
 
       render(<ContactQueryHandler />)
 
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise((resolve) => setTimeout(resolve, 150))
 
       const dispatchCalls = (window.dispatchEvent as any).mock.calls
       const contactSelectEvents = dispatchCalls.filter(
@@ -79,28 +82,34 @@ describe('Query Parameter Routing', () => {
       const secondContactId = 'contact-2'
 
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'open' ? firstContactId : null,
+        get: (key: string) => (key === 'open' ? firstContactId : null),
       })
 
       const { rerender } = render(<ContactQueryHandler />)
 
-      await waitFor(() => {
-        expect(window.dispatchEvent).toHaveBeenCalled()
-      }, { timeout: 200 })
+      await waitFor(
+        () => {
+          expect(window.dispatchEvent).toHaveBeenCalled()
+        },
+        { timeout: 200 }
+      )
 
       const firstCallCount = (window.dispatchEvent as any).mock.calls.length
 
       // Change searchParams
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'open' ? secondContactId : null,
+        get: (key: string) => (key === 'open' ? secondContactId : null),
       })
 
       rerender(<ContactQueryHandler />)
 
-      await waitFor(() => {
-        const newCallCount = (window.dispatchEvent as any).mock.calls.length
-        expect(newCallCount).toBeGreaterThan(firstCallCount)
-      }, { timeout: 200 })
+      await waitFor(
+        () => {
+          const newCallCount = (window.dispatchEvent as any).mock.calls.length
+          expect(newCallCount).toBeGreaterThan(firstCallCount)
+        },
+        { timeout: 200 }
+      )
     })
   })
 
@@ -110,16 +119,17 @@ describe('Query Parameter Routing', () => {
       const mockOnPipelineChange = vi.fn()
 
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'pipeline' ? mockPipelineId : null,
+        get: (key: string) => (key === 'pipeline' ? mockPipelineId : null),
       })
 
-      render(
-        <DealsQueryHandler onPipelineChange={mockOnPipelineChange} />
-      )
+      render(<DealsQueryHandler onPipelineChange={mockOnPipelineChange} />)
 
-      await waitFor(() => {
-        expect(mockOnPipelineChange).toHaveBeenCalledWith(mockPipelineId)
-      }, { timeout: 300 })
+      await waitFor(
+        () => {
+          expect(mockOnPipelineChange).toHaveBeenCalledWith(mockPipelineId)
+        },
+        { timeout: 300 }
+      )
     })
 
     it('should call onDealFocus when focus param is present', async () => {
@@ -127,17 +137,18 @@ describe('Query Parameter Routing', () => {
       const mockOnDealFocus = vi.fn()
 
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'focus' ? mockDealId : null,
+        get: (key: string) => (key === 'focus' ? mockDealId : null),
       })
 
-      render(
-        <DealsQueryHandler onDealFocus={mockOnDealFocus} />
-      )
+      render(<DealsQueryHandler onDealFocus={mockOnDealFocus} />)
 
       // Total delay: 200ms initial + 100ms for focus (no pipeline)
-      await waitFor(() => {
-        expect(mockOnDealFocus).toHaveBeenCalledWith(mockDealId)
-      }, { timeout: 400 })
+      await waitFor(
+        () => {
+          expect(mockOnDealFocus).toHaveBeenCalledWith(mockDealId)
+        },
+        { timeout: 400 }
+      )
     })
 
     it('should handle both pipeline and focus params together', async () => {
@@ -161,14 +172,20 @@ describe('Query Parameter Routing', () => {
         />
       )
 
-      await waitFor(() => {
-        expect(mockOnPipelineChange).toHaveBeenCalledWith(mockPipelineId)
-      }, { timeout: 300 })
+      await waitFor(
+        () => {
+          expect(mockOnPipelineChange).toHaveBeenCalledWith(mockPipelineId)
+        },
+        { timeout: 300 }
+      )
 
       // Focus should be called after pipeline with longer delay
-      await waitFor(() => {
-        expect(mockOnDealFocus).toHaveBeenCalledWith(mockDealId)
-      }, { timeout: 800 })
+      await waitFor(
+        () => {
+          expect(mockOnDealFocus).toHaveBeenCalledWith(mockDealId)
+        },
+        { timeout: 800 }
+      )
     })
 
     it('should attempt to scroll deal card into view', async () => {
@@ -182,21 +199,29 @@ describe('Query Parameter Routing', () => {
       vi.spyOn(document, 'querySelector').mockReturnValue(mockElement as any)
 
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'focus' ? mockDealId : null,
+        get: (key: string) => (key === 'focus' ? mockDealId : null),
       })
 
       render(<DealsQueryHandler onDealFocus={vi.fn()} />)
 
-      await waitFor(() => {
-        expect(document.querySelector).toHaveBeenCalledWith(`[data-deal-id="${mockDealId}"]`)
-      }, { timeout: 400 })
+      await waitFor(
+        () => {
+          expect(document.querySelector).toHaveBeenCalledWith(
+            `[data-deal-id="${mockDealId}"]`
+          )
+        },
+        { timeout: 400 }
+      )
 
-      await waitFor(() => {
-        expect(mockScrollIntoView).toHaveBeenCalledWith({
-          behavior: 'smooth',
-          block: 'center',
-        })
-      }, { timeout: 400 })
+      await waitFor(
+        () => {
+          expect(mockScrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'center',
+          })
+        },
+        { timeout: 400 }
+      )
     })
 
     it('should handle missing element gracefully', async () => {
@@ -205,14 +230,14 @@ describe('Query Parameter Routing', () => {
       vi.spyOn(document, 'querySelector').mockReturnValue(null)
 
       mockUseSearchParams.mockReturnValue({
-        get: (key: string) => key === 'focus' ? mockDealId : null,
+        get: (key: string) => (key === 'focus' ? mockDealId : null),
       })
 
       expect(() => {
         render(<DealsQueryHandler onDealFocus={vi.fn()} />)
       }).not.toThrow()
 
-      await new Promise(resolve => setTimeout(resolve, 400))
+      await new Promise((resolve) => setTimeout(resolve, 400))
     })
 
     it('should not call handlers when params are missing', async () => {
@@ -230,7 +255,7 @@ describe('Query Parameter Routing', () => {
         />
       )
 
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise((resolve) => setTimeout(resolve, 800))
 
       expect(mockOnPipelineChange).not.toHaveBeenCalled()
       expect(mockOnDealFocus).not.toHaveBeenCalled()
@@ -241,10 +266,7 @@ describe('Query Parameter Routing', () => {
 
       expect(() => {
         render(
-          <DealsQueryHandler
-            onPipelineChange={vi.fn()}
-            onDealFocus={vi.fn()}
-          />
+          <DealsQueryHandler onPipelineChange={vi.fn()} onDealFocus={vi.fn()} />
         )
       }).not.toThrow()
     })
@@ -254,7 +276,7 @@ describe('Query Parameter Routing', () => {
     it('should document correct contact URL format', () => {
       const contactId = 'cm123abc'
       const expectedUrl = `/app/contacts?open=${contactId}`
-      
+
       expect(expectedUrl).toMatch(/^\/app\/contacts\?open=/)
       expect(expectedUrl).toContain(contactId)
     })
@@ -262,7 +284,7 @@ describe('Query Parameter Routing', () => {
     it('should document correct deal URL format with focus only', () => {
       const dealId = 'deal123'
       const expectedUrl = `/app/deals?focus=${dealId}`
-      
+
       expect(expectedUrl).toMatch(/^\/app\/deals\?focus=/)
       expect(expectedUrl).toContain(dealId)
     })
@@ -271,7 +293,7 @@ describe('Query Parameter Routing', () => {
       const pipelineId = 'pipeline456'
       const dealId = 'deal789'
       const expectedUrl = `/app/deals?pipeline=${pipelineId}&focus=${dealId}`
-      
+
       expect(expectedUrl).toMatch(/^\/app\/deals\?pipeline=/)
       expect(expectedUrl).toContain(`pipeline=${pipelineId}`)
       expect(expectedUrl).toContain(`&focus=${dealId}`)

@@ -83,7 +83,7 @@ export function makeSEO(metadata: SEOMetadata): SEOProps {
       'business',
       'offline',
       'PWA',
-      'progressive web app'
+      'progressive web app',
     ],
     canonical: url,
     openGraph: {

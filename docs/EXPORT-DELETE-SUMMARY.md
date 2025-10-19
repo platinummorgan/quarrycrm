@@ -9,6 +9,7 @@ Implemented async workspace data export to S3/R2 with signed URLs, and comprehen
 ### 1. Workspace Export to S3/R2
 
 **Features:**
+
 - ✅ Async job processing for large exports
 - ✅ Upload to S3 or Cloudflare R2
 - ✅ Signed URLs with 24-hour expiry
@@ -18,6 +19,7 @@ Implemented async workspace data export to S3/R2 with signed URLs, and comprehen
 - ✅ File size and record count tracking
 
 **API Endpoints:**
+
 ```
 POST /api/export - Start export job
 GET /api/export?jobId=<id> - Check export status
@@ -26,6 +28,7 @@ GET /api/export?jobId=<id> - Check export status
 ### 2. Workspace Deletion
 
 **Features:**
+
 - ✅ Soft delete with 30-day recovery period
 - ✅ Immediate permanent delete with confirmation phrase
 - ✅ Recovery/restore during grace period
@@ -34,6 +37,7 @@ GET /api/export?jobId=<id> - Check export status
 - ✅ Owner-only access control
 
 **API Endpoints:**
+
 ```
 DELETE /api/workspace/delete - Soft delete or permanent delete
 POST /api/workspace/delete - Restore workspace
@@ -123,6 +127,7 @@ npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ### Export API
 
 #### Start Export
+
 ```http
 POST /api/export
 Content-Type: application/json
@@ -139,6 +144,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "jobId": "job-abc123",
@@ -148,11 +154,13 @@ Content-Type: application/json
 ```
 
 #### Check Export Status
+
 ```http
 GET /api/export?jobId=job-abc123
 ```
 
 **Response (Completed):**
+
 ```json
 {
   "jobId": "job-abc123",
@@ -178,6 +186,7 @@ GET /api/export?jobId=job-abc123
 ### Workspace Delete API
 
 #### Soft Delete (30-day recovery)
+
 ```http
 DELETE /api/workspace/delete
 Content-Type: application/json
@@ -189,6 +198,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -207,6 +217,7 @@ Content-Type: application/json
 ```
 
 #### Permanent Delete (immediate)
+
 ```http
 DELETE /api/workspace/delete
 Content-Type: application/json
@@ -219,6 +230,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -234,6 +246,7 @@ Content-Type: application/json
 ```
 
 #### Restore Workspace
+
 ```http
 POST /api/workspace/delete
 Content-Type: application/json
@@ -244,6 +257,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -499,11 +513,13 @@ npx prisma generate
 ### 4. Configure S3/R2 Bucket
 
 **Cloudflare R2:**
+
 1. Create bucket named `crm-exports`
 2. Create API token with read/write permissions
 3. Set bucket lifecycle rule: delete after 30 days
 
 **AWS S3:**
+
 1. Create bucket named `crm-exports`
 2. Create IAM user with S3 permissions
 3. Add bucket policy for private access
@@ -519,6 +535,7 @@ npx prisma generate
 ## Summary
 
 **Total Implementation:**
+
 - 7 files created/modified
 - ~1,200 lines of production code
 - 2 API routes with 4 endpoints
@@ -530,6 +547,7 @@ npx prisma generate
 **Status**: ✅ Complete but not deployed (awaiting environment setup and testing)
 
 **Next Steps:**
+
 1. Install AWS SDK packages
 2. Configure R2/S3 credentials
 3. Apply database migration

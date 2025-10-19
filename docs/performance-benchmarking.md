@@ -155,9 +155,11 @@ npm run seed:demo -- --clean
 #### Pass/Fail Criteria
 
 ✅ **PASS**: p95 ≤ Target Latency
+
 - Example: Contacts List p95 = 115ms (target <120ms) → PASS
 
 ❌ **FAIL**: p95 > Target Latency
+
 - Example: Contacts Search p95 = 165ms (target <150ms) → FAIL
 
 ### Troubleshooting Poor Performance
@@ -165,12 +167,14 @@ npm run seed:demo -- --clean
 #### If Benchmarks Fail
 
 1. **Check Database Connection**
+
    ```bash
    # Test connection
    npm run db:studio
    ```
 
 2. **Verify Indexes Exist**
+
    ```bash
    # Check schema is up to date
    npm run db:push
@@ -182,10 +186,11 @@ npm run seed:demo -- --clean
    - Look for N+1 query problems
 
 4. **Restart Services**
+
    ```bash
    # Restart dev server
    npm run dev
-   
+
    # Restart PostgreSQL
    # (varies by OS)
    ```
@@ -196,12 +201,12 @@ npm run seed:demo -- --clean
 
 #### Expected Latencies by Network
 
-| Network | Additional Latency |
-|---------|-------------------|
-| Localhost | 0-5ms |
-| Local Network | 1-10ms |
-| Cloud (same region) | 10-50ms |
-| Cloud (different region) | 50-200ms |
+| Network                  | Additional Latency |
+| ------------------------ | ------------------ |
+| Localhost                | 0-5ms              |
+| Local Network            | 1-10ms             |
+| Cloud (same region)      | 10-50ms            |
+| Cloud (different region) | 50-200ms           |
 
 Adjust expectations based on your setup.
 
@@ -292,6 +297,7 @@ GET  /api/speed/system-info
 ```
 
 All endpoints return JSON with:
+
 - `data`: Array of records
 - `total`: Total count
 - `page`: Current page
@@ -344,6 +350,7 @@ A: `npm run seed:demo -- --clean` removes all data first.
 ---
 
 **Need Help?** Open an issue on GitHub with:
+
 - Hardware specs
 - Database location (local/remote)
 - Benchmark results screenshot

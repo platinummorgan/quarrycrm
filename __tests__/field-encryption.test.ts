@@ -18,8 +18,10 @@ import {
 
 // Set test environment variables
 beforeAll(() => {
-  process.env.ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-  process.env.ENCRYPTION_KEY_V2 = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'
+  process.env.ENCRYPTION_KEY =
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+  process.env.ENCRYPTION_KEY_V2 =
+    'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'
   process.env.SEARCH_SALT = 'test-salt-32-bytes-for-testing!'
 })
 
@@ -66,7 +68,8 @@ describe('Field Encryption', () => {
     })
 
     it('should decrypt long strings', () => {
-      const plaintext = 'This is a very long string with special characters: !@#$%^&*()_+-=[]{}|;:,.<>?'
+      const plaintext =
+        'This is a very long string with special characters: !@#$%^&*()_+-=[]{}|;:,.<>?'
       const encrypted = encryptField(plaintext)
       const decrypted = decryptField(encrypted)
 
@@ -267,7 +270,7 @@ describe('Field Encryption', () => {
     it('should use authenticated encryption (tamper detection)', () => {
       const encrypted = encryptField('test@example.com')
       const parts = encrypted.split(':')
-      
+
       // Tamper with authentication tag
       const tampered = `${parts[0]}:${parts[1]}:${parts[2]}:${'0'.repeat(32)}`
 

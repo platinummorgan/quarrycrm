@@ -34,22 +34,22 @@ Implemented comprehensive rate limiting for demo sessions using Redis-backed sli
 export const DemoRateLimits = {
   // Authentication endpoints (e.g., /api/auth/demo)
   AUTH: {
-    limit: 10,                        // 10 requests
-    windowMs: 60 * 1000,             // per minute
+    limit: 10, // 10 requests
+    windowMs: 60 * 1000, // per minute
     keyPrefix: 'ratelimit:demo:auth',
   },
-  
+
   // General API endpoints (e.g., /api/whoami)
   API: {
-    limit: 30,                        // 30 requests
-    windowMs: 60 * 1000,             // per minute
+    limit: 30, // 30 requests
+    windowMs: 60 * 1000, // per minute
     keyPrefix: 'ratelimit:demo:api',
   },
-  
+
   // Export operations (e.g., /api/csv/export)
   EXPORT: {
-    limit: 3,                         // 3 exports
-    windowMs: 5 * 60 * 1000,         // per 5 minutes
+    limit: 3, // 3 exports
+    windowMs: 5 * 60 * 1000, // per 5 minutes
     keyPrefix: 'ratelimit:demo:export',
   },
 }
@@ -62,6 +62,7 @@ export const DemoRateLimits = {
 Rate limiting is applied to all demo session endpoints:
 
 #### 1. `/api/auth/demo` - Demo Authentication
+
 ```typescript
 const clientIp = getClientIp(request)
 const rateLimitResult = await checkRateLimit(clientIp, DemoRateLimits.AUTH)
@@ -87,11 +88,13 @@ if (!rateLimitResult.success) {
 ```
 
 #### 2. `/api/whoami` - Session Info
+
 - Only applies rate limiting to demo users
 - Uses `DemoRateLimits.API` configuration
 - Returns 429 with retry information
 
 #### 3. `/api/csv/export` - Data Export
+
 - Strictest limits (3 per 5 minutes)
 - Only applies to demo users
 - Uses `DemoRateLimits.EXPORT` configuration
@@ -105,12 +108,11 @@ import { useRateLimitHandler } from '@/hooks/use-rate-limit-handler'
 
 function MyComponent() {
   const { withRateLimitHandling } = useRateLimitHandler()
-  
+
   const fetchData = async () => {
-    const data = await withRateLimitHandling(
-      fetch('/api/whoami'),
-      { fallbackValue: null }
-    )
+    const data = await withRateLimitHandling(fetch('/api/whoami'), {
+      fallbackValue: null,
+    })
     // Automatically shows toast on 429
   }
 }
@@ -119,12 +121,15 @@ function MyComponent() {
 ## Features
 
 ### 1. Sliding Window Algorithm
+
 - Accurate request counting within time windows
 - Automatic window reset after expiration
 - Per-IP tracking with configurable prefixes
 
 ### 2. IP Address Detection
+
 Supports multiple proxy headers in priority order:
+
 1. `x-forwarded-for` (first IP in comma-separated list)
 2. `cf-connecting-ip` (Cloudflare)
 3. `x-real-ip` (nginx)
@@ -132,24 +137,30 @@ Supports multiple proxy headers in priority order:
 5. Fallback: `'unknown'`
 
 ### 3. Response Headers
+
 All 429 responses include:
+
 - `Retry-After` - Seconds to wait before retry
 - `X-RateLimit-Limit` - Maximum requests allowed
 - `X-RateLimit-Remaining` - Requests remaining in window
 - `X-RateLimit-Reset` - Unix timestamp when window resets
 
 ### 4. User-Friendly Messages
+
 Toast notifications show:
+
 - Clear error message
 - Time-based retry information (seconds/minutes/hours)
 - Automatic dismissal after 5 seconds
 
 Example messages:
+
 - "Please try again in 45 seconds."
 - "Please try again in 3 minutes."
 - "Please try again in 1 hour."
 
 ### 5. Error Handling
+
 - **Fail-open strategy**: If Redis fails, allows requests through
 - Logs errors for monitoring
 - Never blocks legitimate traffic due to infrastructure issues
@@ -157,22 +168,28 @@ Example messages:
 ## Redis Backend
 
 ### Development
+
 Uses in-memory Map fallback when Redis not configured:
+
 ```
 console.warn('Redis not configured, using in-memory store')
 ```
 
 ### Production
+
 Configure Upstash Redis environment variables:
+
 ```env
 UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-token-here
 ```
 
 ### Storage Keys
+
 Format: `{keyPrefix}:{identifier}`
 
 Examples:
+
 - `ratelimit:demo:auth:203.0.113.1`
 - `ratelimit:demo:api:192.168.1.100`
 - `ratelimit:demo:export:10.0.0.5`
@@ -180,6 +197,7 @@ Examples:
 ## Testing
 
 ### Test Coverage
+
 31 tests passing across 2 test suites:
 
 1. **Sliding Window Behavior** (10 tests)
@@ -203,6 +221,7 @@ Examples:
    - Fail-open on Redis errors
 
 ### Running Tests
+
 ```bash
 npm run test:run -- rate-limit.test.ts
 ```
@@ -217,19 +236,19 @@ import { checkRateLimit, getClientIp, DemoRateLimits } from '@/lib/rate-limit'
 export async function GET(request: NextRequest) {
   const clientIp = getClientIp(request)
   const result = await checkRateLimit(clientIp, DemoRateLimits.API)
-  
+
   if (!result.success) {
     return NextResponse.json(
       { error: 'Rate limit exceeded' },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': result.retryAfter?.toString() || '60',
-        }
+        },
       }
     )
   }
-  
+
   // Process request...
 }
 ```
@@ -241,15 +260,15 @@ import { useRateLimitHandler } from '@/hooks/use-rate-limit-handler'
 
 function Component() {
   const { handleRateLimit } = useRateLimitHandler()
-  
+
   const onClick = async () => {
     const response = await fetch('/api/whoami')
-    
+
     if (response.status === 429) {
       await handleRateLimit(response)
       return
     }
-    
+
     const data = await response.json()
     // Use data...
   }
@@ -259,11 +278,13 @@ function Component() {
 ## Files Modified/Created
 
 ### Created
+
 - ✅ `src/lib/rate-limit.ts` - Core rate limiting logic (enhanced existing)
 - ✅ `src/hooks/use-rate-limit-handler.ts` - Client-side helper hook
 - ✅ `__tests__/rate-limit.test.ts` - Comprehensive test suite
 
 ### Modified
+
 - ✅ `src/app/api/auth/demo/route.ts` - Added rate limiting to demo auth
 - ✅ `src/app/api/whoami/route.ts` - Added rate limiting for demo users
 - ✅ `src/app/api/csv/export/route.ts` - Added strict rate limiting for exports
@@ -271,13 +292,16 @@ function Component() {
 ## Performance Considerations
 
 ### Redis Operations per Request
+
 - 1 GET operation (check current count)
 - 1 SETEX operation (update count with TTL)
 
 Total: 2 Redis operations per request (~2ms with Upstash)
 
 ### Memory Usage
+
 Each rate limit key stores ~100 bytes:
+
 ```json
 {
   "count": 5,
@@ -288,6 +312,7 @@ Each rate limit key stores ~100 bytes:
 10,000 unique IPs = ~1 MB storage
 
 ### TTL and Cleanup
+
 - Keys automatically expire after window duration
 - No manual cleanup needed
 - Redis handles memory management
@@ -295,13 +320,16 @@ Each rate limit key stores ~100 bytes:
 ## Monitoring
 
 ### Key Metrics to Track
+
 1. **Rate limit hits** - How often users hit limits
 2. **Retry-After distribution** - Time users wait
 3. **IP diversity** - Unique IPs being rate limited
 4. **Redis latency** - Storage operation timing
 
 ### Logging
+
 Current implementation logs:
+
 - Redis connection method (Upstash vs in-memory)
 - Rate limit check failures
 - Error conditions
@@ -309,6 +337,7 @@ Current implementation logs:
 ## Future Enhancements
 
 ### Potential Improvements
+
 1. **Dynamic limits** - Adjust based on system load
 2. **User-specific limits** - Different limits per user tier
 3. **Burst allowance** - Allow short bursts above limit
@@ -317,6 +346,7 @@ Current implementation logs:
 6. **Whitelist/blacklist** - IP-based exceptions
 
 ### Advanced Features
+
 - Token bucket algorithm option
 - Leaky bucket algorithm option
 - Adaptive rate limiting based on response times
@@ -326,17 +356,20 @@ Current implementation logs:
 ## Security Considerations
 
 ### Protection Against
+
 - ✅ Brute force attacks on demo auth
 - ✅ API abuse from single IP
 - ✅ Resource exhaustion (exports)
 - ✅ Distributed attacks (per-IP tracking)
 
 ### Limitations
+
 - ⚠️ Can be bypassed with IP rotation
 - ⚠️ Shared IPs (NAT) may affect legitimate users
 - ⚠️ Requires Redis availability for production
 
 ### Recommendations
+
 1. Monitor for abnormal IP patterns
 2. Consider adding CAPTCHA after multiple 429s
 3. Implement additional authentication challenges
@@ -345,6 +378,7 @@ Current implementation logs:
 ## Conclusion
 
 The rate limiting implementation provides:
+
 - ✅ Production-ready Redis-backed storage
 - ✅ Accurate sliding window algorithm
 - ✅ User-friendly error messages

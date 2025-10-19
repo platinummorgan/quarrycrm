@@ -57,9 +57,11 @@ describe('Saved Views Round-trip Test', () => {
     expect(() => ViewOperations.validateConfig(testViewConfig)).not.toThrow()
 
     // Invalid config should fail
-    expect(() => ViewOperations.validateConfig({
-      invalidField: 'value'
-    })).toThrow()
+    expect(() =>
+      ViewOperations.validateConfig({
+        invalidField: 'value',
+      })
+    ).toThrow()
   })
 
   test('URL encoding/decoding preserves view configuration', () => {

@@ -31,7 +31,10 @@ interface RouteErrorBoundaryState {
 
 const MAX_RETRY_COUNT = 3
 
-export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, RouteErrorBoundaryState> {
+export class RouteErrorBoundary extends Component<
+  RouteErrorBoundaryProps,
+  RouteErrorBoundaryState
+> {
   private retryTimeouts: NodeJS.Timeout[] = []
 
   public state: RouteErrorBoundaryState = {
@@ -39,12 +42,18 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
     retryCount: 0,
   }
 
-  public static getDerivedStateFromError(error: Error): Partial<RouteErrorBoundaryState> {
+  public static getDerivedStateFromError(
+    error: Error
+  ): Partial<RouteErrorBoundaryState> {
     return { hasError: true, error }
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error(`RouteErrorBoundary (${this.props.routeName || 'unknown'}):`, error, errorInfo)
+    console.error(
+      `RouteErrorBoundary (${this.props.routeName || 'unknown'}):`,
+      error,
+      errorInfo
+    )
 
     this.setState({ errorInfo })
 
@@ -61,12 +70,15 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
     }
 
     // Show toast notification
-    toast.error('Something went wrong', 'The page encountered an error. You can try refreshing or going back.')
+    toast.error(
+      'Something went wrong',
+      'The page encountered an error. You can try refreshing or going back.'
+    )
   }
 
   public componentWillUnmount() {
     // Clear any pending retry timeouts
-    this.retryTimeouts.forEach(timeout => clearTimeout(timeout))
+    this.retryTimeouts.forEach((timeout) => clearTimeout(timeout))
   }
 
   private handleRetry = () => {
@@ -74,11 +86,14 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
     const { retryCount } = this.state
 
     if (retryCount >= MAX_RETRY_COUNT) {
-      toast.error('Maximum retry attempts reached', 'Please refresh the page or contact support.')
+      toast.error(
+        'Maximum retry attempts reached',
+        'Please refresh the page or contact support.'
+      )
       return
     }
 
-    this.setState(prevState => ({ retryCount: prevState.retryCount + 1 }))
+    this.setState((prevState) => ({ retryCount: prevState.retryCount + 1 }))
 
     // Reset error state
     this.setState({
@@ -117,12 +132,19 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
     }
 
     // Copy to clipboard
-    navigator.clipboard.writeText(JSON.stringify(bugReport, null, 2))
+    navigator.clipboard
+      .writeText(JSON.stringify(bugReport, null, 2))
       .then(() => {
-        toast.success('Bug report copied to clipboard', 'Please paste this in a support ticket.')
+        toast.success(
+          'Bug report copied to clipboard',
+          'Please paste this in a support ticket.'
+        )
       })
       .catch(() => {
-        toast.error('Failed to copy bug report', 'Please manually copy the error details.')
+        toast.error(
+          'Failed to copy bug report',
+          'Please manually copy the error details.'
+        )
       })
   }
 
@@ -133,16 +155,22 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
       }
 
       const { error, retryCount } = this.state
-      const { routeName, showErrorDetails = process.env.NODE_ENV === 'development' } = this.props
+      const {
+        routeName,
+        showErrorDetails = process.env.NODE_ENV === 'development',
+      } = this.props
       const canRetry = retryCount < MAX_RETRY_COUNT
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-4">
+        <div className="flex min-h-[400px] items-center justify-center p-4">
           <Card className="w-full max-w-2xl border-destructive/50">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-destructive/10 rounded-full">
-                  <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
+                <div className="rounded-full bg-destructive/10 p-2">
+                  <AlertTriangle
+                    className="h-6 w-6 text-destructive"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
                   <CardTitle className="text-destructive">
@@ -156,11 +184,12 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                We apologize for the inconvenience. This error has been logged and we're working to fix it.
+                We apologize for the inconvenience. This error has been logged
+                and we're working to fix it.
               </p>
 
               {retryCount > 0 && (
-                <div className="p-3 bg-muted rounded-md">
+                <div className="rounded-md bg-muted p-3">
                   <p className="text-sm">
                     Retry attempts: {retryCount} / {MAX_RETRY_COUNT}
                   </p>
@@ -168,22 +197,22 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
               )}
 
               {showErrorDetails && error && (
-                <details className="text-xs bg-muted p-3 rounded-md">
-                  <summary className="cursor-pointer font-medium mb-2 flex items-center gap-2">
+                <details className="rounded-md bg-muted p-3 text-xs">
+                  <summary className="mb-2 flex cursor-pointer items-center gap-2 font-medium">
                     <Bug className="h-4 w-4" />
                     Error Details (Development)
                   </summary>
                   <div className="space-y-2">
                     <div>
                       <strong>Error:</strong>
-                      <pre className="mt-1 text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border overflow-auto max-h-32">
+                      <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded border bg-background p-2 text-xs">
                         {error.toString()}
                       </pre>
                     </div>
                     {this.state.errorInfo?.componentStack && (
                       <div>
                         <strong>Component Stack:</strong>
-                        <pre className="mt-1 text-xs whitespace-pre-wrap break-all bg-background p-2 rounded border overflow-auto max-h-32">
+                        <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded border bg-background p-2 text-xs">
                           {this.state.errorInfo.componentStack}
                         </pre>
                       </div>
@@ -192,19 +221,32 @@ export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, Route
                 </details>
               )}
             </CardContent>
-            <CardFooter className="flex gap-2 flex-wrap">
+            <CardFooter className="flex flex-wrap gap-2">
               {canRetry && (
-                <Button onClick={this.handleRetry} variant="default" className="flex-1">
+                <Button
+                  onClick={this.handleRetry}
+                  variant="default"
+                  className="flex-1"
+                >
                   <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Try Again {retryCount > 0 && `(${retryCount}/${MAX_RETRY_COUNT})`}
+                  Try Again{' '}
+                  {retryCount > 0 && `(${retryCount}/${MAX_RETRY_COUNT})`}
                 </Button>
               )}
-              <Button onClick={this.handleGoHome} variant="outline" className={canRetry ? "flex-1" : "flex-1"}>
+              <Button
+                onClick={this.handleGoHome}
+                variant="outline"
+                className={canRetry ? 'flex-1' : 'flex-1'}
+              >
                 <Home className="mr-2 h-4 w-4" aria-hidden="true" />
                 Go Home
               </Button>
               {showErrorDetails && (
-                <Button onClick={this.handleReportBug} variant="ghost" size="sm">
+                <Button
+                  onClick={this.handleReportBug}
+                  variant="ghost"
+                  size="sm"
+                >
                   <Bug className="mr-2 h-4 w-4" aria-hidden="true" />
                   Report Bug
                 </Button>

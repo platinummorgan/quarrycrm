@@ -1,4 +1,8 @@
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { ActivityType } from '@prisma/client'
@@ -87,8 +91,18 @@ export const activitiesRouter = createTRPCRouter({
     .input(activityFiltersSchema)
     .output(activityListResponseSchema)
     .query(async ({ ctx, input }) => {
-      const { q, owner, type, contact, deal, isCompleted, overdue, updatedSince, limit, cursor } =
-        input
+      const {
+        q,
+        owner,
+        type,
+        contact,
+        deal,
+        isCompleted,
+        overdue,
+        updatedSince,
+        limit,
+        cursor,
+      } = input
 
       // Build where clause
       const where: any = {

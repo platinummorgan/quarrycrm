@@ -22,10 +22,10 @@ function AppLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       <BetaBanner />
       <SkipLink href="#main-content">Skip to main content</SkipLink>
-      
+
       {/* Demo Banner - Full width, prominent */}
       <DemoPill variant="large" />
-      
+
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto max-w-[1200px] px-4 py-4">

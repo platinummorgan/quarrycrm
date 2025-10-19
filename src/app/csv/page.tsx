@@ -13,11 +13,12 @@ export default function CsvManagementPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">CSV Import & Export</h1>
+        <h1 className="mb-2 text-3xl font-bold">CSV Import & Export</h1>
         <p className="text-muted-foreground">
-          Import and export your CRM data with powerful validation, templates, and rollback capabilities.
+          Import and export your CRM data with powerful validation, templates,
+          and rollback capabilities.
         </p>
       </div>
 
@@ -31,7 +32,10 @@ export default function CsvManagementPage() {
             <Download className="h-4 w-4" />
             <span>Export</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="templates"
+            className="flex items-center space-x-2"
+          >
             <FileText className="h-4 w-4" />
             <span>Templates</span>
           </TabsTrigger>

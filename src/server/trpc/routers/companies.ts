@@ -1,4 +1,8 @@
-import { createTRPCRouter, orgProcedure, demoProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -358,10 +362,12 @@ export const companiesRouter = createTRPCRouter({
 
   // Search companies for combobox/dropdown
   search: orgProcedure
-    .input(z.object({
-      q: z.string().optional(),
-      limit: z.number().min(1).max(50).default(10),
-    }))
+    .input(
+      z.object({
+        q: z.string().optional(),
+        limit: z.number().min(1).max(50).default(10),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const { q, limit } = input
 

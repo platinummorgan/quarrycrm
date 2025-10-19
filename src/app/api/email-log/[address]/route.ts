@@ -49,7 +49,9 @@ async function getOrgIdFromEmail(rawEmail: string): Promise<string | null> {
   return organization?.id || null
 }
 
-const emailLogHandler = async (request: NextRequest): Promise<NextResponse<any>> => {
+const emailLogHandler = async (
+  request: NextRequest
+): Promise<NextResponse<any>> => {
   // Demo user guard
   const demoCheck = await demoGuard()
   if (demoCheck) return demoCheck
@@ -115,7 +117,6 @@ const emailLogHandler = async (request: NextRequest): Promise<NextResponse<any>>
       success: true,
       activityId: activity.id,
     })
-
   } catch (error) {
     console.error('Email logging error:', error)
     return NextResponse.json(

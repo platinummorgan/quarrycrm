@@ -1,34 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 interface TimingEntry {
-  name: string;
-  duration: number;
-  description?: string;
+  name: string
+  duration: number
+  description?: string
 }
 
 interface RouteTimingData {
-  route: string;
-  method: string;
-  totalDuration: number;
-  sqlDuration: number;
-  handlerDuration: number;
-  timestamp: number;
+  route: string
+  method: string
+  totalDuration: number
+  sqlDuration: number
+  handlerDuration: number
+  timestamp: number
 }
 
 // In-memory store for timing data (dev only)
-const timingStore: RouteTimingData[] = [];
-const MAX_TIMING_ENTRIES = 100;
+const timingStore: RouteTimingData[] = []
+const MAX_TIMING_ENTRIES = 100
 
 /**
  * Store timing data for debug page
  */
 function storeTimingData(data: RouteTimingData) {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (process.env.NODE_ENV !== 'development') return
 
-  timingStore.unshift(data);
+  timingStore.unshift(data)
   if (timingStore.length > MAX_TIMING_ENTRIES) {
-    timingStore.pop();
+    timingStore.pop()
   }
 }
 
@@ -36,14 +36,14 @@ function storeTimingData(data: RouteTimingData) {
  * Get stored timing data (sorted by total duration)
  */
 export function getTimingData() {
-  return [...timingStore].sort((a, b) => b.totalDuration - a.totalDuration);
+  return [...timingStore].sort((a, b) => b.totalDuration - a.totalDuration)
 }
 
 /**
  * Clear timing data
  */
 export function clearTimingData() {
-  timingStore.length = 0;
+  timingStore.length = 0
 }
 
 /**
@@ -53,11 +53,11 @@ export async function measureSql<T>(
   name: string,
   fn: () => Promise<T>
 ): Promise<{ result: T; duration: number }> {
-  const start = performance.now();
-  const result = await fn();
-  const duration = performance.now() - start;
+  const start = performance.now()
+  const result = await fn()
+  const duration = performance.now() - start
 
-  return { result, duration };
+  return { result, duration }
 }
 
 /**
@@ -66,10 +66,10 @@ export async function measureSql<T>(
 function formatTiming(timings: TimingEntry[]): string {
   return timings
     .map((t) => {
-      const desc = t.description ? `;desc="${t.description}"` : '';
-      return `${t.name};dur=${t.duration.toFixed(2)}${desc}`;
+      const desc = t.description ? `;desc="${t.description}"` : ''
+      return `${t.name};dur=${t.duration.toFixed(2)}${desc}`
     })
-    .join(', ');
+    .join(', ')
 }
 
 /**
@@ -79,28 +79,28 @@ export function withServerTiming<T = any>(
   handler: (req: NextRequest, context?: any) => Promise<NextResponse<T>>
 ) {
   return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
-    const timings: TimingEntry[] = [];
-    const totalStart = performance.now();
-    let sqlDuration = 0;
+    const timings: TimingEntry[] = []
+    const totalStart = performance.now()
+    let sqlDuration = 0
 
     // Intercept Prisma queries to measure SQL timing
-    const originalPrismaQuery = (prisma as any)._engine?.query;
+    const originalPrismaQuery = (prisma as any)._engine?.query
     if (originalPrismaQuery) {
-      (prisma as any)._engine.query = async function (...args: any[]) {
-        const sqlStart = performance.now();
-        const result = await originalPrismaQuery.apply(this, args);
-        const duration = performance.now() - sqlStart;
-        sqlDuration += duration;
-        return result;
-      };
+      ;(prisma as any)._engine.query = async function (...args: any[]) {
+        const sqlStart = performance.now()
+        const result = await originalPrismaQuery.apply(this, args)
+        const duration = performance.now() - sqlStart
+        sqlDuration += duration
+        return result
+      }
     }
 
     try {
       // Measure handler execution
-      const handlerStart = performance.now();
-      const response = await handler(req, context);
-      const handlerDuration = performance.now() - handlerStart;
-      const totalDuration = performance.now() - totalStart;
+      const handlerStart = performance.now()
+      const response = await handler(req, context)
+      const handlerDuration = performance.now() - handlerStart
+      const totalDuration = performance.now() - totalStart
 
       // Add timings
       if (sqlDuration > 0) {
@@ -108,23 +108,23 @@ export function withServerTiming<T = any>(
           name: 'sql',
           duration: sqlDuration,
           description: 'Database queries',
-        });
+        })
       }
 
       timings.push({
         name: 'handler',
         duration: handlerDuration - sqlDuration,
         description: 'Handler execution',
-      });
+      })
 
       timings.push({
         name: 'total',
         duration: totalDuration,
         description: 'Total request time',
-      });
+      })
 
       // Store timing data for debug page
-      const url = new URL(req.url);
+      const url = new URL(req.url)
       storeTimingData({
         route: url.pathname,
         method: req.method,
@@ -132,28 +132,28 @@ export function withServerTiming<T = any>(
         sqlDuration,
         handlerDuration: handlerDuration - sqlDuration,
         timestamp: Date.now(),
-      });
+      })
 
       // Clone response and add Server-Timing header
-      const headers = new Headers(response.headers);
-      headers.set('Server-Timing', formatTiming(timings));
+      const headers = new Headers(response.headers)
+      headers.set('Server-Timing', formatTiming(timings))
 
       return new NextResponse(response.body, {
         status: response.status,
         statusText: response.statusText,
         headers,
-      });
+      })
     } catch (error) {
       // Even on error, report timing
-      const totalDuration = performance.now() - totalStart;
+      const totalDuration = performance.now() - totalStart
 
       timings.push({
         name: 'error',
         duration: totalDuration,
         description: 'Request failed',
-      });
+      })
 
-      const url = new URL(req.url);
+      const url = new URL(req.url)
       storeTimingData({
         route: url.pathname,
         method: req.method,
@@ -161,16 +161,16 @@ export function withServerTiming<T = any>(
         sqlDuration,
         handlerDuration: 0,
         timestamp: Date.now(),
-      });
+      })
 
-      throw error;
+      throw error
     } finally {
       // Restore original Prisma query method
       if (originalPrismaQuery) {
-        (prisma as any)._engine.query = originalPrismaQuery;
+        ;(prisma as any)._engine.query = originalPrismaQuery
       }
     }
-  };
+  }
 }
 
 /**
@@ -180,9 +180,9 @@ export async function measure<T>(
   name: string,
   fn: () => Promise<T>
 ): Promise<{ result: T; duration: number; timing: TimingEntry }> {
-  const start = performance.now();
-  const result = await fn();
-  const duration = performance.now() - start;
+  const start = performance.now()
+  const result = await fn()
+  const duration = performance.now() - start
 
   return {
     result,
@@ -191,5 +191,5 @@ export async function measure<T>(
       name,
       duration,
     },
-  };
+  }
 }

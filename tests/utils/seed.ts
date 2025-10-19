@@ -18,7 +18,9 @@ function getPrismaClient(): PrismaClient {
  * Seed organization, user, and membership.
  * Returns full objects (not just IDs) for easy access in tests.
  */
-export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClient) {
+export async function seedOrgUser(
+  client?: PrismaClient | Prisma.TransactionClient
+) {
   const db = client ?? getPrismaClient()
   const org = await db.organization.create({
     data: {
@@ -68,9 +70,30 @@ export async function seedPipelines(
   // the 'Proposal' stage with color '#eab308'. Use stable names/colors
   // so assertions in tests pass.
   const stages = await Promise.all([
-    db.stage.create({ data: { name: 'Lead', pipelineId: pipeline.id, order: 0, color: '#3B82F6' } }),
-    db.stage.create({ data: { name: 'Proposal', pipelineId: pipeline.id, order: 1, color: '#eab308' } }),
-    db.stage.create({ data: { name: 'Negotiation', pipelineId: pipeline.id, order: 2, color: '#EF4444' } }),
+    db.stage.create({
+      data: {
+        name: 'Lead',
+        pipelineId: pipeline.id,
+        order: 0,
+        color: '#3B82F6',
+      },
+    }),
+    db.stage.create({
+      data: {
+        name: 'Proposal',
+        pipelineId: pipeline.id,
+        order: 1,
+        color: '#eab308',
+      },
+    }),
+    db.stage.create({
+      data: {
+        name: 'Negotiation',
+        pipelineId: pipeline.id,
+        order: 2,
+        color: '#EF4444',
+      },
+    }),
   ])
 
   return {
@@ -90,7 +113,10 @@ export async function seedContacts(
   orgId: string,
   ownerId: string,
   count: number,
-  options?: { companyId?: string; client?: PrismaClient | Prisma.TransactionClient }
+  options?: {
+    companyId?: string
+    client?: PrismaClient | Prisma.TransactionClient
+  }
 ) {
   const db = options?.client ?? getPrismaClient()
 

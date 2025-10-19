@@ -5,7 +5,7 @@ const mockPapaParse = vi.fn()
 vi.mock('papaparse', () => ({
   default: {
     parse: mockPapaParse,
-  }
+  },
 }))
 
 // Mock fetch for API calls
@@ -17,7 +17,7 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
-  }
+  },
 }))
 
 describe('Contacts Import Wizard - Happy Path', () => {
@@ -30,13 +30,25 @@ describe('Contacts Import Wizard - Happy Path', () => {
     mockPapaParse.mockImplementation((file, config) => {
       config.complete({
         data: [
-          { 'First Name': 'John', 'Last Name': 'Doe', 'Email': 'john@example.com', 'Phone': '+1234567890', 'Company': 'Acme Corp' },
-          { 'First Name': 'Jane', 'Last Name': 'Smith', 'Email': 'jane@example.com', 'Phone': '+0987654321', 'Company': 'Tech Inc' },
+          {
+            'First Name': 'John',
+            'Last Name': 'Doe',
+            Email: 'john@example.com',
+            Phone: '+1234567890',
+            Company: 'Acme Corp',
+          },
+          {
+            'First Name': 'Jane',
+            'Last Name': 'Smith',
+            Email: 'jane@example.com',
+            Phone: '+0987654321',
+            Company: 'Tech Inc',
+          },
         ],
         errors: [],
         meta: {
-          fields: ['First Name', 'Last Name', 'Email', 'Phone', 'Company']
-        }
+          fields: ['First Name', 'Last Name', 'Email', 'Phone', 'Company'],
+        },
       })
     })
 
@@ -49,8 +61,8 @@ describe('Contacts Import Wizard - Happy Path', () => {
         created: 2,
         skipped: 0,
         errors: 0,
-        affectedIds: ['contact-1', 'contact-2']
-      })
+        affectedIds: ['contact-1', 'contact-2'],
+      }),
     })
 
     // Mock progress polling
@@ -64,11 +76,17 @@ describe('Contacts Import Wizard - Happy Path', () => {
         processedRows: 2,
         skippedRows: 0,
         errorRows: 0,
-      })
+      }),
     })
 
     // Test CSV file validation
-    const file = new File(['First Name,Last Name,Email,Phone,Company\nJohn,Doe,john@example.com,+1234567890,Acme Corp\nJane,Smith,jane@example.com,+0987654321,Tech Inc'], 'contacts.csv', { type: 'text/csv' })
+    const file = new File(
+      [
+        'First Name,Last Name,Email,Phone,Company\nJohn,Doe,john@example.com,+1234567890,Acme Corp\nJane,Smith,jane@example.com,+0987654321,Tech Inc',
+      ],
+      'contacts.csv',
+      { type: 'text/csv' }
+    )
 
     // Verify file validation would pass
     expect(file.name.toLowerCase().endsWith('.csv')).toBe(true)
@@ -83,14 +101,17 @@ describe('Contacts Import Wizard - Happy Path', () => {
       error: () => {},
     })
 
-    expect(mockPapaParse).toHaveBeenCalledWith(file, expect.objectContaining({
-      header: true,
-      skipEmptyLines: true,
-    }))
+    expect(mockPapaParse).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({
+        header: true,
+        skipEmptyLines: true,
+      })
+    )
 
     // Verify field mapping generation
     const csvHeaders = ['First Name', 'Last Name', 'Email', 'Phone', 'Company']
-    const mappings = csvHeaders.map(header => {
+    const mappings = csvHeaders.map((header) => {
       const lowerHeader = header.toLowerCase()
 
       let dbField: string | null = null
@@ -131,10 +152,22 @@ describe('Contacts Import Wizard - Happy Path', () => {
     // Verify import API call
     const importData = {
       data: [
-        { 'First Name': 'John', 'Last Name': 'Doe', 'Email': 'john@example.com', 'Phone': '+1234567890', 'Company': 'Acme Corp' },
-        { 'First Name': 'Jane', 'Last Name': 'Smith', 'Email': 'jane@example.com', 'Phone': '+0987654321', 'Company': 'Tech Inc' },
+        {
+          'First Name': 'John',
+          'Last Name': 'Doe',
+          Email: 'john@example.com',
+          Phone: '+1234567890',
+          Company: 'Acme Corp',
+        },
+        {
+          'First Name': 'Jane',
+          'Last Name': 'Smith',
+          Email: 'jane@example.com',
+          Phone: '+0987654321',
+          Company: 'Tech Inc',
+        },
       ],
-      mappings: mappings.filter(m => m.dbField),
+      mappings: mappings.filter((m) => m.dbField),
     }
 
     const response = await fetch('/api/import/contacts', {
@@ -159,11 +192,13 @@ describe('Contacts Import Wizard - Happy Path', () => {
       created: 2,
       skipped: 0,
       errors: 0,
-      affectedIds: ['contact-1', 'contact-2']
+      affectedIds: ['contact-1', 'contact-2'],
     })
 
     // Verify progress polling
-    const progressResponse = await fetch('/api/import/contacts/test-import-123/progress')
+    const progressResponse = await fetch(
+      '/api/import/contacts/test-import-123/progress'
+    )
     const progressData = await progressResponse.json()
 
     expect(progressData).toEqual({
@@ -183,36 +218,42 @@ describe('Contacts Import Wizard - Happy Path', () => {
       ok: true,
       json: async () => ({
         message: 'Import rolled back successfully',
-        deletedCount: 2
-      })
+        deletedCount: 2,
+      }),
     })
 
     // Test rollback API call
-    const response = await fetch('/api/import/contacts/test-import-123/rollback', {
-      method: 'POST',
-    })
+    const response = await fetch(
+      '/api/import/contacts/test-import-123/rollback',
+      {
+        method: 'POST',
+      }
+    )
 
     const result = await response.json()
 
     // Verify API call
-    expect(mockFetch).toHaveBeenCalledWith('/api/import/contacts/test-import-123/rollback', {
-      method: 'POST',
-    })
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/import/contacts/test-import-123/rollback',
+      {
+        method: 'POST',
+      }
+    )
 
     // Verify response
     expect(result).toEqual({
       message: 'Import rolled back successfully',
-      deletedCount: 2
+      deletedCount: 2,
     })
   })
 
   it('validates data integrity throughout the process', () => {
     // Test data validation
     const testData = [
-      { 'First Name': 'John', 'Last Name': 'Doe', 'Email': 'john@example.com' },
-      { 'First Name': '', 'Last Name': 'Smith', 'Email': 'jane@example.com' }, // Missing first name
-      { 'First Name': 'Bob', 'Last Name': '', 'Email': 'bob@example.com' }, // Missing last name
-      { 'First Name': 'Alice', 'Last Name': 'Wonder', 'Email': 'invalid-email' }, // Invalid email
+      { 'First Name': 'John', 'Last Name': 'Doe', Email: 'john@example.com' },
+      { 'First Name': '', 'Last Name': 'Smith', Email: 'jane@example.com' }, // Missing first name
+      { 'First Name': 'Bob', 'Last Name': '', Email: 'bob@example.com' }, // Missing last name
+      { 'First Name': 'Alice', 'Last Name': 'Wonder', Email: 'invalid-email' }, // Invalid email
     ]
 
     const mappings = [
@@ -228,17 +269,29 @@ describe('Contacts Import Wizard - Happy Path', () => {
 
       // Check required fields
       if (!row['First Name']?.trim()) {
-        errors.push({ row: rowNum, field: 'firstName', message: 'First name is required' })
+        errors.push({
+          row: rowNum,
+          field: 'firstName',
+          message: 'First name is required',
+        })
       }
       if (!row['Last Name']?.trim()) {
-        errors.push({ row: rowNum, field: 'lastName', message: 'Last name is required' })
+        errors.push({
+          row: rowNum,
+          field: 'lastName',
+          message: 'Last name is required',
+        })
       }
 
       // Check email format
       if (row['Email']) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(row['Email'].trim())) {
-          errors.push({ row: rowNum, field: 'email', message: 'Invalid email format' })
+          errors.push({
+            row: rowNum,
+            field: 'email',
+            message: 'Invalid email format',
+          })
         }
       }
     })

@@ -1,11 +1,11 @@
 /**
  * Prisma Middleware for Field-Level Encryption
- * 
+ *
  * Automatically encrypts/decrypts sensitive Contact fields:
  * - email (encrypted + searchable hash)
  * - phone (encrypted + searchable hash)
  * - notes (encrypted only)
- * 
+ *
  * Encryption happens on write (create/update)
  * Decryption happens on read (findMany/findUnique/etc)
  */
@@ -24,8 +24,8 @@ import {
 const ENCRYPTED_CONTACT_FIELDS = ['email', 'phone', 'notes'] as const
 const SEARCHABLE_FIELDS = ['email', 'phone'] as const
 
-type EncryptedContactField = typeof ENCRYPTED_CONTACT_FIELDS[number]
-type SearchableField = typeof SEARCHABLE_FIELDS[number]
+type EncryptedContactField = (typeof ENCRYPTED_CONTACT_FIELDS)[number]
+type SearchableField = (typeof SEARCHABLE_FIELDS)[number]
 
 /**
  * Encrypt contact data before writing to database
@@ -39,10 +39,10 @@ function encryptContactData(data: any): any {
   for (const field of ENCRYPTED_CONTACT_FIELDS) {
     if (encrypted[field] && !isEncrypted(encrypted[field])) {
       const plaintext = encrypted[field]
-      
+
       // Encrypt the field
       encrypted[field] = encryptField(plaintext)
-      
+
       // Create search token if field is searchable
       if (SEARCHABLE_FIELDS.includes(field as SearchableField)) {
         const hashField = `${field}_hash` as const
@@ -141,16 +141,19 @@ function transformWhereClause(where: any): any {
 
 /**
  * Prisma middleware for Contact encryption
- * 
+ *
  * Usage:
  * ```typescript
  * import { prisma } from '@/lib/db'
  * import { contactEncryptionMiddleware } from '@/lib/crypto/middleware'
- * 
+ *
  * prisma.$use(contactEncryptionMiddleware)
  * ```
  */
-export const contactEncryptionMiddleware: Prisma.Middleware = async (params, next) => {
+export const contactEncryptionMiddleware: Prisma.Middleware = async (
+  params,
+  next
+) => {
   // Only apply to Contact model
   if (params.model !== 'Contact') {
     return next(params)
@@ -228,7 +231,7 @@ export const contactEncryptionMiddleware: Prisma.Middleware = async (params, nex
 
 /**
  * Apply encryption middleware to Prisma client
- * 
+ *
  * Call this once during app initialization:
  * ```typescript
  * import { applyEncryptionMiddleware } from '@/lib/crypto/middleware'

@@ -6,7 +6,13 @@ import { outboxManager } from '@/lib/outbox-manager'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   AlertTriangle,
   RefreshCw,
@@ -16,7 +22,7 @@ import {
   CheckCircle,
   XCircle,
   Wifi,
-  WifiOff
+  WifiOff,
 } from 'lucide-react'
 import { OfflineStorage } from '@/lib/offline-storage'
 
@@ -53,7 +59,11 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
 
   const getStatusIcon = (item: any) => {
     if (item.error) {
-      return item.retryCount >= 3 ? <XCircle className="h-4 w-4 text-red-500" /> : <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      return item.retryCount >= 3 ? (
+        <XCircle className="h-4 w-4 text-red-500" />
+      ) : (
+        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      )
     }
     return <Clock className="h-4 w-4 text-blue-500" />
   }
@@ -72,7 +82,7 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
           {!isOnline ? (
             <WifiOff className="h-5 w-5 text-orange-600" />
           ) : (
-            <RefreshCw className="h-5 w-5 text-orange-600 animate-spin" />
+            <RefreshCw className="h-5 w-5 animate-spin text-orange-600" />
           )}
 
           <AlertDescription className="flex items-center space-x-2">
@@ -109,7 +119,7 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
               onClick={handleRetryAll}
               className="h-8"
             >
-              <RefreshCw className="h-3 w-3 mr-1" />
+              <RefreshCw className="mr-1 h-3 w-3" />
               Retry Failed
             </Button>
           )}
@@ -125,7 +135,7 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
                 View Details
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh]">
+            <DialogContent className="max-h-[80vh] max-w-2xl">
               <DialogHeader>
                 <DialogTitle className="flex items-center space-x-2">
                   <RefreshCw className="h-5 w-5" />
@@ -141,12 +151,16 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
                   <div className="flex space-x-2">
                     {stats.failed > 0 && isOnline && (
                       <Button size="sm" onClick={handleRetryAll}>
-                        <RefreshCw className="h-3 w-3 mr-1" />
+                        <RefreshCw className="mr-1 h-3 w-3" />
                         Retry All Failed
                       </Button>
                     )}
-                    <Button size="sm" variant="destructive" onClick={handleClearAll}>
-                      <Trash2 className="h-3 w-3 mr-1" />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleClearAll}
+                    >
+                      <Trash2 className="mr-1 h-3 w-3" />
                       Clear All
                     </Button>
                   </div>
@@ -155,13 +169,13 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
                 <div className="max-h-96 overflow-y-auto">
                   <div className="space-y-3">
                     {outboxItems.map((item, index) => (
-                      <div key={item.id} className="border rounded-lg p-3">
+                      <div key={item.id} className="rounded-lg border p-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-start space-x-3">
                             {getStatusIcon(item)}
                             <div className="flex-1">
                               <div className="flex items-center space-x-2">
-                                <span className="font-medium text-sm">
+                                <span className="text-sm font-medium">
                                   {item.type.toUpperCase()} {item.entity}
                                 </span>
                                 <Badge variant="outline" className="text-xs">
@@ -169,20 +183,26 @@ export function OutboxBanner({ className }: OutboxBannerProps) {
                                 </Badge>
                               </div>
 
-                              <div className="text-xs text-muted-foreground mt-1">
+                              <div className="mt-1 text-xs text-muted-foreground">
                                 {new Date(item.timestamp).toLocaleString()}
                                 {item.lastAttempt && (
-                                  <> • Last attempt: {new Date(item.lastAttempt).toLocaleString()}</>
+                                  <>
+                                    {' '}
+                                    • Last attempt:{' '}
+                                    {new Date(
+                                      item.lastAttempt
+                                    ).toLocaleString()}
+                                  </>
                                 )}
                               </div>
 
                               {item.error && (
-                                <div className="text-xs text-red-600 mt-1">
+                                <div className="mt-1 text-xs text-red-600">
                                   Error: {item.error}
                                 </div>
                               )}
 
-                              <div className="text-xs text-muted-foreground mt-2">
+                              <div className="mt-2 text-xs text-muted-foreground">
                                 Procedure: {item.procedure}
                               </div>
                             </div>

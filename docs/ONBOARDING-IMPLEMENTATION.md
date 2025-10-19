@@ -1,11 +1,13 @@
 # Onboarding Checklist - Implementation Summary
 
 ## Overview
+
 Implemented a user onboarding checklist on `/app` that tracks 5 key setup tasks: Create pipeline, Import sample CSV, Create first deal, Save a view, and Install PWA. The checklist is dismissible, persists per user, and shows progress in the header until complete.
 
 ## Features Implemented
 
 ### 1. Task Tracking System
+
 - **5 Core Tasks:**
   1. 🎯 Create a pipeline
   2. 📥 Import sample contacts (10-row CSV bundled)
@@ -20,6 +22,7 @@ Implemented a user onboarding checklist on `/app` that tracks 5 key setup tasks:
 ### 2. UI Components
 
 **OnboardingChecklist Component** (`src/components/onboarding/OnboardingChecklist.tsx`)
+
 - Dismissible card with X button
 - Progress bar showing X/5 complete and percentage
 - Task list with icons, titles, descriptions
@@ -29,6 +32,7 @@ Implemented a user onboarding checklist on `/app` that tracks 5 key setup tasks:
 - Completion animations and styling
 
 **OnboardingProgress Component** (`src/components/onboarding/OnboardingProgress.tsx`)
+
 - Compact header pill showing "Setup: X/5"
 - Mini progress bar (16px wide)
 - Auto-hides when dismissed or completed
@@ -37,10 +41,11 @@ Implemented a user onboarding checklist on `/app` that tracks 5 key setup tasks:
 ### 3. Data Persistence
 
 **Prisma Schema Changes** (`prisma/schema.prisma`)
+
 ```prisma
 model OrgMember {
   // ... existing fields
-  
+
   // Onboarding
   onboardingDismissed Boolean   @default(false)
   onboardingCompleted Boolean   @default(false)
@@ -49,6 +54,7 @@ model OrgMember {
 ```
 
 **Fields:**
+
 - `onboardingDismissed`: User clicked X to hide checklist
 - `onboardingCompleted`: All 5 tasks are complete
 - `onboardingProgress`: JSON object with boolean for each task
@@ -58,12 +64,14 @@ model OrgMember {
 **File:** `src/server/onboarding.ts`
 
 **Actions:**
+
 1. `getOnboardingState()` - Fetch current user's onboarding state
 2. `checkOnboardingProgress()` - Smart check that queries actual data counts
 3. `dismissOnboarding()` - Mark checklist as dismissed
 4. `completeOnboardingTask(taskId)` - Manually mark a task complete
 
 **Smart Detection Logic:**
+
 ```typescript
 - create_pipeline: pipelineCount > 0
 - import_csv: contactCount >= 10 (assumes CSV imported if 10+ contacts)
@@ -75,6 +83,7 @@ model OrgMember {
 ### 5. Sample Data
 
 **File:** `public/samples/contacts-sample.csv`
+
 - 10 diverse sample contacts
 - Includes: firstName, lastName, email, phone, company, title, notes
 - Ready to import via CSV import feature
@@ -121,7 +130,9 @@ model OrgMember {
 ### Modified Files
 
 #### 1. `prisma/schema.prisma`
+
 **Changes:** Added 3 fields to `OrgMember` model
+
 ```diff
  model OrgMember {
    id             String            @id @default(cuid())
@@ -135,13 +146,15 @@ model OrgMember {
 +  onboardingDismissed Boolean        @default(false)
 +  onboardingCompleted Boolean        @default(false)
 +  onboardingProgress  Json?          // Tracks which tasks are complete
- 
+
    // Relations
    organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 ```
 
 #### 2. `src/lib/auth-helpers.ts`
+
 **Changes:** Added `getCurrentMember()` helper function
+
 ```diff
 +// Helper to get the current organization member
 +export async function getCurrentMember() {
@@ -165,7 +178,9 @@ model OrgMember {
 ```
 
 #### 3. `src/app/(app)/app/page.tsx`
+
 **Changes:** Added onboarding checklist to dashboard
+
 ```diff
 +import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
  import { prisma } from '@/lib/prisma'
@@ -195,7 +210,9 @@ model OrgMember {
 ```
 
 #### 4. `src/app/(app)/layout.tsx`
+
 **Changes:** Added progress indicator to header
+
 ```diff
 -import { ReactNode } from 'react'
 +import { ReactNode, Suspense } from 'react'
@@ -239,11 +256,13 @@ model OrgMember {
    - Tasks completed in any order
 
 **Run tests:**
+
 ```bash
 npm test -- __tests__/onboarding.test.ts --run
 ```
 
 **Result:**
+
 ```
 ✓ __tests__/onboarding.test.ts (14 tests) 7ms
   All tests passing!
@@ -252,6 +271,7 @@ npm test -- __tests__/onboarding.test.ts --run
 ## User Experience Flow
 
 ### First-Time User (0% Complete)
+
 1. User logs in and navigates to `/app`
 2. Sees onboarding checklist card at top of dashboard
 3. Header shows "Setup: 0/5" with empty progress bar
@@ -260,6 +280,7 @@ npm test -- __tests__/onboarding.test.ts --run
 6. Checklist automatically updates to "Setup: 1/5 (20%)"
 
 ### Mid-Progress User (60% Complete)
+
 1. Dashboard shows checklist with 3 completed, 2 remaining
 2. Header shows "Setup: 3/5" with 60% filled progress bar
 3. Completed tasks have checkmark and strikethrough
@@ -267,12 +288,14 @@ npm test -- __tests__/onboarding.test.ts --run
 5. Can dismiss checklist with X button at any time
 
 ### Completed User (100%)
+
 1. All 5 tasks show green checkmarks
 2. Checklist auto-hides on next page load
 3. Header progress indicator disappears
 4. Dashboard shows normal content without checklist
 
 ### Dismissed User
+
 1. User clicks X on checklist
 2. Checklist immediately disappears
 3. Header progress indicator disappears
@@ -281,16 +304,19 @@ npm test -- __tests__/onboarding.test.ts --run
 ## Database Migration Required
 
 **Before deploying, run:**
+
 ```bash
 npx prisma migrate dev --name add_onboarding_fields
 ```
 
 **This will:**
+
 1. Add `onboardingDismissed` column (default: false)
 2. Add `onboardingCompleted` column (default: false)
 3. Add `onboardingProgress` column (nullable JSON)
 
 **For existing users:**
+
 - All columns default to false/null
 - First visit to `/app` triggers `checkOnboardingProgress()`
 - System detects existing data and updates progress automatically
@@ -298,6 +324,7 @@ npx prisma migrate dev --name add_onboarding_fields
 ## Technical Details
 
 ### Progress Detection Algorithm
+
 ```typescript
 // Counts actual database records
 const pipelineCount = await prisma.pipeline.count({ where: { organizationId } })
@@ -308,20 +335,22 @@ const viewCount = await prisma.savedView.count({ where: { organizationId } })
 // Updates progress based on counts
 progress = {
   create_pipeline: pipelineCount > 0,
-  import_csv: contactCount >= 10,  // Heuristic: CSV likely imported
+  import_csv: contactCount >= 10, // Heuristic: CSV likely imported
   create_deal: dealCount > 0,
   save_view: viewCount > 0,
-  install_pwa: currentProgress?.install_pwa || false  // Manual only
+  install_pwa: currentProgress?.install_pwa || false, // Manual only
 }
 ```
 
 ### State Management
+
 - **Server State:** Stored in Prisma database per OrgMember
 - **Client State:** React useState for UI updates
 - **Optimistic Updates:** Client updates immediately, server persists async
 - **Revalidation:** `revalidatePath('/app')` after state changes
 
 ### Performance
+
 - **Parallel Queries:** Dashboard data and onboarding state fetched simultaneously
 - **Conditional Rendering:** Components only render when needed
 - **No Polling:** Progress checks only on page load
@@ -330,6 +359,7 @@ progress = {
 ## Future Enhancements
 
 ### Potential Improvements
+
 - [ ] Animated confetti when all tasks complete
 - [ ] Email notification when checklist done
 - [ ] Admin dashboard showing org-wide completion rates
@@ -340,6 +370,7 @@ progress = {
 - [ ] Skip tour option (for experienced users)
 
 ### Analytics Ideas
+
 - Track average time to complete each task
 - Monitor which tasks users skip/struggle with
 - A/B test different task orders
@@ -348,6 +379,7 @@ progress = {
 ## Files Changed Summary
 
 **New Files: 7**
+
 - `src/lib/onboarding.ts`
 - `src/components/onboarding/OnboardingChecklist.tsx`
 - `src/components/onboarding/OnboardingProgress.tsx`
@@ -357,6 +389,7 @@ progress = {
 - `__tests__/onboarding.test.ts`
 
 **Modified Files: 4**
+
 - `prisma/schema.prisma` (+3 fields)
 - `src/lib/auth-helpers.ts` (+1 function)
 - `src/app/(app)/app/page.tsx` (+7 lines)

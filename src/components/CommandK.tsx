@@ -58,8 +58,8 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
   if (!open) return null
 
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/50" 
+    <div
+      className="fixed inset-0 z-50 bg-black/50"
       onClick={() => onOpenChange(false)}
       role="dialog"
       aria-modal="true"
@@ -80,7 +80,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
               value={search}
               onValueChange={setSearch}
               placeholder="Type a command or search..."
-              className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Command palette search"
             />
             <kbd className="ml-auto hidden select-none rounded border bg-muted px-2 py-1 font-mono text-xs text-muted-foreground sm:block">
@@ -104,7 +104,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     }
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Plus className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/contacts?import=1')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Upload className="h-4 w-4" />
@@ -150,7 +150,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/contacts')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Users className="h-4 w-4" />
@@ -170,7 +170,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/deals')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Target className="h-4 w-4" />
@@ -190,7 +190,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/companies')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Building2 className="h-4 w-4" />
@@ -210,7 +210,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/activities')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Activity className="h-4 w-4" />
@@ -230,7 +230,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                     router.push('/app/settings')
                   })
                 }
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
                   <Settings className="h-4 w-4" />
@@ -319,7 +319,7 @@ export function CommandKProvider({ children }: { children: React.ReactNode }) {
         onOpenChange={setOpen}
         onNewContact={handleNewContact}
       />
-      
+
       {/* Contact drawer will be injected via context or global state */}
       {showContactDrawer && (
         <div id="command-k-contact-drawer">

@@ -193,7 +193,8 @@ describe('checkDemoRateLimit', () => {
     // Test x-forwarded-for
     const request1 = {
       headers: {
-        get: (name: string) => name === 'x-forwarded-for' ? '192.168.1.1' : null,
+        get: (name: string) =>
+          name === 'x-forwarded-for' ? '192.168.1.1' : null,
       },
     } as any
 
@@ -203,7 +204,7 @@ describe('checkDemoRateLimit', () => {
     // Test x-real-ip
     const request2 = {
       headers: {
-        get: (name: string) => name === 'x-real-ip' ? '192.168.1.2' : null,
+        get: (name: string) => (name === 'x-real-ip' ? '192.168.1.2' : null),
       },
     } as any
 

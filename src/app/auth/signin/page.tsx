@@ -18,7 +18,7 @@ export default async function SignInPage({
           {searchParams.error && (
             <div className="mt-4 rounded-md bg-red-50 p-4">
               <p className="text-sm text-red-800">
-                {searchParams.error === 'EmailCreateAccount' 
+                {searchParams.error === 'EmailCreateAccount'
                   ? 'There was a problem creating your account. Please try again.'
                   : 'There was a problem signing you in. Please try again.'}
               </p>

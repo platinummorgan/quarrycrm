@@ -12,7 +12,10 @@ interface StatusAnnouncerProps {
  * StatusAnnouncer provides screen reader announcements for async operations
  * Uses ARIA live regions to announce loading, success, and error states
  */
-export function StatusAnnouncer({ message, priority = 'polite' }: StatusAnnouncerProps) {
+export function StatusAnnouncer({
+  message,
+  priority = 'polite',
+}: StatusAnnouncerProps) {
   const previousMessage = useRef<string>('')
 
   useEffect(() => {

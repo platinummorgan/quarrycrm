@@ -8,7 +8,13 @@ import { trpc } from '@/lib/trpc'
 import { ActivityType } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { CalendarIcon, Plus } from 'lucide-react'
 
 const taskCreateSchema = z.object({
@@ -34,7 +40,7 @@ export function TaskQuickCreate({
   dealId,
   companyId,
   onSuccess,
-  className = ''
+  className = '',
 }: TaskQuickCreateProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -79,7 +85,7 @@ export function TaskQuickCreate({
   }
 
   return (
-    <div className={`border rounded-lg p-3 bg-background ${className}`}>
+    <div className={`rounded-lg border bg-background p-3 ${className}`}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div className="flex items-center space-x-2">
           <Input
@@ -90,7 +96,7 @@ export function TaskQuickCreate({
           />
           <input
             type="date"
-            className="px-3 py-2 border rounded-md text-sm w-40"
+            className="w-40 rounded-md border px-3 py-2 text-sm"
             {...form.register('dueDate')}
           />
           <Button

@@ -1,12 +1,12 @@
 /**
  * Blockchain-style Audit Chain using SHA-256
- * 
+ *
  * Features:
  * - Cryptographic chaining (prev_hash -> self_hash)
  * - Tamper detection via hash verification
  * - Canonical JSON serialization for deterministic hashing
  * - Genesis record support (first record has null prev_hash)
- * 
+ *
  * Security Properties:
  * - SHA-256: 256-bit cryptographic hash
  * - Any modification breaks the chain
@@ -18,13 +18,13 @@ import type { EventAudit } from '@prisma/client'
 
 /**
  * Canonicalize audit record for deterministic hashing
- * 
+ *
  * Ensures same data always produces same hash by:
  * - Sorting object keys alphabetically
  * - Excluding hash fields (prevHash, selfHash)
  * - Excluding auto-generated fields that change (id, createdAt if not part of payload)
  * - Using stable JSON serialization
- * 
+ *
  * @param record - Audit record (partial or full)
  * @returns Canonical JSON string
  */
@@ -41,7 +41,8 @@ export function canonicalizeAuditRecord(record: Partial<EventAudit>): string {
     createdAt: ((): string => {
       const v = record.createdAt
       if (!v) return new Date().toISOString()
-      if (v instanceof Date) return isNaN(v.getTime()) ? new Date().toISOString() : v.toISOString()
+      if (v instanceof Date)
+        return isNaN(v.getTime()) ? new Date().toISOString() : v.toISOString()
       try {
         const d = new Date(v as any)
         return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
@@ -54,7 +55,7 @@ export function canonicalizeAuditRecord(record: Partial<EventAudit>): string {
   // Sort keys alphabetically and stringify
   const sortedKeys = Object.keys(payload).sort()
   const canonical: Record<string, any> = {}
-  
+
   for (const key of sortedKeys) {
     canonical[key] = payload[key as keyof typeof payload]
   }
@@ -64,7 +65,7 @@ export function canonicalizeAuditRecord(record: Partial<EventAudit>): string {
 
 /**
  * Compute SHA-256 hash of audit record
- * 
+ *
  * @param record - Audit record to hash
  * @returns 64-character hex-encoded SHA-256 hash
  */
@@ -81,7 +82,7 @@ export function computeAuditHash(record: Partial<EventAudit>): string {
 
 /**
  * Compute chain hashes for a new audit record
- * 
+ *
  * @param record - New audit record (without hashes)
  * @param prevHash - Hash of previous record in chain (null for genesis)
  * @returns Object with prevHash and selfHash
@@ -91,7 +92,7 @@ export function computeChainHashes(
   prevHash: string | null
 ): { prevHash: string | null; selfHash: string } {
   const selfHash = computeAuditHash(record)
-  
+
   return {
     prevHash,
     selfHash,
@@ -100,13 +101,13 @@ export function computeChainHashes(
 
 /**
  * Verify audit chain integrity
- * 
+ *
  * Checks:
  * 1. First record has null prevHash (genesis)
  * 2. Each record's selfHash matches computed hash
  * 3. Each record's prevHash matches previous record's selfHash
  * 4. Records are in chronological order
- * 
+ *
  * @param records - Ordered audit records (chronological)
  * @returns Verification result with errors if any
  */
@@ -125,7 +126,9 @@ export interface ChainVerificationError {
   actual?: string
 }
 
-export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult {
+export function verifyAuditChain(
+  records: EventAudit[]
+): ChainVerificationResult {
   const errors: ChainVerificationError[] = []
 
   if (records.length === 0) {
@@ -158,7 +161,12 @@ export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult
     if ((record as any).selfHash !== expectedSelfHash) {
       if (process.env.AUDIT_DEBUG) {
         // eslint-disable-next-line no-console
-        console.log('[audit-debug] selfHash mismatch at index', i, 'id', record.id)
+        console.log(
+          '[audit-debug] selfHash mismatch at index',
+          i,
+          'id',
+          record.id
+        )
         // eslint-disable-next-line no-console
         console.log('[audit-debug] expectedSelfHash:', expectedSelfHash)
         // eslint-disable-next-line no-console
@@ -180,9 +188,17 @@ export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult
       if ((record as any).prevHash !== (prevRecord as any).selfHash) {
         if (process.env.AUDIT_DEBUG) {
           // eslint-disable-next-line no-console
-          console.log('[audit-debug] prevHash mismatch at index', i, 'id', record.id)
+          console.log(
+            '[audit-debug] prevHash mismatch at index',
+            i,
+            'id',
+            record.id
+          )
           // eslint-disable-next-line no-console
-          console.log('[audit-debug] expectedPrevHash:', (prevRecord as any).selfHash)
+          console.log(
+            '[audit-debug] expectedPrevHash:',
+            (prevRecord as any).selfHash
+          )
           // eslint-disable-next-line no-console
           console.log('[audit-debug] actualPrevHash:', (record as any).prevHash)
         }
@@ -190,7 +206,8 @@ export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult
           recordId: record.id,
           recordIndex: i,
           errorType: 'prev_hash',
-          message: 'Record prevHash does not match previous selfHash (broken chain)',
+          message:
+            'Record prevHash does not match previous selfHash (broken chain)',
           expected: (prevRecord as any).selfHash,
           actual: (record as any).prevHash || 'null',
         })
@@ -222,7 +239,7 @@ export function verifyAuditChain(records: EventAudit[]): ChainVerificationResult
 
 /**
  * Get the latest audit record for an organization (for chaining)
- * 
+ *
  * @param prisma - Prisma client
  * @param organizationId - Organization ID
  * @returns Latest audit record or null if none exist
@@ -239,9 +256,9 @@ export async function getLatestAuditRecord(
 
 /**
  * Create audit record with chain hashes
- * 
+ *
  * Automatically computes prevHash and selfHash based on chain state
- * 
+ *
  * @param prisma - Prisma client
  * @param data - Audit record data (without hashes)
  * @returns Created audit record with hashes
@@ -252,7 +269,7 @@ export async function createAuditRecord(
 ): Promise<EventAudit> {
   // Get the latest record for this organization
   const latestRecord = await getLatestAuditRecord(prisma, data.organizationId)
-  
+
   // Compute chain hashes
   const { prevHash, selfHash } = computeChainHashes(
     data,
@@ -271,7 +288,7 @@ export async function createAuditRecord(
 
 /**
  * Verify audit chain for an organization
- * 
+ *
  * @param prisma - Prisma client
  * @param organizationId - Organization ID to verify
  * @returns Verification result
@@ -290,7 +307,7 @@ export async function verifyOrganizationAuditChain(
 
 /**
  * Verify entire audit chain across all organizations
- * 
+ *
  * @param prisma - Prisma client
  * @returns Map of organization ID to verification result
  */

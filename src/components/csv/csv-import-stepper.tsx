@@ -4,7 +4,11 @@ import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { EntityType, CsvColumnMapping, autoDetectMappings } from '@/lib/csv-processor'
+import {
+  EntityType,
+  CsvColumnMapping,
+  autoDetectMappings,
+} from '@/lib/csv-processor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -19,7 +23,7 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
-  Download
+  Download,
 } from 'lucide-react'
 
 // Step definitions
@@ -37,13 +41,23 @@ const uploadSchema = z.object({
 })
 
 const mappingSchema = z.object({
-  columnMappings: z.array(z.object({
-    csvColumn: z.string(),
-    field: z.string(),
-    confidence: z.number(),
-    transform: z.enum(['none', 'normalize_phone', 'normalize_email', 'lowercase', 'uppercase']).optional(),
-    treatAsTag: z.boolean().optional(),
-  })),
+  columnMappings: z.array(
+    z.object({
+      csvColumn: z.string(),
+      field: z.string(),
+      confidence: z.number(),
+      transform: z
+        .enum([
+          'none',
+          'normalize_phone',
+          'normalize_email',
+          'lowercase',
+          'uppercase',
+        ])
+        .optional(),
+      treatAsTag: z.boolean().optional(),
+    })
+  ),
   skipDuplicates: z.boolean().default(true),
   updateExisting: z.boolean().default(false),
   createMissingCompanies: z.boolean().default(false),
@@ -59,7 +73,12 @@ interface CsvImportStepperProps {
   onTemplateChange?: (template: any) => void
 }
 
-export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTemplateChange }: CsvImportStepperProps) {
+export function CsvImportStepper({
+  onComplete,
+  onCancel,
+  selectedTemplate,
+  onTemplateChange,
+}: CsvImportStepperProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [parsedData, setParsedData] = useState<{
     headers: string[]
@@ -88,34 +107,40 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
   })
 
   // Handle file upload
-  const handleFileUpload = useCallback(async (data: UploadForm) => {
-    const formData = new FormData()
-    formData.append('file', data.file)
-    formData.append('entityType', data.entityType)
+  const handleFileUpload = useCallback(
+    async (data: UploadForm) => {
+      const formData = new FormData()
+      formData.append('file', data.file)
+      formData.append('entityType', data.entityType)
 
-    try {
-      const response = await fetch('/api/csv/import', {
-        method: 'POST',
-        body: formData,
-      })
+      try {
+        const response = await fetch('/api/csv/import', {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (!response.ok) {
-        throw new Error('Failed to parse CSV')
+        if (!response.ok) {
+          throw new Error('Failed to parse CSV')
+        }
+
+        const result = await response.json()
+        setParsedData(result)
+
+        // Auto-detect mappings
+        const autoMappings = autoDetectMappings(
+          result.headers,
+          data.entityType as EntityType
+        )
+        setMappings(autoMappings)
+
+        mappingForm.setValue('columnMappings', autoMappings)
+        setCurrentStep(1)
+      } catch (error) {
+        console.error('Upload error:', error)
       }
-
-      const result = await response.json()
-      setParsedData(result)
-
-      // Auto-detect mappings
-      const autoMappings = autoDetectMappings(result.headers, data.entityType as EntityType)
-      setMappings(autoMappings)
-
-      mappingForm.setValue('columnMappings', autoMappings)
-      setCurrentStep(1)
-    } catch (error) {
-      console.error('Upload error:', error)
-    }
-  }, [mappingForm])
+    },
+    [mappingForm]
+  )
 
   // Handle mapping submission
   const handleMappingSubmit = useCallback((data: MappingForm) => {
@@ -127,7 +152,12 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
   const handleImportStart = useCallback(async () => {
     if (!parsedData) return
 
-    setImportProgress({ processed: 0, total: parsedData.totalRows, status: 'processing', errors: [] })
+    setImportProgress({
+      processed: 0,
+      total: parsedData.totalRows,
+      status: 'processing',
+      errors: [],
+    })
 
     try {
       // Create import record first
@@ -150,15 +180,21 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
 
       // Simulate progress (in real implementation, this would be WebSocket or polling)
       for (let i = 0; i <= parsedData.totalRows; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-        setImportProgress(prev => ({ ...prev, processed: Math.min(i, parsedData.totalRows) }))
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        setImportProgress((prev) => ({
+          ...prev,
+          processed: Math.min(i, parsedData.totalRows),
+        }))
       }
 
-      setImportProgress(prev => ({ ...prev, status: 'completed' }))
+      setImportProgress((prev) => ({ ...prev, status: 'completed' }))
       setCurrentStep(3)
-
     } catch (error) {
-      setImportProgress(prev => ({ ...prev, status: 'error', errors: ['Import failed'] }))
+      setImportProgress((prev) => ({
+        ...prev,
+        status: 'error',
+        errors: ['Import failed'],
+      }))
     }
   }, [parsedData, mappings, uploadForm, mappingForm])
 
@@ -173,35 +209,44 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="mx-auto max-w-4xl p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Import CSV Data</h1>
+        <h1 className="mb-2 text-2xl font-bold">Import CSV Data</h1>
         <p className="text-muted-foreground">
-          Upload and import your data with automatic column detection and validation.
+          Upload and import your data with automatic column detection and
+          validation.
         </p>
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         {STEPS.map((step, index) => (
           <div key={step.id} className="flex items-center">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-              index <= currentStep ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-            }`}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+                index <= currentStep
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300'
+              }`}
+            >
               {getStepIcon(index, step.icon)}
             </div>
             <div className="ml-3">
-              <p className={`text-sm font-medium ${
-                index <= currentStep ? 'text-blue-600' : 'text-gray-500'
-              }`}>
+              <p
+                className={`text-sm font-medium ${
+                  index <= currentStep ? 'text-blue-600' : 'text-gray-500'
+                }`}
+              >
                 {step.title}
               </p>
             </div>
             {index < STEPS.length - 1 && (
-              <div className={`w-16 h-0.5 mx-4 ${
-                index < currentStep ? 'bg-blue-500' : 'bg-gray-300'
-              }`} />
+              <div
+                className={`mx-4 h-0.5 w-16 ${
+                  index < currentStep ? 'bg-blue-500' : 'bg-gray-300'
+                }`}
+              />
             )}
           </div>
         ))}
@@ -213,18 +258,24 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
           {currentStep === 0 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Upload CSV File</h3>
-                <p className="text-muted-foreground mb-4">
-                  Select the type of data you're importing and upload your CSV file.
+                <h3 className="mb-2 text-lg font-semibold">Upload CSV File</h3>
+                <p className="mb-4 text-muted-foreground">
+                  Select the type of data you're importing and upload your CSV
+                  file.
                 </p>
               </div>
 
-              <form onSubmit={uploadForm.handleSubmit(handleFileUpload)} className="space-y-4">
+              <form
+                onSubmit={uploadForm.handleSubmit(handleFileUpload)}
+                className="space-y-4"
+              >
                 <div>
-                  <label className="block text-sm font-medium mb-2">Data Type</label>
+                  <label className="mb-2 block text-sm font-medium">
+                    Data Type
+                  </label>
                   <select
                     {...uploadForm.register('entityType')}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full rounded-md border px-3 py-2"
                   >
                     <option value="CONTACT">Contacts</option>
                     <option value="COMPANY">Companies</option>
@@ -233,7 +284,9 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">CSV File</label>
+                  <label className="mb-2 block text-sm font-medium">
+                    CSV File
+                  </label>
                   <input
                     type="file"
                     accept=".csv"
@@ -249,7 +302,10 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                   <Button type="button" variant="outline" onClick={onCancel}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={!uploadForm.formState.isValid}>
+                  <Button
+                    type="submit"
+                    disabled={!uploadForm.formState.isValid}
+                  >
                     Next: Map Columns
                   </Button>
                 </div>
@@ -260,23 +316,33 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
           {currentStep === 1 && parsedData && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Map Columns</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="mb-2 text-lg font-semibold">Map Columns</h3>
+                <p className="mb-4 text-muted-foreground">
                   Review and adjust how your CSV columns map to system fields.
                 </p>
               </div>
 
-              <form onSubmit={mappingForm.handleSubmit(handleMappingSubmit)} className="space-y-4">
+              <form
+                onSubmit={mappingForm.handleSubmit(handleMappingSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-3">
                   {mappings.map((mapping, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 rounded-lg border p-3"
+                    >
                       <div className="flex-1">
                         <div className="font-medium">{mapping.csvColumn}</div>
                         <div className="text-sm text-muted-foreground">
                           Maps to: {mapping.field}
                         </div>
                       </div>
-                      <Badge variant={mapping.confidence > 0.8 ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={
+                          mapping.confidence > 0.8 ? 'default' : 'secondary'
+                        }
+                      >
                         {Math.round(mapping.confidence * 100)}% confidence
                       </Badge>
                       <Button
@@ -325,12 +391,14 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                 </div>
 
                 <div className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={() => setCurrentStep(0)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCurrentStep(0)}
+                  >
                     Back
                   </Button>
-                  <Button type="submit">
-                    Next: Preview Data
-                  </Button>
+                  <Button type="submit">Next: Preview Data</Button>
                 </div>
               </form>
             </div>
@@ -339,9 +407,12 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
           {currentStep === 2 && parsedData && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Preview & Fix Data</h3>
-                <p className="text-muted-foreground mb-4">
-                  Review your data before importing. Fix any issues or adjust mappings.
+                <h3 className="mb-2 text-lg font-semibold">
+                  Preview & Fix Data
+                </h3>
+                <p className="mb-4 text-muted-foreground">
+                  Review your data before importing. Fix any issues or adjust
+                  mappings.
                 </p>
               </div>
 
@@ -352,12 +423,15 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                 </TabsList>
 
                 <TabsContent value="preview" className="space-y-4">
-                  <div className="border rounded-lg overflow-x-auto">
+                  <div className="overflow-x-auto rounded-lg border">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          {parsedData.headers.map(header => (
-                            <th key={header} className="text-left p-2 font-medium">
+                          {parsedData.headers.map((header) => (
+                            <th
+                              key={header}
+                              className="p-2 text-left font-medium"
+                            >
                               {header}
                             </th>
                           ))}
@@ -366,7 +440,7 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                       <tbody>
                         {parsedData.sampleRows.map((row, index) => (
                           <tr key={index} className="border-b">
-                            {parsedData.headers.map(header => (
+                            {parsedData.headers.map((header) => (
                               <td key={header} className="p-2">
                                 {row[header] || '-'}
                               </td>
@@ -382,19 +456,22 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      No issues detected in the preview data. You can proceed with the import.
+                      No issues detected in the preview data. You can proceed
+                      with the import.
                     </AlertDescription>
                   </Alert>
                 </TabsContent>
               </Tabs>
 
               <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCurrentStep(1)}
+                >
                   Back
                 </Button>
-                <Button onClick={handleImportStart}>
-                  Start Import
-                </Button>
+                <Button onClick={handleImportStart}>Start Import</Button>
               </div>
             </div>
           )}
@@ -402,20 +479,24 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Import Progress</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="mb-2 text-lg font-semibold">Import Progress</h3>
+                <p className="mb-4 text-muted-foreground">
                   Importing your data... This may take a few moments.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
+                  <div className="mb-2 flex justify-between text-sm">
                     <span>Progress</span>
-                    <span>{importProgress.processed} / {importProgress.total}</span>
+                    <span>
+                      {importProgress.processed} / {importProgress.total}
+                    </span>
                   </div>
                   <Progress
-                    value={(importProgress.processed / importProgress.total) * 100}
+                    value={
+                      (importProgress.processed / importProgress.total) * 100
+                    }
                     className="w-full"
                   />
                 </div>
@@ -424,7 +505,8 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Import completed successfully! {importProgress.processed} records imported.
+                      Import completed successfully! {importProgress.processed}{' '}
+                      records imported.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -433,10 +515,14 @@ export function CsvImportStepper({ onComplete, onCancel, selectedTemplate, onTem
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      <div className="font-medium mb-2">Import completed with errors:</div>
-                      <ul className="list-disc list-inside space-y-1">
+                      <div className="mb-2 font-medium">
+                        Import completed with errors:
+                      </div>
+                      <ul className="list-inside list-disc space-y-1">
                         {importProgress.errors.map((error, index) => (
-                          <li key={index} className="text-sm">{error}</li>
+                          <li key={index} className="text-sm">
+                            {error}
+                          </li>
                         ))}
                       </ul>
                     </AlertDescription>

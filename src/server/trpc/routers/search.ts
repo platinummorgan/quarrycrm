@@ -60,10 +60,7 @@ export const searchRouter = createTRPCRouter({
             },
           },
           take: limit,
-          orderBy: [
-            { firstName: 'asc' },
-            { lastName: 'asc' },
-          ],
+          orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
         })
 
         results.push(
@@ -167,10 +164,7 @@ export const searchRouter = createTRPCRouter({
             },
           },
           take: limit,
-          orderBy: [
-            { updatedAt: 'desc' },
-            { title: 'asc' },
-          ],
+          orderBy: [{ updatedAt: 'desc' }, { title: 'asc' }],
         })
 
         results.push(
@@ -178,7 +172,11 @@ export const searchRouter = createTRPCRouter({
             id: deal.id,
             type: 'deal' as const,
             title: deal.title,
-            subtitle: deal.company?.name || (deal.contact ? `${deal.contact.firstName} ${deal.contact.lastName}` : undefined),
+            subtitle:
+              deal.company?.name ||
+              (deal.contact
+                ? `${deal.contact.firstName} ${deal.contact.lastName}`
+                : undefined),
             url: `/app/deals/${deal.id}`,
             metadata: {
               value: deal.value,

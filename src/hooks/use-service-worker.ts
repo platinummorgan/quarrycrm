@@ -14,7 +14,10 @@ export function useServiceWorker() {
             const newWorker = registration.installing
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                if (
+                  newWorker.state === 'installed' &&
+                  navigator.serviceWorker.controller
+                ) {
                   // New content is available, notify user
                   if (confirm('New content is available. Reload to update?')) {
                     window.location.reload()

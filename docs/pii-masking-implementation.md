@@ -7,13 +7,17 @@ Comprehensive PII (Personally Identifiable Information) masking system for demo 
 ## Masking Formats
 
 ### Email Masking
+
 Shows only first character + `***` + domain:
+
 - `mike.smith@example.com` → `m***@example.com`
 - `john@example.com` → `j***@example.com`
 - `a@example.com` → `a***@example.com`
 
 ### Phone Masking
+
 Consistent format regardless of input:
+
 - `(404) 555-9231` → `***-***-9231`
 - `404-555-9231` → `***-***-9231`
 - `+1 (404) 555-9231` → `***-***-9231`
@@ -22,6 +26,7 @@ Consistent format regardless of input:
 ## Files Created
 
 ### 1. Core Masking Utilities
+
 **File**: `src/lib/mask-pii.ts`
 
 ```typescript
@@ -44,6 +49,7 @@ maskCompanyData<T>(company: T, isDemo: boolean): T
 ```
 
 ### 2. Server Transformers
+
 **File**: `src/lib/server/transform-pii.ts`
 
 ```typescript
@@ -66,6 +72,7 @@ getMaskingStatus(session: Session | null): { isDemo: boolean; reason: string | n
 ```
 
 ### 3. Test Suites
+
 - **`__tests__/mask-pii.test.ts`**: Core masking utilities (150+ tests)
 - **`__tests__/transform-pii.test.ts`**: Server transformers (80+ tests)
 
@@ -79,7 +86,7 @@ import { maskEmail, maskPhone, maskPII, isRequestFromDemo } from '@/lib/mask-pii
 // In a React component
 function ContactCard({ contact, session }) {
   const isDemo = isRequestFromDemo(session)
-  
+
   return (
     <div>
       <p>Email: {isDemo ? maskEmail(contact.email) : contact.email}</p>
@@ -103,15 +110,15 @@ import { getServerSession } from 'next-auth'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  
+
   // Fetch contacts from database
   const contacts = await prisma.contact.findMany({
     where: { organizationId: orgId },
   })
-  
+
   // Transform for demo users
   const transformed = transformContacts(contacts, session)
-  
+
   return NextResponse.json(transformed)
 }
 ```
@@ -129,7 +136,7 @@ export const contactRouter = router({
         where: { organizationId: ctx.organizationId },
         take: input.limit,
       })
-      
+
       // Transform response for demo users
       return transformResponse(contacts, ctx.session)
     }),
@@ -245,7 +252,7 @@ import { useSession } from 'next-auth/react'
 function ContactList() {
   const { data: session } = useSession()
   const isDemo = isRequestFromDemo(session)
-  
+
   return (
     <div>
       {contacts.map(contact => (
@@ -281,6 +288,7 @@ npm test transform-pii.test.ts
 ## Test Coverage
 
 ### Core Masking Tests (150+ tests)
+
 - Email masking (standard, edge cases, unicode)
 - Phone masking (formatted, international, unformatted)
 - Generic PII detection and masking
@@ -290,6 +298,7 @@ npm test transform-pii.test.ts
 - Edge cases and integration scenarios
 
 ### Server Transformer Tests (80+ tests)
+
 - Contact transformation
 - Company transformation
 - Activity transformation
@@ -373,7 +382,7 @@ console.log('Is demo?', isRequestFromDemo(session))
 ```typescript
 // Force demo mode for testing
 const testSession = {
-  user: { isDemo: true }
+  user: { isDemo: true },
 }
 
 const masked = transformContact(contact, testSession)
@@ -400,12 +409,12 @@ function apiResponse<T>(data: T, session: Session | null) {
 function ContactField({ contact, field, session }) {
   const isDemo = isRequestFromDemo(session)
   const value = contact[field]
-  
+
   if (!value) return null
-  
+
   if (field === 'email' && isDemo) return maskEmail(value)
   if (field === 'phone' && isDemo) return maskPhone(value)
-  
+
   return value
 }
 ```
@@ -415,9 +424,9 @@ function ContactField({ contact, field, session }) {
 ```typescript
 async function getContactsForExport(session: Session) {
   const contacts = await fetchContacts()
-  
+
   // Transform all at once
-  return transformContacts(contacts, session).map(contact => ({
+  return transformContacts(contacts, session).map((contact) => ({
     Name: contact.name,
     Email: contact.email, // Already masked if demo
     Phone: contact.phone, // Already masked if demo
@@ -427,18 +436,18 @@ async function getContactsForExport(session: Session) {
 
 ## API Summary
 
-| Function | Purpose | Returns Masked? |
-|----------|---------|-----------------|
-| `maskEmail()` | Mask single email | Always |
-| `maskPhone()` | Mask single phone | Always |
-| `maskPII()` | Auto-detect and mask | Always |
-| `maskPIIFields()` | Mask object fields | Conditional |
-| `maskPIIArray()` | Mask array of objects | Conditional |
-| `transformContact()` | Transform contact for demo | Conditional |
-| `transformContacts()` | Transform contact list | Conditional |
-| `transformResponse()` | Generic transformer | Conditional |
-| `isRequestFromDemo()` | Check demo status | N/A |
-| `getMaskingStatus()` | Debug masking reason | N/A |
+| Function              | Purpose                    | Returns Masked? |
+| --------------------- | -------------------------- | --------------- |
+| `maskEmail()`         | Mask single email          | Always          |
+| `maskPhone()`         | Mask single phone          | Always          |
+| `maskPII()`           | Auto-detect and mask       | Always          |
+| `maskPIIFields()`     | Mask object fields         | Conditional     |
+| `maskPIIArray()`      | Mask array of objects      | Conditional     |
+| `transformContact()`  | Transform contact for demo | Conditional     |
+| `transformContacts()` | Transform contact list     | Conditional     |
+| `transformResponse()` | Generic transformer        | Conditional     |
+| `isRequestFromDemo()` | Check demo status          | N/A             |
+| `getMaskingStatus()`  | Debug masking reason       | N/A             |
 
 ## Deployment Checklist
 

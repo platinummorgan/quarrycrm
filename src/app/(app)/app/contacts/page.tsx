@@ -34,7 +34,9 @@ export default function ContactsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Contacts</h1>
-          <p className="text-muted-foreground">Manage your customer and prospect contacts</p>
+          <p className="text-muted-foreground">
+            Manage your customer and prospect contacts
+          </p>
         </div>
         {/* Primary CTA in the top-right. Keep empty-state CTA handled by DataTable */}
         {showTopCTA && (

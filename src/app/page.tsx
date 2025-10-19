@@ -12,7 +12,8 @@ import { getBaseUrl } from '@/lib/utils'
 
 export const metadata = makeSEO({
   title: 'Quarry CRM - Modern CRM for the Browser Era',
-  description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+  description:
+    'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
   path: '/',
 })
 
@@ -27,11 +28,11 @@ export default function MarketingPage() {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'USD',
-      description: 'Free trial available'
+      description: 'Free trial available',
     },
     operatingSystem: 'Web',
     url: baseUrl,
-    logo: `${baseUrl}/logo.png` // Placeholder - replace with actual logo URL
+    logo: `${baseUrl}/logo.png`, // Placeholder - replace with actual logo URL
   }
 
   return (
@@ -74,11 +75,10 @@ export default function MarketingPage() {
       {/* Hero */}
       <section className="py-20">
         <div className="container mx-auto max-w-[1200px] px-4 text-center">
-          <h2 className="mb-6 text-5xl font-bold">
-            Blazing Fast CRM
-          </h2>
+          <h2 className="mb-6 text-5xl font-bold">Blazing Fast CRM</h2>
           <p className="mx-auto mb-8 max-w-2xl text-xl text-muted-foreground">
-            Lightning-quick lists, one-click imports, and offline reliability for modern sales teams.
+            Lightning-quick lists, one-click imports, and offline reliability
+            for modern sales teams.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button size="lg" asChild>
@@ -100,7 +100,8 @@ export default function MarketingPage() {
               <CardHeader>
                 <CardTitle>Blazing lists</CardTitle>
                 <CardDescription>
-                  Lightning-fast contact and company lists that load instantly, no matter the size.
+                  Lightning-fast contact and company lists that load instantly,
+                  no matter the size.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -108,7 +109,8 @@ export default function MarketingPage() {
               <CardHeader>
                 <CardTitle>One-click import</CardTitle>
                 <CardDescription>
-                  Import contacts and companies from CSV with zero configuration. Just works.
+                  Import contacts and companies from CSV with zero
+                  configuration. Just works.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -116,7 +118,8 @@ export default function MarketingPage() {
               <CardHeader>
                 <CardTitle>Offline outbox</CardTitle>
                 <CardDescription>
-                  Create and edit deals offline. Everything syncs automatically when you're back online.
+                  Create and edit deals offline. Everything syncs automatically
+                  when you're back online.
                 </CardDescription>
               </CardHeader>
             </Card>

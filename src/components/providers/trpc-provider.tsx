@@ -17,14 +17,20 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
           // Ensure browser requests send cookies so server can read NextAuth session
           // and include selected org id (if present) to support multi-org flows.
           fetch: (input, init) => {
-            const headers = new Headers(init?.headers as HeadersInit || undefined)
+            const headers = new Headers(
+              (init?.headers as HeadersInit) || undefined
+            )
             try {
               const orgId = localStorage.getItem('orgId')
               if (orgId) headers.set('x-org-id', orgId)
             } catch (e) {
               // localStorage may be unavailable in some environments; ignore
             }
-            return fetch(input as RequestInfo, { ...init, credentials: 'include', headers })
+            return fetch(input as RequestInfo, {
+              ...init,
+              credentials: 'include',
+              headers,
+            })
           },
         }),
       ],

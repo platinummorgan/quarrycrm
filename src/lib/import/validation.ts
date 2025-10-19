@@ -13,8 +13,14 @@ export interface CSVRow {
 
 // Zod schema for contact validation
 export const contactValidationSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100, 'First name too long'),
-  lastName: z.string().min(1, 'Last name is required').max(100, 'Last name too long'),
+  firstName: z
+    .string()
+    .min(1, 'First name is required')
+    .max(100, 'First name too long'),
+  lastName: z
+    .string()
+    .min(1, 'Last name is required')
+    .max(100, 'Last name too long'),
   email: z.string().email('Invalid email format').optional().or(z.literal('')),
   phone: z.string().optional(),
   companyName: z.string().optional(),
@@ -122,8 +128,8 @@ export function validateContactData(
 
   return {
     errors,
-    hasErrors: errors.some(e => e.severity === 'error'),
-    hasWarnings: errors.some(e => e.severity === 'warning'),
+    hasErrors: errors.some((e) => e.severity === 'error'),
+    hasWarnings: errors.some((e) => e.severity === 'warning'),
   }
 }
 
@@ -135,11 +141,11 @@ export function getValidationSummary(errors: ValidationError[]): {
   totalWarnings: number
   errorsByField: Record<string, number>
 } {
-  const totalErrors = errors.filter(e => e.severity === 'error').length
-  const totalWarnings = errors.filter(e => e.severity === 'warning').length
+  const totalErrors = errors.filter((e) => e.severity === 'error').length
+  const totalWarnings = errors.filter((e) => e.severity === 'warning').length
 
   const errorsByField: Record<string, number> = {}
-  errors.forEach(error => {
+  errors.forEach((error) => {
     errorsByField[error.field] = (errorsByField[error.field] || 0) + 1
   })
 

@@ -18,23 +18,32 @@ import {
 import { useToast } from '@/hooks/use-toast'
 
 interface DemoResetButtonProps {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
   size?: 'default' | 'sm' | 'lg' | 'icon'
 }
 
 /**
  * DemoResetButton
- * 
+ *
  * Button to reset demo organization data.
  * Only visible in non-production and for demo org owners.
- * 
+ *
  * Features:
  * - Confirmation dialog before reset
  * - Loading state during reset
  * - Toast notifications for success/error
  * - Automatic page reload after success
  */
-export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetButtonProps) {
+export function DemoResetButton({
+  variant = 'outline',
+  size = 'sm',
+}: DemoResetButtonProps) {
   const [isResetting, setIsResetting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const { data: session } = useSession()
@@ -45,11 +54,12 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
   if (isProduction) return null
 
   // Check if user is in demo org (isDemo flag OR role is DEMO)
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
-  
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+
   // Only show for OWNER role
   const isOwner = session?.user?.currentOrg?.role === 'OWNER'
-  
+
   // Show only if user is owner of a demo org
   if (!isDemo || !isOwner) return null
 
@@ -88,7 +98,8 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
       console.error('Demo reset failed:', error)
       toast({
         title: 'Reset Failed',
-        description: error instanceof Error ? error.message : 'Failed to reset demo data',
+        description:
+          error instanceof Error ? error.message : 'Failed to reset demo data',
         variant: 'destructive',
       })
     } finally {
@@ -105,7 +116,9 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
           disabled={isResetting}
           className="gap-2"
         >
-          <RefreshCw className={`h-4 w-4 ${isResetting ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isResetting ? 'animate-spin' : ''}`}
+          />
           {isResetting ? 'Resetting...' : 'Reset Demo Data'}
         </Button>
       </AlertDialogTrigger>
@@ -117,16 +130,18 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <p>
-              This will <strong>delete all current data</strong> and regenerate fresh demo data:
+              This will <strong>delete all current data</strong> and regenerate
+              fresh demo data:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-sm">
+            <ul className="list-inside list-disc space-y-1 text-sm">
               <li>3,000 contacts</li>
               <li>500 companies</li>
               <li>200 deals</li>
               <li>300 activities</li>
             </ul>
-            <p className="text-yellow-600 dark:text-yellow-500 font-medium">
-              ⚠️ This action cannot be undone. All current demo data will be lost.
+            <p className="font-medium text-yellow-600 dark:text-yellow-500">
+              ⚠️ This action cannot be undone. All current demo data will be
+              lost.
             </p>
             <p className="text-sm text-muted-foreground">
               This process takes about 30-60 seconds.

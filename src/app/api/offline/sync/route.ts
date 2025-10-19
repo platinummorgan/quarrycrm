@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     // Process the outbox
     await outboxManager.processOutbox()
 
-    return NextResponse.json({ success: true, message: 'Outbox processed successfully' })
+    return NextResponse.json({
+      success: true,
+      message: 'Outbox processed successfully',
+    })
   } catch (error) {
     console.error('Background sync processing failed:', error)
     return NextResponse.json(

@@ -3,10 +3,20 @@
 import { useState, useTransition } from 'react'
 import { X, CheckCircle2, Circle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
-import { ONBOARDING_TASKS, type OnboardingState, type OnboardingTaskType } from '@/lib/onboarding'
+import {
+  ONBOARDING_TASKS,
+  type OnboardingState,
+  type OnboardingTaskType,
+} from '@/lib/onboarding'
 import { dismissOnboarding, completeOnboardingTask } from '@/server/onboarding'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -15,7 +25,9 @@ interface OnboardingChecklistProps {
   initialState: OnboardingState
 }
 
-export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) {
+export function OnboardingChecklist({
+  initialState,
+}: OnboardingChecklistProps) {
   const [state, setState] = useState(initialState)
   const [isPending, startTransition] = useTransition()
 
@@ -35,7 +47,10 @@ export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) 
     })
   }
 
-  const handleTaskClick = async (taskId: OnboardingTaskType, action?: string) => {
+  const handleTaskClick = async (
+    taskId: OnboardingTaskType,
+    action?: string
+  ) => {
     if (action === 'installPWA') {
       // Trigger PWA install
       const deferredPrompt = (window as any).deferredPrompt
@@ -81,7 +96,9 @@ export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) 
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg font-semibold">Get Started</CardTitle>
-            <CardDescription>Complete these tasks to set up your CRM</CardDescription>
+            <CardDescription>
+              Complete these tasks to set up your CRM
+            </CardDescription>
           </div>
           <Button
             variant="ghost"
@@ -126,7 +143,9 @@ export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) 
                     {task.title}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground">{task.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {task.description}
+                </p>
                 {task.id === 'import_csv' && !task.completed && (
                   <Button
                     variant="outline"
@@ -152,7 +171,7 @@ export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) 
                 <Link
                   href={task.href}
                   className={cn(
-                    'flex items-start gap-3 rounded-lg p-3 transition-colors cursor-pointer hover:bg-accent'
+                    'flex cursor-pointer items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent'
                   )}
                 >
                   {content}
@@ -163,7 +182,9 @@ export function OnboardingChecklist({ initialState }: OnboardingChecklistProps) 
                     'flex items-start gap-3 rounded-lg p-3 transition-colors',
                     task.action && 'cursor-pointer hover:bg-accent'
                   )}
-                  onClick={() => task.action && handleTaskClick(task.id, task.action)}
+                  onClick={() =>
+                    task.action && handleTaskClick(task.id, task.action)
+                  }
                 >
                   {content}
                 </div>

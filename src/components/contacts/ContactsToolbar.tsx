@@ -80,7 +80,8 @@ export function ContactsToolbar({
   const { toast } = useToast()
   const sessionResult = useSession()
   const session = sessionResult?.data
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null)
@@ -90,10 +91,11 @@ export function ContactsToolbar({
   const [newViewIsStarred, setNewViewIsStarred] = useState(false)
 
   // tRPC hooks
-  const { data: savedViews, refetch: refetchViews } = trpc.savedViews.list.useQuery({
-    entityType: 'CONTACT',
-    includePublic: true,
-  })
+  const { data: savedViews, refetch: refetchViews } =
+    trpc.savedViews.list.useQuery({
+      entityType: 'CONTACT',
+      includePublic: true,
+    })
 
   const createViewMutation = trpc.savedViews.create.useMutation({
     onSuccess: () => {
@@ -198,61 +200,76 @@ export function ContactsToolbar({
     toast,
   ])
 
-  const handleLoadView = useCallback((viewId: string) => {
-    const view = savedViews?.find(v => v.id === viewId)
-    if (view) {
-      onViewChange({
-        filters: view.filters as ViewFilters,
-        sortBy: view.sortBy || undefined,
-        sortOrder: view.sortOrder as 'asc' | 'desc' | undefined,
-        visibleColumns: currentView.visibleColumns, // Keep current column visibility
-      })
-      setSelectedViewId(viewId)
-      toast({
-        title: 'View loaded',
-        description: `Loaded view "${view.name}"`,
-      })
-    }
-  }, [savedViews, onViewChange, currentView.visibleColumns, toast])
+  const handleLoadView = useCallback(
+    (viewId: string) => {
+      const view = savedViews?.find((v) => v.id === viewId)
+      if (view) {
+        onViewChange({
+          filters: view.filters as ViewFilters,
+          sortBy: view.sortBy || undefined,
+          sortOrder: view.sortOrder as 'asc' | 'desc' | undefined,
+          visibleColumns: currentView.visibleColumns, // Keep current column visibility
+        })
+        setSelectedViewId(viewId)
+        toast({
+          title: 'View loaded',
+          description: `Loaded view "${view.name}"`,
+        })
+      }
+    },
+    [savedViews, onViewChange, currentView.visibleColumns, toast]
+  )
 
-  const handleToggleStar = useCallback((viewId: string) => {
-    toggleStarMutation.mutate({ id: viewId })
-  }, [toggleStarMutation])
+  const handleToggleStar = useCallback(
+    (viewId: string) => {
+      toggleStarMutation.mutate({ id: viewId })
+    },
+    [toggleStarMutation]
+  )
 
-  const handleDeleteView = useCallback((viewId: string) => {
-    if (confirm('Are you sure you want to delete this view?')) {
-      deleteViewMutation.mutate({ id: viewId })
-    }
-  }, [deleteViewMutation])
+  const handleDeleteView = useCallback(
+    (viewId: string) => {
+      if (confirm('Are you sure you want to delete this view?')) {
+        deleteViewMutation.mutate({ id: viewId })
+      }
+    },
+    [deleteViewMutation]
+  )
 
-  const handleShareView = useCallback((viewId: string) => {
-    const view = savedViews?.find(v => v.id === viewId)
-    if (view?.viewUrl) {
-      const shareUrl = `${window.location.origin}/app/contacts?view=${view.viewUrl}`
-      navigator.clipboard.writeText(shareUrl)
-      toast({
-        title: 'Link copied',
-        description: 'Share link has been copied to clipboard.',
-      })
-    } else {
-      // Make view public first
-      updateViewMutation.mutate({
-        id: viewId,
-        isPublic: true,
-      })
-    }
-  }, [savedViews, updateViewMutation, toast])
+  const handleShareView = useCallback(
+    (viewId: string) => {
+      const view = savedViews?.find((v) => v.id === viewId)
+      if (view?.viewUrl) {
+        const shareUrl = `${window.location.origin}/app/contacts?view=${view.viewUrl}`
+        navigator.clipboard.writeText(shareUrl)
+        toast({
+          title: 'Link copied',
+          description: 'Share link has been copied to clipboard.',
+        })
+      } else {
+        // Make view public first
+        updateViewMutation.mutate({
+          id: viewId,
+          isPublic: true,
+        })
+      }
+    },
+    [savedViews, updateViewMutation, toast]
+  )
 
-  const getShareUrl = useCallback((viewId: string) => {
-    const view = savedViews?.find(v => v.id === viewId)
-    if (view?.viewUrl) {
-      return `${window.location.origin}/app/contacts?view=${view.viewUrl}`
-    }
-    return null
-  }, [savedViews])
+  const getShareUrl = useCallback(
+    (viewId: string) => {
+      const view = savedViews?.find((v) => v.id === viewId)
+      if (view?.viewUrl) {
+        return `${window.location.origin}/app/contacts?view=${view.viewUrl}`
+      }
+      return null
+    },
+    [savedViews]
+  )
 
-  const starredViews = savedViews?.filter(v => v.isStarred) || []
-  const regularViews = savedViews?.filter(v => !v.isStarred) || []
+  const starredViews = savedViews?.filter((v) => v.isStarred) || []
+  const regularViews = savedViews?.filter((v) => !v.isStarred) || []
 
   return (
     <div className={cn('flex items-center justify-between gap-4', className)}>
@@ -260,7 +277,7 @@ export function ContactsToolbar({
       <div className="flex items-center gap-2">
         {/* Quick filters could go here */}
         <Button variant="outline" size="sm">
-          <Filter className="h-4 w-4 mr-2" />
+          <Filter className="mr-2 h-4 w-4" />
           Filters
         </Button>
 
@@ -277,7 +294,7 @@ export function ContactsToolbar({
           }}
         >
           <SelectTrigger className="w-40">
-            <ArrowUpDown className="h-4 w-4 mr-2" />
+            <ArrowUpDown className="mr-2 h-4 w-4" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -286,7 +303,9 @@ export function ContactsToolbar({
             <SelectItem value="email-asc">Email A-Z</SelectItem>
             <SelectItem value="email-desc">Email Z-A</SelectItem>
             <SelectItem value="updatedAt-desc">Recently Updated</SelectItem>
-            <SelectItem value="updatedAt-asc">Least Recently Updated</SelectItem>
+            <SelectItem value="updatedAt-asc">
+              Least Recently Updated
+            </SelectItem>
             <SelectItem value="createdAt-desc">Recently Created</SelectItem>
             <SelectItem value="createdAt-asc">Oldest Created</SelectItem>
           </SelectContent>
@@ -299,7 +318,7 @@ export function ContactsToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" data-tour="saved-views">
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               Views
               {savedViews && savedViews.length > 0 && (
                 <Badge variant="secondary" className="ml-2">
@@ -315,7 +334,7 @@ export function ContactsToolbar({
             {/* Starred views */}
             {starredViews.length > 0 && (
               <>
-                <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
+                <DropdownMenuLabel className="px-2 py-1 text-xs text-muted-foreground">
                   Starred
                 </DropdownMenuLabel>
                 {starredViews.map((view) => (
@@ -326,10 +345,16 @@ export function ContactsToolbar({
                   >
                     <div className="flex items-center gap-2">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className={cn(selectedViewId === view.id && 'font-semibold')}>
+                      <span
+                        className={cn(
+                          selectedViewId === view.id && 'font-semibold'
+                        )}
+                      >
                         {view.name}
                       </span>
-                      {view.isPublic && <Eye className="h-3 w-3 text-muted-foreground" />}
+                      {view.isPublic && (
+                        <Eye className="h-3 w-3 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -369,10 +394,16 @@ export function ContactsToolbar({
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <span className={cn(selectedViewId === view.id && 'font-semibold')}>
+                  <span
+                    className={cn(
+                      selectedViewId === view.id && 'font-semibold'
+                    )}
+                  >
                     {view.name}
                   </span>
-                  {view.isPublic && <Eye className="h-3 w-3 text-muted-foreground" />}
+                  {view.isPublic && (
+                    <Eye className="h-3 w-3 text-muted-foreground" />
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -409,7 +440,9 @@ export function ContactsToolbar({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleDeleteView(view.id)}>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteView(view.id)}
+                      >
                         Delete view
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -420,32 +453,32 @@ export function ContactsToolbar({
 
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSaveDialogOpen(true)}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               Save current view
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         {/* Action buttons */}
-        <Button 
-          onClick={onCreateContact} 
+        <Button
+          onClick={onCreateContact}
           size="sm"
           disabled={isDemo}
           title={isDemo ? 'Demo is read-only' : undefined}
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Contact
         </Button>
 
         {onImportContacts && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onImportContacts}
             disabled={isDemo}
             title={isDemo ? 'Demo is read-only' : undefined}
           >
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye className="mr-2 h-4 w-4" />
             Import
           </Button>
         )}
@@ -457,7 +490,8 @@ export function ContactsToolbar({
           <DialogHeader>
             <DialogTitle>Save View</DialogTitle>
             <DialogDescription>
-              Save your current filters, sorting, and column visibility as a reusable view.
+              Save your current filters, sorting, and column visibility as a
+              reusable view.
             </DialogDescription>
           </DialogHeader>
 
@@ -487,7 +521,9 @@ export function ContactsToolbar({
               <Checkbox
                 id="view-public"
                 checked={newViewIsPublic}
-                onCheckedChange={(checked) => setNewViewIsPublic(checked === true)}
+                onCheckedChange={(checked) =>
+                  setNewViewIsPublic(checked === true)
+                }
               />
               <Label htmlFor="view-public" className="text-sm">
                 Make this view public (shareable with team members)
@@ -498,7 +534,9 @@ export function ContactsToolbar({
               <Checkbox
                 id="view-starred"
                 checked={newViewIsStarred}
-                onCheckedChange={(checked) => setNewViewIsStarred(checked === true)}
+                onCheckedChange={(checked) =>
+                  setNewViewIsStarred(checked === true)
+                }
               />
               <Label htmlFor="view-starred" className="text-sm">
                 Star this view (appears at top of list)
@@ -510,7 +548,10 @@ export function ContactsToolbar({
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveView} disabled={createViewMutation.isLoading}>
+            <Button
+              onClick={handleSaveView}
+              disabled={createViewMutation.isLoading}
+            >
               {createViewMutation.isLoading ? 'Saving...' : 'Save View'}
             </Button>
           </DialogFooter>
@@ -531,7 +572,7 @@ export function ContactsToolbar({
             <div className="space-y-4">
               <div>
                 <Label>Share Link</Label>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <Input
                     value={getShareUrl(selectedViewId) || ''}
                     readOnly

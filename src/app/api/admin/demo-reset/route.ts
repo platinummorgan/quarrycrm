@@ -11,20 +11,20 @@ export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/admin/demo-reset
- * 
+ *
  * Truncates and reseeds the demo organization data.
- * 
+ *
  * Requirements:
  * - User must be authenticated
  * - User must be OWNER of the Quarry Demo organization
  * - Only works in non-production environments
  * - Idempotent operation
- * 
+ *
  * Process:
  * 1. Verify user is OWNER of Quarry Demo org
  * 2. Delete all demo data (deals, activities, contacts, companies)
  * 3. Run seed-demo script to regenerate data
- * 
+ *
  * Response:
  * {
  *   success: boolean,

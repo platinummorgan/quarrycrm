@@ -1,6 +1,6 @@
 /**
  * Demo User Write Protection Tests
- * 
+ *
  * These tests verify that users with isDemo=true are blocked from
  * performing write operations (POST/PUT/PATCH/DELETE) and receive
  * 403 responses with code "DEMO_READ_ONLY".
@@ -34,7 +34,11 @@ import { POST as rollbackPOST } from '@/app/api/import/contacts/[importId]/rollb
 import { POST as emailLogPOST } from '@/app/api/email-log/[address]/route'
 import { POST as syncPOST } from '@/app/api/offline/sync/route'
 import { POST as csvImportPOST } from '@/app/api/csv/import/route'
-import { POST as templatesPOST, PUT as templatesPUT, DELETE as templatesDELETE } from '@/app/api/csv/templates/route'
+import {
+  POST as templatesPOST,
+  PUT as templatesPUT,
+  DELETE as templatesDELETE,
+} from '@/app/api/csv/templates/route'
 import { PUT as workspacePUT } from '@/app/api/workspace/route'
 import { POST as uploadPOST } from '@/app/api/upload/route'
 
@@ -65,26 +69,34 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from importing contacts', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/import/contacts', {
-        method: 'POST',
-        body: JSON.stringify({ contacts: [] }),
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/import/contacts',
+        {
+          method: 'POST',
+          body: JSON.stringify({ contacts: [] }),
+        }
+      )
 
       const response = await contactsImportPOST(request)
       const data = await response.json()
 
       expect(response.status).toBe(403)
       expect(data.code).toBe('DEMO_READ_ONLY')
-      expect(data.message).toContain('Demo users cannot perform write operations')
+      expect(data.message).toContain(
+        'Demo users cannot perform write operations'
+      )
     })
 
     it('should allow regular user to import contacts', async () => {
       vi.mocked(getServerSession).mockResolvedValue(regularSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/import/contacts', {
-        method: 'POST',
-        body: JSON.stringify({ contacts: [{ name: 'Test Contact' }] }),
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/import/contacts',
+        {
+          method: 'POST',
+          body: JSON.stringify({ contacts: [{ name: 'Test Contact' }] }),
+        }
+      )
 
       // This will fail due to missing data, but should NOT return 403
       const response = await contactsImportPOST(request)
@@ -94,11 +106,16 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from rolling back imports', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/import/contacts/123/rollback', {
-        method: 'POST',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/import/contacts/123/rollback',
+        {
+          method: 'POST',
+        }
+      )
 
-      const response = await rollbackPOST(request, { params: { importId: '123' } })
+      const response = await rollbackPOST(request, {
+        params: { importId: '123' },
+      })
       const data = await response.json()
 
       expect(response.status).toBe(403)
@@ -110,26 +127,34 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from logging emails', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/email-log/test@example.com', {
-        method: 'POST',
-        body: 'From: test@example.com\nTo: log@example.com\nSubject: Test\n\nBody',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/email-log/test@example.com',
+        {
+          method: 'POST',
+          body: 'From: test@example.com\nTo: log@example.com\nSubject: Test\n\nBody',
+        }
+      )
 
       const response = await emailLogPOST(request)
       const data = await response.json()
 
       expect(response.status).toBe(403)
       expect(data.code).toBe('DEMO_READ_ONLY')
-      expect(data.message).toContain('Demo users cannot perform write operations')
+      expect(data.message).toContain(
+        'Demo users cannot perform write operations'
+      )
     })
 
     it('should allow regular user to log emails', async () => {
       vi.mocked(getServerSession).mockResolvedValue(regularSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/email-log/test@example.com', {
-        method: 'POST',
-        body: 'From: test@example.com\nTo: log@example.com\nSubject: Test\n\nBody',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/email-log/test@example.com',
+        {
+          method: 'POST',
+          body: 'From: test@example.com\nTo: log@example.com\nSubject: Test\n\nBody',
+        }
+      )
 
       const response = await emailLogPOST(request)
       expect(response.status).not.toBe(403)
@@ -140,9 +165,12 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from sync operations', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/offline/sync', {
-        method: 'POST',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/offline/sync',
+        {
+          method: 'POST',
+        }
+      )
 
       const response = await syncPOST(request)
       const data = await response.json()
@@ -154,9 +182,12 @@ describe('Demo User Write Protection', () => {
     it('should allow regular user to sync', async () => {
       vi.mocked(getServerSession).mockResolvedValue(regularSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/offline/sync', {
-        method: 'POST',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/offline/sync',
+        {
+          method: 'POST',
+        }
+      )
 
       const response = await syncPOST(request)
       expect(response.status).not.toBe(403)
@@ -204,10 +235,17 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from creating templates', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/csv/templates', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'Test Template', entityType: 'CONTACT', mappings: {} }),
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/csv/templates',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: 'Test Template',
+            entityType: 'CONTACT',
+            mappings: {},
+          }),
+        }
+      )
 
       const response = await templatesPOST(request)
       const data = await response.json()
@@ -219,10 +257,13 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from updating templates', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/csv/templates', {
-        method: 'PUT',
-        body: JSON.stringify({ id: '123', name: 'Updated Template' }),
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/csv/templates',
+        {
+          method: 'PUT',
+          body: JSON.stringify({ id: '123', name: 'Updated Template' }),
+        }
+      )
 
       const response = await templatesPUT(request)
       const data = await response.json()
@@ -234,9 +275,12 @@ describe('Demo User Write Protection', () => {
     it('should block demo user from deleting templates', async () => {
       vi.mocked(getServerSession).mockResolvedValue(demoSession as any)
 
-      const request = new NextRequest('http://localhost:3000/api/csv/templates?id=123', {
-        method: 'DELETE',
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/csv/templates?id=123',
+        {
+          method: 'DELETE',
+        }
+      )
 
       const response = await templatesDELETE(request)
       const data = await response.json()

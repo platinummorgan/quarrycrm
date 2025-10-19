@@ -3,7 +3,12 @@
 import { useOffline } from '@/hooks/use-offline'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Wifi, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react'
 
 interface OfflineIndicatorProps {
@@ -11,7 +16,8 @@ interface OfflineIndicatorProps {
 }
 
 export function OfflineIndicator({ className }: OfflineIndicatorProps) {
-  const { networkState, isOnline, hasPendingWork, unresolvedConflicts } = useOffline()
+  const { networkState, isOnline, hasPendingWork, unresolvedConflicts } =
+    useOffline()
 
   const getStatusInfo = () => {
     if (!isOnline) {
@@ -59,18 +65,23 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={`flex items-center space-x-2 ${className}`} data-tour="offline-indicator">
+          <div
+            className={`flex items-center space-x-2 ${className}`}
+            data-tour="offline-indicator"
+          >
             <Badge
               variant="outline"
               className={`flex items-center space-x-1 px-2 py-1 ${statusInfo.bgColor} ${statusInfo.color} border-current`}
             >
-              <StatusIcon className={`h-3 w-3 ${networkState === 'syncing' ? 'animate-spin' : ''}`} />
+              <StatusIcon
+                className={`h-3 w-3 ${networkState === 'syncing' ? 'animate-spin' : ''}`}
+              />
               <span className="text-xs font-medium">{statusInfo.label}</span>
               {hasPendingWork && (
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                <div className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
               )}
               {unresolvedConflicts > 0 && (
-                <Badge variant="destructive" className="text-xs px-1 py-0">
+                <Badge variant="destructive" className="px-1 py-0 text-xs">
                   {unresolvedConflicts}
                 </Badge>
               )}
@@ -87,7 +98,8 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
             )}
             {unresolvedConflicts > 0 && (
               <p className="text-sm text-red-600">
-                • {unresolvedConflicts} data conflict{unresolvedConflicts > 1 ? 's' : ''} need resolution
+                • {unresolvedConflicts} data conflict
+                {unresolvedConflicts > 1 ? 's' : ''} need resolution
               </p>
             )}
           </div>

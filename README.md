@@ -288,14 +288,14 @@ Quarry-CRM is designed for high performance even with large datasets. Our benchm
 
 ### Benchmark Targets
 
-| Endpoint | Target Latency (p95) | Dataset Size | Notes |
-|----------|---------------------|--------------|-------|
-| Contacts List | <120ms | 10,000 records | 50 items/page |
-| Contacts Search | <150ms | 10,000 records | Full-text search |
-| Companies List | <100ms | 2,000 records | 50 items/page |
-| Companies Search | <120ms | 2,000 records | Full-text search |
-| Deals List | <80ms | 800 records | 50 items/page |
-| Deals Search | <100ms | 800 records | Title search |
+| Endpoint         | Target Latency (p95) | Dataset Size   | Notes            |
+| ---------------- | -------------------- | -------------- | ---------------- |
+| Contacts List    | <120ms               | 10,000 records | 50 items/page    |
+| Contacts Search  | <150ms               | 10,000 records | Full-text search |
+| Companies List   | <100ms               | 2,000 records  | 50 items/page    |
+| Companies Search | <120ms               | 2,000 records  | Full-text search |
+| Deals List       | <80ms                | 800 records    | 50 items/page    |
+| Deals Search     | <100ms               | 800 records    | Title search     |
 
 **Success Criteria**: p95 latency (95th percentile) must be below target. This ensures 95% of requests complete faster than the target time.
 
@@ -372,6 +372,7 @@ For consistent results across test runs:
 - **Avg**: Mean latency across all samples
 
 We target **p95** instead of average because:
+
 - Averages hide outliers that frustrate users
 - p95 ensures consistent experience for 95% of users
 - Industry standard for SLA agreements
@@ -391,6 +392,7 @@ npm run db:studio
 #### For Production
 
 1. **Enable Database Connection Pooling**
+
    ```env
    DATABASE_URL="postgresql://...?connection_limit=10&pool_timeout=20"
    ```
@@ -414,6 +416,7 @@ Benchmark results vary based on:
 - **System Load**: Background processes, other apps
 
 **Reference Hardware** (for baseline comparisons):
+
 - CPU: Modern multi-core processor (e.g., Apple M1, Intel i7)
 - RAM: 16GB minimum
 - Storage: SSD
@@ -430,10 +433,12 @@ Benchmark results vary based on:
 ### Interpreting Results
 
 **✅ Pass**: p95 latency below target
+
 - System meets performance requirements
 - Scalable to production workloads
 
 **❌ Fail**: p95 latency above target
+
 - Check database indexes
 - Review query complexity
 - Consider connection pooling
@@ -471,54 +476,62 @@ npm run dod -- --ci
 The DoD script performs 8 comprehensive checks:
 
 #### 1. **TypeScript Compilation** ✅
+
 - All TypeScript code compiles without errors
 - Strict mode enabled
 - No implicit any types
 
 #### 2. **Production Build** 🏗️
+
 - Next.js builds successfully
 - All pages render without errors
 - No missing dependencies
 
 #### 3. **Lint Checks** 🔍
+
 - ESLint passes with no errors
 - Code follows style guide
 - No unused imports or variables
 
 #### 4. **Unit Tests** 🧪
+
 - All tests pass
 - Code coverage meets threshold
 - No flaky tests
 
 #### 5. **Accessibility Violations** ♿
+
 Uses [axe-core](https://github.com/dequelabs/axe-core) to detect accessibility issues:
 
-| Severity | Threshold | Description |
-|----------|-----------|-------------|
-| Critical | 0 | Must fix immediately |
-| Serious | ≤2 | Should fix before release |
-| Moderate | ≤5 | Fix in next sprint |
-| Minor | ≤10 | Can defer |
+| Severity | Threshold | Description               |
+| -------- | --------- | ------------------------- |
+| Critical | 0         | Must fix immediately      |
+| Serious  | ≤2        | Should fix before release |
+| Moderate | ≤5        | Fix in next sprint        |
+| Minor    | ≤10       | Can defer                 |
 
 **Tested Pages**: Home, Contacts, Companies, Deals, Settings
 
 #### 6. **Lighthouse Scores** 🔦
+
 Desktop performance targets (0-100 scale):
 
-| Category | Target | Notes |
-|----------|--------|-------|
-| Performance | ≥90 | Page load, FCP, LCP, CLS |
-| Accessibility | ≥90 | WCAG 2.1 AA compliance |
-| Best Practices | ≥90 | HTTPS, console errors, deprecations |
-| SEO | ≥90 | Meta tags, crawlability |
-| PWA | ≥90 | Service worker, manifest, installable |
+| Category       | Target | Notes                                 |
+| -------------- | ------ | ------------------------------------- |
+| Performance    | ≥90    | Page load, FCP, LCP, CLS              |
+| Accessibility  | ≥90    | WCAG 2.1 AA compliance                |
+| Best Practices | ≥90    | HTTPS, console errors, deprecations   |
+| SEO            | ≥90    | Meta tags, crawlability               |
+| PWA            | ≥90    | Service worker, manifest, installable |
 
 **How it works**:
+
 - Runs 3 times per URL (median score)
 - Tests 4 key pages
 - Desktop preset (simulated throttling)
 
 #### 7. **Route Protection** 🔐
+
 Ensures all protected routes require authentication:
 
 ```typescript
@@ -530,11 +543,13 @@ Ensures all protected routes require authentication:
 ```
 
 **Detects**:
+
 - Unprotected pages in `(app)` folder
 - Missing auth checks
 - Potential security vulnerabilities
 
 #### 8. **Organization Leakage Prevention** 🛡️
+
 Validates multi-tenant data isolation:
 
 ```typescript
@@ -543,16 +558,18 @@ prisma.contact.findMany({
   where: {
     organizationId: user.organizationId, // ✅ Required
     // other filters...
-  }
+  },
 })
 ```
 
 **Scans**:
+
 - All tRPC router files
 - Prisma queries: `findMany`, `findFirst`, `findUnique`, `count`, `aggregate`
 - Ensures no cross-org data leakage
 
 **Entities Checked**:
+
 - Contacts
 - Companies
 - Deals
@@ -621,6 +638,7 @@ git push
 ### Troubleshooting DoD Failures
 
 #### TypeScript Errors
+
 ```bash
 # See detailed errors
 npm run type-check
@@ -630,6 +648,7 @@ npx tsc --noEmit src/path/to/file.ts
 ```
 
 #### Build Failures
+
 ```bash
 # Clear cache and rebuild
 rm -rf .next
@@ -637,6 +656,7 @@ npm run build
 ```
 
 #### Lint Errors
+
 ```bash
 # Auto-fix issues
 npm run lint:fix
@@ -646,18 +666,20 @@ npx eslint src/path/to/file.ts
 ```
 
 #### Route Protection Issues
+
 - Add `getServerSession()` to all `(app)` pages
 - Check `src/app/(app)/*/page.tsx` files
 - Ensure redirect to `/login` if not authenticated
 
 #### Org Leakage Issues
+
 ```typescript
 // ❌ Missing organizationId
 const contacts = await prisma.contact.findMany()
 
 // ✅ Properly filtered
 const contacts = await prisma.contact.findMany({
-  where: { organizationId: ctx.session.user.organizationId }
+  where: { organizationId: ctx.session.user.organizationId },
 })
 ```
 

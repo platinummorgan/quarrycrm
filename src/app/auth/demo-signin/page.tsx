@@ -33,7 +33,10 @@ function DemoSigninContent() {
       try {
         setLoading(true)
         setSigninAttempted(true)
-        console.log('Attempting demo signin with token:', token.substring(0, 10) + '...')
+        console.log(
+          'Attempting demo signin with token:',
+          token.substring(0, 10) + '...'
+        )
 
         // Get current host for host pinning
         const currentHost = window.location.host
@@ -85,7 +88,9 @@ function DemoSigninContent() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-600">Demo Signin Error</h2>
+            <h2 className="text-2xl font-bold text-red-600">
+              Demo Signin Error
+            </h2>
             <p className="mt-2 text-gray-600">Demo token is missing</p>
             <button
               onClick={() => router.push('/auth/signin')}
@@ -105,7 +110,9 @@ function DemoSigninContent() {
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-indigo-600"></div>
           <p className="mt-4 text-gray-600">
-            {signinAttempted ? 'Establishing session...' : 'Signing you into the demo...'}
+            {signinAttempted
+              ? 'Establishing session...'
+              : 'Signing you into the demo...'}
           </p>
         </div>
       </div>
@@ -117,7 +124,9 @@ function DemoSigninContent() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-600">Demo Signin Error</h2>
+            <h2 className="text-2xl font-bold text-red-600">
+              Demo Signin Error
+            </h2>
             <p className="mt-2 text-gray-600">{error}</p>
             <button
               onClick={() => router.push('/auth/signin')}

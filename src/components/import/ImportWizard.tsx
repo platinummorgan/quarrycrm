@@ -2,7 +2,13 @@
 
 import React, { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -61,7 +67,9 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
   const [csvData, setCsvData] = useState<CSVRow[]>([])
   const [headers, setHeaders] = useState<string[]>([])
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([])
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    []
+  )
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -84,30 +92,33 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
   }, [open, resetWizard])
 
   // Step 1: File Upload
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
 
-    // Validate file
-    const validation = validateCSVFile(file)
-    if (!validation.valid) {
-      toast.error(validation.error!)
-      return
-    }
+      // Validate file
+      const validation = validateCSVFile(file)
+      if (!validation.valid) {
+        toast.error(validation.error!)
+        return
+      }
 
-    // Parse CSV
-    parseCSV(file)
-      .then((result) => {
-        setCsvData(result.data)
-        setHeaders(result.headers)
-        setCurrentStep('map')
-        setupFieldMappings(result.headers)
-      })
-      .catch((error) => {
-        toast.error('Failed to parse CSV file')
-        console.error('CSV parsing error:', error)
-      })
-  }, [])
+      // Parse CSV
+      parseCSV(file)
+        .then((result) => {
+          setCsvData(result.data)
+          setHeaders(result.headers)
+          setCurrentStep('map')
+          setupFieldMappings(result.headers)
+        })
+        .catch((error) => {
+          toast.error('Failed to parse CSV file')
+          console.error('CSV parsing error:', error)
+        })
+    },
+    []
+  )
 
   // Step 2: Auto-map fields
   const setupFieldMappings = (csvHeaders: string[]) => {
@@ -116,8 +127,8 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
   }
 
   const updateFieldMapping = (csvField: string, dbField: string | null) => {
-    setFieldMappings(prev =>
-      prev.map(mapping =>
+    setFieldMappings((prev) =>
+      prev.map((mapping) =>
         mapping.csvField === csvField
           ? { ...mapping, dbField, confidence: dbField ? 100 : 0 }
           : mapping
@@ -129,7 +140,9 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
   const validatePreviewData = () => {
     const validation = validateContactData(
       csvData,
-      fieldMappings.filter(m => m.dbField).map(m => ({ csvField: m.csvField, dbField: m.dbField })),
+      fieldMappings
+        .filter((m) => m.dbField)
+        .map((m) => ({ csvField: m.csvField, dbField: m.dbField })),
       25
     )
     setValidationErrors(validation.errors)
@@ -152,7 +165,7 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: csvData,
-          mappings: fieldMappings.filter(m => m.dbField),
+          mappings: fieldMappings.filter((m) => m.dbField),
         }),
       })
 
@@ -166,14 +179,21 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
       // Poll for progress updates
       const pollProgress = async (importId: string) => {
         try {
-          const progressResponse = await fetch(`/api/import/contacts/${importId}/progress`)
+          const progressResponse = await fetch(
+            `/api/import/contacts/${importId}/progress`
+          )
           if (progressResponse.ok) {
             const progressData = await progressResponse.json()
             setProgress(progressData.progress)
 
-            if (progressData.status === 'COMPLETED' || progressData.status === 'FAILED') {
+            if (
+              progressData.status === 'COMPLETED' ||
+              progressData.status === 'FAILED'
+            ) {
               setCurrentStep('complete')
-              toast.success(`Import completed! Created ${result.created} contacts`)
+              toast.success(
+                `Import completed! Created ${result.created} contacts`
+              )
             } else if (progressData.status === 'PROCESSING') {
               // Continue polling
               setTimeout(() => pollProgress(importId), 1000)
@@ -199,9 +219,12 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
 
     setIsProcessing(true)
     try {
-      const response = await fetch(`/api/import/contacts/${importResult.importId}/rollback`, {
-        method: 'POST',
-      })
+      const response = await fetch(
+        `/api/import/contacts/${importResult.importId}/rollback`,
+        {
+          method: 'POST',
+        }
+      )
 
       if (!response.ok) {
         throw new Error('Rollback failed')
@@ -228,37 +251,56 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
   }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      {(['upload', 'map', 'preview', 'import', 'complete'] as ImportStep[]).map((step, index) => (
-        <React.Fragment key={step}>
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-            currentStep === step
-              ? 'bg-primary border-primary text-primary-foreground'
-              : index < ['upload', 'map', 'preview', 'import', 'complete'].indexOf(currentStep)
-              ? 'bg-green-500 border-green-500 text-white'
-              : 'border-muted-foreground text-muted-foreground'
-          }`}>
-            {index < ['upload', 'map', 'preview', 'import', 'complete'].indexOf(currentStep) ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <span className="text-sm font-medium">{index + 1}</span>
+    <div className="mb-8 flex items-center justify-center">
+      {(['upload', 'map', 'preview', 'import', 'complete'] as ImportStep[]).map(
+        (step, index) => (
+          <React.Fragment key={step}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+                currentStep === step
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : index <
+                      [
+                        'upload',
+                        'map',
+                        'preview',
+                        'import',
+                        'complete',
+                      ].indexOf(currentStep)
+                    ? 'border-green-500 bg-green-500 text-white'
+                    : 'border-muted-foreground text-muted-foreground'
+              }`}
+            >
+              {index <
+              ['upload', 'map', 'preview', 'import', 'complete'].indexOf(
+                currentStep
+              ) ? (
+                <CheckCircle className="h-5 w-5" />
+              ) : (
+                <span className="text-sm font-medium">{index + 1}</span>
+              )}
+            </div>
+            {index < 4 && (
+              <div
+                className={`mx-2 h-0.5 w-12 ${
+                  index <
+                  ['upload', 'map', 'preview', 'import', 'complete'].indexOf(
+                    currentStep
+                  )
+                    ? 'bg-green-500'
+                    : 'bg-muted'
+                }`}
+              />
             )}
-          </div>
-          {index < 4 && (
-            <div className={`w-12 h-0.5 mx-2 ${
-              index < ['upload', 'map', 'preview', 'import', 'complete'].indexOf(currentStep)
-                ? 'bg-green-500'
-                : 'bg-muted'
-            }`} />
-          )}
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        )
+      )}
     </div>
   )
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
         <SheetHeader>
           <SheetTitle>Import Contacts</SheetTitle>
           <SheetDescription>
@@ -274,7 +316,7 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
             <Card className="border-0 shadow-none">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5" />
+                  <Upload className="h-5 w-5" />
                   Upload CSV File
                 </CardTitle>
                 <CardDescription>
@@ -282,10 +324,12 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
+                  <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <div className="space-y-2">
-                    <p className="text-lg font-medium">Drop your CSV file here</p>
+                    <p className="text-lg font-medium">
+                      Drop your CSV file here
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       or click to browse files
                     </p>
@@ -294,7 +338,7 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                     type="file"
                     accept=".csv"
                     onChange={handleFileUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   />
                 </div>
                 <div className="mt-4 text-sm text-muted-foreground">
@@ -318,7 +362,10 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
               <CardContent>
                 <div className="space-y-4">
                   {fieldMappings.map((mapping) => (
-                    <div key={mapping.csvField} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div
+                      key={mapping.csvField}
+                      className="flex items-center gap-4 rounded-lg border p-4"
+                    >
                       <div className="flex-1">
                         <p className="font-medium">{mapping.csvField}</p>
                         <p className="text-sm text-muted-foreground">
@@ -330,8 +377,13 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                       </div>
                       <select
                         value={mapping.dbField || ''}
-                        onChange={(e) => updateFieldMapping(mapping.csvField, e.target.value || null)}
-                        className="flex-1 p-2 border rounded"
+                        onChange={(e) =>
+                          updateFieldMapping(
+                            mapping.csvField,
+                            e.target.value || null
+                          )
+                        }
+                        className="flex-1 rounded border p-2"
                       >
                         <option value="">Don't import</option>
                         <option value="firstName">First Name</option>
@@ -343,14 +395,17 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between mt-6">
-                  <Button variant="outline" onClick={() => setCurrentStep('upload')}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                <div className="mt-6 flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep('upload')}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
                   <Button onClick={() => setCurrentStep('preview')}>
                     Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -371,7 +426,8 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                   <Alert className="mb-4">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      Found {validationErrors.length} validation errors. Please fix them before importing.
+                      Found {validationErrors.length} validation errors. Please
+                      fix them before importing.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -380,29 +436,50 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                   <table className="w-full border-collapse border border-muted">
                     <thead>
                       <tr className="bg-muted">
-                        <th className="border border-muted p-2 text-left">Row</th>
-                        {fieldMappings.filter(m => m.dbField).map(mapping => (
-                          <th key={mapping.csvField} className="border border-muted p-2 text-left">
-                            {mapping.dbField}
-                          </th>
-                        ))}
-                        <th className="border border-muted p-2 text-left">Errors</th>
+                        <th className="border border-muted p-2 text-left">
+                          Row
+                        </th>
+                        {fieldMappings
+                          .filter((m) => m.dbField)
+                          .map((mapping) => (
+                            <th
+                              key={mapping.csvField}
+                              className="border border-muted p-2 text-left"
+                            >
+                              {mapping.dbField}
+                            </th>
+                          ))}
+                        <th className="border border-muted p-2 text-left">
+                          Errors
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {csvData.slice(0, 25).map((row, index) => {
-                        const rowErrors = validationErrors.filter(e => e.row === index + 1)
+                        const rowErrors = validationErrors.filter(
+                          (e) => e.row === index + 1
+                        )
                         return (
-                          <tr key={index} className={rowErrors.length > 0 ? 'bg-red-50' : ''}>
-                            <td className="border border-muted p-2">{index + 1}</td>
-                            {fieldMappings.filter(m => m.dbField).map(mapping => (
-                              <td key={mapping.csvField} className="border border-muted p-2">
-                                {row[mapping.csvField] || '-'}
-                              </td>
-                            ))}
+                          <tr
+                            key={index}
+                            className={rowErrors.length > 0 ? 'bg-red-50' : ''}
+                          >
+                            <td className="border border-muted p-2">
+                              {index + 1}
+                            </td>
+                            {fieldMappings
+                              .filter((m) => m.dbField)
+                              .map((mapping) => (
+                                <td
+                                  key={mapping.csvField}
+                                  className="border border-muted p-2"
+                                >
+                                  {row[mapping.csvField] || '-'}
+                                </td>
+                              ))}
                             <td className="border border-muted p-2">
                               {rowErrors.length > 0 && (
-                                <div className="text-red-600 text-sm">
+                                <div className="text-sm text-red-600">
                                   {rowErrors.map((error, i) => (
                                     <div key={i}>{error.message}</div>
                                   ))}
@@ -416,9 +493,12 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                   </table>
                 </div>
 
-                <div className="flex justify-between mt-6">
-                  <Button variant="outline" onClick={() => setCurrentStep('map')}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                <div className="mt-6 flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep('map')}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
                   <Button
@@ -426,7 +506,7 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                     disabled={validationErrors.length > 0}
                   >
                     Import {csvData.length} Contacts
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -452,7 +532,9 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="mb-4">Ready to import {csvData.length} contacts</p>
+                    <p className="mb-4">
+                      Ready to import {csvData.length} contacts
+                    </p>
                     <Button onClick={handleImport} size="lg">
                       Start Import
                     </Button>
@@ -467,38 +549,44 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
             <Card className="border-0 shadow-none">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <CheckCircle className="h-5 w-5 text-green-500" />
                   Import Complete
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">{importResult.created}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {importResult.created}
+                    </p>
                     <p className="text-sm text-muted-foreground">Created</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-yellow-600">{importResult.skipped}</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      {importResult.skipped}
+                    </p>
                     <p className="text-sm text-muted-foreground">Skipped</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-red-600">{importResult.errors}</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {importResult.errors}
+                    </p>
                     <p className="text-sm text-muted-foreground">Errors</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{importResult.totalRows}</p>
+                    <p className="text-2xl font-bold">
+                      {importResult.totalRows}
+                    </p>
                     <p className="text-sm text-muted-foreground">Total</p>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={handleUndo}>
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Undo Import
                   </Button>
-                  <Button onClick={() => onOpenChange(false)}>
-                    Close
-                  </Button>
+                  <Button onClick={() => onOpenChange(false)}>Close</Button>
                 </div>
               </CardContent>
             </Card>

@@ -1,10 +1,7 @@
 'use client'
 
 import { useDroppable } from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { KanbanCard } from './kanban-card'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,7 +56,13 @@ interface KanbanColumnProps {
   onDealFocus: (dealId: string | null) => void
 }
 
-export function KanbanColumn({ stage, deals, total, focusedDealId, onDealFocus }: KanbanColumnProps) {
+export function KanbanColumn({
+  stage,
+  deals,
+  total,
+  focusedDealId,
+  onDealFocus,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   })
@@ -100,13 +103,11 @@ export function KanbanColumn({ stage, deals, total, focusedDealId, onDealFocus }
       <div
         ref={setNodeRef}
         className={`min-h-96 flex-1 rounded-lg border-2 border-dashed p-4 transition-colors ${
-          isOver
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25'
+          isOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
         }`}
       >
         <SortableContext
-          items={deals.map(deal => deal.id)}
+          items={deals.map((deal) => deal.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-3">

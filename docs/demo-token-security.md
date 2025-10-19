@@ -3,6 +3,7 @@
 ## Overview
 
 Comprehensive security enhancements for demo authentication tokens with:
+
 - ✅ **Expiration enforcement**: Tokens must expire within ≤ 15 minutes
 - ✅ **IAT skew validation**: Prevents clock manipulation attacks
 - ✅ **Replay protection**: One-time use via Redis-backed JTI storage
@@ -11,22 +12,26 @@ Comprehensive security enhancements for demo authentication tokens with:
 ## Security Features
 
 ### 1. Expiration Enforcement (≤ 15 minutes)
+
 - Validates token lifetime doesn't exceed 15 minutes (900 seconds)
 - Rejects expired tokens immediately
 - Checks both `exp` claim and computed lifetime (`exp - iat`)
 
 ### 2. IAT Skew Validation
+
 - **Max future skew**: 60 seconds (prevents future-dated tokens)
 - **Max age**: 15 minutes (prevents old tokens being reissued)
 - Protects against clock manipulation attacks
 
 ### 3. Replay Protection
+
 - Every token has unique `jti` (nonce) stored in Redis
 - Token can only be used once
 - JTI stored with TTL = remaining token lifetime
 - Prevents token replay attacks
 
 ### 4. Host Pinning
+
 - Tokens optionally include originating host
 - Verification checks current host matches token host
 - Host normalization (removes protocol, port, trailing slash)
@@ -35,16 +40,21 @@ Comprehensive security enhancements for demo authentication tokens with:
 ## Files Modified
 
 ### 1. Redis Client (NEW)
+
 **File**: `src/lib/redis.ts`
 
 ```typescript
 // NEW FILE - Redis client with Upstash support + in-memory fallback
 export function getRedisClient(): RedisClient
-export async function storeTokenJti(jti: string, ttlSeconds: number): Promise<void>
+export async function storeTokenJti(
+  jti: string,
+  ttlSeconds: number
+): Promise<void>
 export async function isTokenUsed(jti: string): Promise<boolean>
 ```
 
 **Features**:
+
 - Upstash Redis support for production
 - In-memory fallback for development
 - JTI storage with automatic expiration
@@ -52,6 +62,7 @@ export async function isTokenUsed(jti: string): Promise<boolean>
 ---
 
 ### 2. Demo Authentication Library
+
 **File**: `src/lib/demo-auth.ts`
 
 ```diff
@@ -111,7 +122,7 @@ const DEMO_TOKEN_EXPIRY = 15 * 60 // 15 minutes in seconds (MAX)
 + * - IAT skew validation (max 1 minute in future)
 + * - Replay protection via JTI
 + * - Optional host pinning
-+ * 
++ *
 + * @param token - JWT token to verify
 + * @param expectedHost - Expected host for host pinning (optional)
 + * @throws Error if token is invalid, expired, replayed, or host mismatch
@@ -217,6 +228,7 @@ export function isDemoTokenExpired(token: DemoTokenPayload): boolean {
 ---
 
 ### 3. NextAuth Configuration
+
 **File**: `src/lib/auth.ts`
 
 ```diff
@@ -242,11 +254,11 @@ export function isDemoTokenExpired(token: DemoTokenPayload): boolean {
 -         const payload = await verifyDemoToken(credentials.token)
 -         console.log('Token verified, orgId:', payload.orgId)
 +         console.log('🔍 Verifying demo token with security checks...')
-+         
++
 +         // Verify the demo token with host pinning if provided
 +         const expectedHost = credentials.host || process.env.NEXTAUTH_URL || undefined
 +         console.log('🔍 Expected host for token:', expectedHost)
-+         
++
 +         const payload = await verifyDemoToken(credentials.token, expectedHost)
 +         console.log('✅ Token verified successfully, orgId:', payload.orgId, 'jti:', payload.jti)
 
@@ -286,6 +298,7 @@ export function isDemoTokenExpired(token: DemoTokenPayload): boolean {
 ---
 
 ### 4. Demo Route Handler
+
 **File**: `src/app/demo/route.ts`
 
 ```diff
@@ -332,6 +345,7 @@ export async function GET(request: NextRequest) {
 ---
 
 ### 5. Demo Signin Page
+
 **File**: `src/app/auth/demo-signin/page.tsx`
 
 ```diff
@@ -413,12 +427,14 @@ export async function GET(request: NextRequest) {
 ## Environment Variables
 
 ### Required
+
 ```bash
 DEMO_TOKEN_SECRET="your-secret-key-min-32-chars"
 NEXTAUTH_SECRET="your-nextauth-secret"
 ```
 
 ### Optional (Redis)
+
 ```bash
 # For production replay protection with distributed storage
 UPSTASH_REDIS_REST_URL="https://your-redis.upstash.io"
@@ -427,14 +443,14 @@ UPSTASH_REDIS_REST_TOKEN="your-redis-token"
 
 ## Security Properties
 
-| Feature | Protection Against | Implementation |
-|---------|-------------------|----------------|
-| **Expiration ≤ 15min** | Long-lived token theft | `exp - iat ≤ 900s` check |
-| **IAT Skew** | Clock manipulation | `iat ≤ now + 60s` check |
-| **Replay Guard** | Token reuse | Redis JTI store with TTL |
-| **Host Pinning** | Cross-domain theft | Normalized host comparison |
-| **Signature** | Tampering | HMAC-SHA256 with secret |
-| **Unique JTI** | Prediction attacks | 16-byte random nonce |
+| Feature                | Protection Against     | Implementation             |
+| ---------------------- | ---------------------- | -------------------------- |
+| **Expiration ≤ 15min** | Long-lived token theft | `exp - iat ≤ 900s` check   |
+| **IAT Skew**           | Clock manipulation     | `iat ≤ now + 60s` check    |
+| **Replay Guard**       | Token reuse            | Redis JTI store with TTL   |
+| **Host Pinning**       | Cross-domain theft     | Normalized host comparison |
+| **Signature**          | Tampering              | HMAC-SHA256 with secret    |
+| **Unique JTI**         | Prediction attacks     | 16-byte random nonce       |
 
 ## Attack Scenarios Prevented
 
@@ -469,12 +485,14 @@ UPSTASH_REDIS_REST_TOKEN="your-redis-token"
 ## Migration Notes
 
 ### Breaking Changes
+
 - `generateDemoToken()` now accepts optional `host` parameter
 - `verifyDemoToken()` now accepts optional `expectedHost` parameter
 - Tokens now include `jti` field (required)
 - Redis dependency required for replay protection
 
 ### Backwards Compatibility
+
 - Old tokens without JTI will be rejected (by design)
 - Host pinning is optional (works without host field)
 - In-memory fallback works without Redis (dev only)

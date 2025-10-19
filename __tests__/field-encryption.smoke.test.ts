@@ -1,4 +1,9 @@
-import { encryptField, decryptField, makeSearchToken, generateEncryptionKeyHex } from '@/lib/crypto/fields'
+import {
+  encryptField,
+  decryptField,
+  makeSearchToken,
+  generateEncryptionKeyHex,
+} from '@/lib/crypto/fields'
 
 test('encrypt -> decrypt and search token format', () => {
   // Use a deterministic key from .env.test if set; tests will already have env loaded by setup

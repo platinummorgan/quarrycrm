@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,103 +12,110 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { toast } from 'sonner';
-import { AlertTriangle, Trash2, RotateCcw, Skull, Calendar } from 'lucide-react';
+} from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { toast } from 'sonner'
+import { AlertTriangle, Trash2, RotateCcw, Skull, Calendar } from 'lucide-react'
 
-const CONFIRMATION_PHRASE = 'delete my workspace';
+const CONFIRMATION_PHRASE = 'delete my workspace'
 
 interface Props {
-  organizationName: string;
-  organizationId: string;
+  organizationName: string
+  organizationId: string
   deleteStatus?: {
-    isDeleted: boolean;
-    scheduledPurgeAt: string | null;
-    deletedAt: string | null;
-  };
+    isDeleted: boolean
+    scheduledPurgeAt: string | null
+    deletedAt: string | null
+  }
   recordCounts?: {
-    contacts: number;
-    companies: number;
-    deals: number;
-    members: number;
-  };
+    contacts: number
+    companies: number
+    deals: number
+    members: number
+  }
 }
 
-export function WorkspaceDelete({ 
-  organizationName, 
-  organizationId, 
+export function WorkspaceDelete({
+  organizationName,
+  organizationId,
   deleteStatus,
-  recordCounts 
+  recordCounts,
 }: Props) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showPurgeDialog, setShowPurgeDialog] = useState(false);
-  const [confirmationPhrase, setConfirmationPhrase] = useState('');
-  const [deleting, setDeleting] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [purging, setPurging] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showPurgeDialog, setShowPurgeDialog] = useState(false)
+  const [confirmationPhrase, setConfirmationPhrase] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+  const [purging, setPurging] = useState(false)
 
-  const daysUntilPurge = deleteStatus?.scheduledPurgeAt 
-    ? Math.ceil((new Date(deleteStatus.scheduledPurgeAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
+  const daysUntilPurge = deleteStatus?.scheduledPurgeAt
+    ? Math.ceil(
+        (new Date(deleteStatus.scheduledPurgeAt).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : null
 
   async function handleSoftDelete() {
-    setDeleting(true);
+    setDeleting(true)
     try {
       const response = await fetch('/api/workspace/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           organizationId,
           immediate: false,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Delete failed');
+        throw new Error(data.error || 'Delete failed')
       }
 
       toast.success('Workspace scheduled for deletion', {
         description: `Data will be permanently removed on ${new Date(data.scheduledPurgeAt).toLocaleDateString()}. You can restore it anytime before then.`,
-      });
-      
-      setTimeout(() => window.location.reload(), 1500);
+      })
+
+      setTimeout(() => window.location.reload(), 1500)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete workspace');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete workspace'
+      )
     } finally {
-      setDeleting(false);
-      setShowDeleteDialog(false);
+      setDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
   async function handleRestore() {
-    setRestoring(true);
+    setRestoring(true)
     try {
       const response = await fetch('/api/workspace/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ organizationId }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Restore failed');
+        throw new Error(data.error || 'Restore failed')
       }
 
       toast.success('Workspace restored successfully!', {
         description: 'All your data has been recovered.',
-      });
-      
-      setTimeout(() => window.location.reload(), 1500);
+      })
+
+      setTimeout(() => window.location.reload(), 1500)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to restore workspace');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to restore workspace'
+      )
     } finally {
-      setRestoring(false);
+      setRestoring(false)
     }
   }
 
@@ -116,51 +123,58 @@ export function WorkspaceDelete({
     if (confirmationPhrase.toLowerCase().trim() !== CONFIRMATION_PHRASE) {
       toast.error('Confirmation phrase does not match', {
         description: `Please type exactly: "${CONFIRMATION_PHRASE}"`,
-      });
-      return;
+      })
+      return
     }
 
-    setPurging(true);
+    setPurging(true)
     try {
       const response = await fetch('/api/workspace/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           organizationId,
           immediate: true,
           confirmationPhrase,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Permanent delete failed');
+        throw new Error(data.error || 'Permanent delete failed')
       }
 
-      toast.success('Workspace permanently deleted');
-      
+      toast.success('Workspace permanently deleted')
+
       setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
+        window.location.href = '/'
+      }, 2000)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to permanently delete workspace');
-      setPurging(false);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to permanently delete workspace'
+      )
+      setPurging(false)
     } finally {
-      setShowPurgeDialog(false);
-      setConfirmationPhrase('');
+      setShowPurgeDialog(false)
+      setConfirmationPhrase('')
     }
   }
 
   return (
-    <Card className="p-6 border-destructive">
+    <Card className="border-destructive p-6">
       <div className="space-y-6">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+          <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
           <div>
-            <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Irreversible and destructive actions that affect your entire workspace
+            <h3 className="text-lg font-semibold text-destructive">
+              Danger Zone
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Irreversible and destructive actions that affect your entire
+              workspace
             </p>
           </div>
         </div>
@@ -173,23 +187,26 @@ export function WorkspaceDelete({
             </AlertTitle>
             <AlertDescription className="text-amber-800 dark:text-amber-200">
               <p className="mb-3">
-                This workspace will be permanently deleted in <strong>{daysUntilPurge} days</strong> ({new Date(deleteStatus.scheduledPurgeAt!).toLocaleDateString()}).
+                This workspace will be permanently deleted in{' '}
+                <strong>{daysUntilPurge} days</strong> (
+                {new Date(deleteStatus.scheduledPurgeAt!).toLocaleDateString()}
+                ).
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRestore} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRestore}
                 disabled={restoring}
                 className="border-amber-600 text-amber-700 hover:bg-amber-100"
               >
                 {restoring ? (
                   <>
-                    <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
+                    <RotateCcw className="mr-2 h-4 w-4 animate-spin" />
                     Restoring...
                   </>
                 ) : (
                   <>
-                    <RotateCcw className="h-4 w-4 mr-2" />
+                    <RotateCcw className="mr-2 h-4 w-4" />
                     Cancel Deletion & Restore
                   </>
                 )}
@@ -201,8 +218,8 @@ export function WorkspaceDelete({
         {recordCounts && !deleteStatus?.isDeleted && (
           <Alert className="bg-muted">
             <AlertDescription className="text-sm">
-              <div className="font-medium mb-2">This workspace contains:</div>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+              <div className="mb-2 font-medium">This workspace contains:</div>
+              <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                 <li>{recordCounts.contacts.toLocaleString()} contacts</li>
                 <li>{recordCounts.companies.toLocaleString()} companies</li>
                 <li>{recordCounts.deals.toLocaleString()} deals</li>
@@ -213,7 +230,7 @@ export function WorkspaceDelete({
         )}
 
         {!deleteStatus?.isDeleted && (
-          <div className="border rounded-lg p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border p-4">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -221,40 +238,46 @@ export function WorkspaceDelete({
                   <h4 className="font-semibold">Delete Workspace</h4>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Soft delete with 30-day recovery period. You can restore your workspace anytime within 30 days.
+                  Soft delete with 30-day recovery period. You can restore your
+                  workspace anytime within 30 days.
                 </p>
               </div>
             </div>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => setShowDeleteDialog(true)}
               className="w-full sm:w-auto"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete Workspace
             </Button>
           </div>
         )}
 
         {deleteStatus?.isDeleted && (
-          <div className="border border-destructive rounded-lg p-4 space-y-3 bg-destructive/5">
+          <div className="space-y-3 rounded-lg border border-destructive bg-destructive/5 p-4">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Skull className="h-4 w-4 text-destructive" />
-                  <h4 className="font-semibold text-destructive">Permanent Deletion</h4>
+                  <h4 className="font-semibold text-destructive">
+                    Permanent Deletion
+                  </h4>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Skip the 30-day waiting period and immediately purge all data. <strong className="text-destructive">This action cannot be undone.</strong>
+                  Skip the 30-day waiting period and immediately purge all data.{' '}
+                  <strong className="text-destructive">
+                    This action cannot be undone.
+                  </strong>
                 </p>
               </div>
             </div>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => setShowPurgeDialog(true)}
-              className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
+              className="w-full bg-red-600 hover:bg-red-700 sm:w-auto"
             >
-              <Skull className="h-4 w-4 mr-2" />
+              <Skull className="mr-2 h-4 w-4" />
               Permanently Delete Now
             </Button>
           </div>
@@ -271,11 +294,15 @@ export function WorkspaceDelete({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3 pt-2">
               <p>
-                This will schedule your workspace for deletion. Your data will be kept for <strong>30 days</strong> during which you can restore it.
+                This will schedule your workspace for deletion. Your data will
+                be kept for <strong>30 days</strong> during which you can
+                restore it.
               </p>
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded p-3 text-sm">
-                <p className="font-medium text-amber-900 dark:text-amber-100 mb-1">What happens:</p>
-                <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200">
+              <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/20">
+                <p className="mb-1 font-medium text-amber-900 dark:text-amber-100">
+                  What happens:
+                </p>
+                <ul className="list-inside list-disc space-y-1 text-amber-800 dark:text-amber-200">
                   <li>Workspace will be hidden from your account</li>
                   <li>Team members lose access immediately</li>
                   <li>Data remains recoverable for 30 days</li>
@@ -284,15 +311,17 @@ export function WorkspaceDelete({
               </div>
               {recordCounts && (
                 <p className="text-xs text-muted-foreground">
-                  This will affect {recordCounts.contacts} contacts, {recordCounts.companies} companies, {recordCounts.deals} deals, and {recordCounts.members} team members.
+                  This will affect {recordCounts.contacts} contacts,{' '}
+                  {recordCounts.companies} companies, {recordCounts.deals}{' '}
+                  deals, and {recordCounts.members} team members.
                 </p>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleSoftDelete} 
+            <AlertDialogAction
+              onClick={handleSoftDelete}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -303,10 +332,13 @@ export function WorkspaceDelete({
       </AlertDialog>
 
       {/* Permanent Delete Dialog */}
-      <AlertDialog open={showPurgeDialog} onOpenChange={(open) => {
-        setShowPurgeDialog(open);
-        if (!open) setConfirmationPhrase('');
-      }}>
+      <AlertDialog
+        open={showPurgeDialog}
+        onOpenChange={(open) => {
+          setShowPurgeDialog(open)
+          if (!open) setConfirmationPhrase('')
+        }}
+      >
         <AlertDialogContent className="border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
@@ -314,28 +346,34 @@ export function WorkspaceDelete({
               Permanently Delete Workspace?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-4 pt-2">
-              <div className="bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-800 rounded p-4">
-                <p className="font-bold text-red-900 dark:text-red-100 text-sm mb-2">
+              <div className="rounded border-2 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/20">
+                <p className="mb-2 text-sm font-bold text-red-900 dark:text-red-100">
                   ⚠️ THIS ACTION IS IRREVERSIBLE
                 </p>
-                <p className="text-red-800 dark:text-red-200 text-sm">
-                  All data will be <strong>immediately and permanently deleted</strong>. This includes:
+                <p className="text-sm text-red-800 dark:text-red-200">
+                  All data will be{' '}
+                  <strong>immediately and permanently deleted</strong>. This
+                  includes:
                 </p>
-                <ul className="list-disc list-inside space-y-1 text-sm text-red-800 dark:text-red-200 mt-2">
+                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-800 dark:text-red-200">
                   <li>All contacts, companies, and deals</li>
                   <li>All pipelines and activities</li>
                   <li>All team members and permissions</li>
                   <li>All files and attachments</li>
                   <li>All audit logs and history</li>
                 </ul>
-                <p className="text-red-900 dark:text-red-100 font-semibold text-sm mt-3">
+                <p className="mt-3 text-sm font-semibold text-red-900 dark:text-red-100">
                   There is no recovery period. This data cannot be restored.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmation" className="text-sm font-medium">
-                  Type <code className="text-xs bg-muted px-2 py-0.5 rounded">{CONFIRMATION_PHRASE}</code> to confirm:
+                  Type{' '}
+                  <code className="rounded bg-muted px-2 py-0.5 text-xs">
+                    {CONFIRMATION_PHRASE}
+                  </code>{' '}
+                  to confirm:
                 </Label>
                 <Input
                   id="confirmation"
@@ -354,17 +392,20 @@ export function WorkspaceDelete({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handlePermanentDelete}
-              disabled={confirmationPhrase.toLowerCase().trim() !== CONFIRMATION_PHRASE || purging}
+              disabled={
+                confirmationPhrase.toLowerCase().trim() !==
+                  CONFIRMATION_PHRASE || purging
+              }
               className="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
             >
               {purging ? (
                 <>
-                  <Skull className="h-4 w-4 mr-2 animate-pulse" />
+                  <Skull className="mr-2 h-4 w-4 animate-pulse" />
                   Deleting Forever...
                 </>
               ) : (
                 <>
-                  <Skull className="h-4 w-4 mr-2" />
+                  <Skull className="mr-2 h-4 w-4" />
                   Permanently Delete Now
                 </>
               )}
@@ -373,5 +414,5 @@ export function WorkspaceDelete({
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-  );
+  )
 }

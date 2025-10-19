@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { PrismaClient, Prisma } from '@prisma/client'
 
-export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClient) {
+export async function seedOrgUser(
+  client?: PrismaClient | Prisma.TransactionClient
+) {
   const db = (client ?? prisma) as any
 
   const org = await db.organization.create({
@@ -9,7 +11,10 @@ export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClie
   })
 
   const user = await db.user.create({
-    data: { email: `tester+${crypto.randomUUID()}@example.com`, name: 'Tester' },
+    data: {
+      email: `tester+${crypto.randomUUID()}@example.com`,
+      name: 'Tester',
+    },
   })
 
   const membership = await db.orgMember.create({

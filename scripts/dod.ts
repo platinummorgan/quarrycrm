@@ -1,6 +1,6 @@
 /**
  * Definition of Done (DoD) Validation Script
- * 
+ *
  * Comprehensive checks before deployment:
  * - TypeScript compilation
  * - Production build
@@ -10,7 +10,7 @@
  * - Lighthouse scores (PWA, Performance, Best Practices, SEO)
  * - Route protection (auth required)
  * - Organization leakage prevention
- * 
+ *
  * Usage:
  *   npm run dod              # Run all checks
  *   npm run dod -- --skip-lighthouse  # Skip slow checks
@@ -42,13 +42,7 @@ const CONFIG = {
     pwa: 90,
   },
   // Pages to test
-  testPages: [
-    '/',
-    '/contacts',
-    '/companies',
-    '/deals',
-    '/settings',
-  ],
+  testPages: ['/', '/contacts', '/companies', '/deals', '/settings'],
   // Protected routes pattern
   protectedRoutePattern: /\/\(app\)\//,
 }
@@ -77,7 +71,9 @@ const colors = {
 }
 
 function log(message: string, color?: string) {
-  const colorCode = color ? colors[color as keyof typeof colors] || colors.reset : colors.reset
+  const colorCode = color
+    ? colors[color as keyof typeof colors] || colors.reset
+    : colors.reset
   console.log(`${colorCode}${message}${colors.reset}`)
 }
 
@@ -92,21 +88,24 @@ function logResult(result: CheckResult) {
   const color = result.passed ? 'green' : 'red'
   const duration = result.duration ? ` (${result.duration}ms)` : ''
   log(`${icon} ${result.name}${duration}`, color)
-  
+
   if (result.details) {
     log(`  ${result.details}`, 'cyan')
   }
-  
+
   if (result.error) {
     log(`  Error: ${result.error}`, 'red')
   }
-  
+
   if (!result.passed) {
     hasFailures = true
   }
 }
 
-async function runCommand(command: string, args: string[] = []): Promise<{ stdout: string; stderr: string; code: number }> {
+async function runCommand(
+  command: string,
+  args: string[] = []
+): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
@@ -139,11 +138,11 @@ async function runCommand(command: string, args: string[] = []): Promise<{ stdou
  */
 async function checkTypeScript(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     const { code, stderr } = await runCommand('npm', ['run', 'type-check'])
     const duration = Date.now() - start
-    
+
     if (code === 0) {
       return {
         name: 'TypeScript Compilation',
@@ -174,11 +173,11 @@ async function checkTypeScript(): Promise<CheckResult> {
  */
 async function checkBuild(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     const { code, stderr } = await runCommand('npm', ['run', 'build'])
     const duration = Date.now() - start
-    
+
     if (code === 0) {
       return {
         name: 'Production Build',
@@ -209,11 +208,11 @@ async function checkBuild(): Promise<CheckResult> {
  */
 async function checkLint(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     const { code, stdout, stderr } = await runCommand('npm', ['run', 'lint'])
     const duration = Date.now() - start
-    
+
     if (code === 0) {
       return {
         name: 'ESLint',
@@ -244,16 +243,16 @@ async function checkLint(): Promise<CheckResult> {
  */
 async function checkTests(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     const { code, stdout } = await runCommand('npm', ['run', 'test:run'])
     const duration = Date.now() - start
-    
+
     if (code === 0) {
       // Parse test results
       const passMatch = stdout.match(/(\d+) passed/)
       const passed = passMatch ? passMatch[1] : '?'
-      
+
       return {
         name: 'Unit Tests',
         passed: true,
@@ -283,11 +282,16 @@ async function checkTests(): Promise<CheckResult> {
  */
 async function checkAccessibility(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     // Check if axe-core is installed
-    const axePath = path.join(process.cwd(), 'node_modules', '@axe-core', 'playwright')
-    
+    const axePath = path.join(
+      process.cwd(),
+      'node_modules',
+      '@axe-core',
+      'playwright'
+    )
+
     try {
       await fs.access(axePath)
     } catch {
@@ -298,11 +302,11 @@ async function checkAccessibility(): Promise<CheckResult> {
         duration: Date.now() - start,
       }
     }
-    
+
     // Run accessibility tests
     const { code, stdout } = await runCommand('npm', ['run', 'test:a11y'])
     const duration = Date.now() - start
-    
+
     // Parse aXe results (this would come from actual test output)
     const violations = {
       critical: 0,
@@ -310,19 +314,20 @@ async function checkAccessibility(): Promise<CheckResult> {
       moderate: 0,
       minor: 0,
     }
-    
+
     const criticalPass = violations.critical <= CONFIG.accessibility.critical
     const seriousPass = violations.serious <= CONFIG.accessibility.serious
     const moderatePass = violations.moderate <= CONFIG.accessibility.moderate
     const minorPass = violations.minor <= CONFIG.accessibility.minor
-    
+
     const passed = criticalPass && seriousPass && moderatePass && minorPass
-    
-    const details = `Critical: ${violations.critical}/${CONFIG.accessibility.critical}, ` +
-                   `Serious: ${violations.serious}/${CONFIG.accessibility.serious}, ` +
-                   `Moderate: ${violations.moderate}/${CONFIG.accessibility.moderate}, ` +
-                   `Minor: ${violations.minor}/${CONFIG.accessibility.minor}`
-    
+
+    const details =
+      `Critical: ${violations.critical}/${CONFIG.accessibility.critical}, ` +
+      `Serious: ${violations.serious}/${CONFIG.accessibility.serious}, ` +
+      `Moderate: ${violations.moderate}/${CONFIG.accessibility.moderate}, ` +
+      `Minor: ${violations.minor}/${CONFIG.accessibility.minor}`
+
     return {
       name: 'Accessibility (aXe)',
       passed,
@@ -352,13 +357,13 @@ async function checkLighthouse(skipLighthouse: boolean): Promise<CheckResult> {
       details: 'Skipped (--skip-lighthouse flag)',
     }
   }
-  
+
   const start = Date.now()
-  
+
   try {
     // Check if Lighthouse CI is configured
     const lhciPath = path.join(process.cwd(), 'lighthouserc.json')
-    
+
     try {
       await fs.access(lhciPath)
     } catch {
@@ -369,11 +374,14 @@ async function checkLighthouse(skipLighthouse: boolean): Promise<CheckResult> {
         duration: Date.now() - start,
       }
     }
-    
+
     // Run Lighthouse CI
-    const { code, stdout } = await runCommand('npx', ['@lhci/cli@0.12.x', 'autorun'])
+    const { code, stdout } = await runCommand('npx', [
+      '@lhci/cli@0.12.x',
+      'autorun',
+    ])
     const duration = Date.now() - start
-    
+
     if (code === 0) {
       return {
         name: 'Lighthouse Scores',
@@ -405,11 +413,11 @@ async function checkLighthouse(skipLighthouse: boolean): Promise<CheckResult> {
  */
 async function checkRouteProtection(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     // Find all (app) route files
     const appDir = path.join(process.cwd(), 'src', 'app', '(app)')
-    
+
     try {
       await fs.access(appDir)
     } catch {
@@ -420,28 +428,29 @@ async function checkRouteProtection(): Promise<CheckResult> {
         duration: Date.now() - start,
       }
     }
-    
+
     // Recursively find all page.tsx files
     const protectedRoutes: string[] = []
     const unprotectedRoutes: string[] = []
-    
+
     const scanDirectory = async (dir: string): Promise<void> => {
       const entries = await fs.readdir(dir, { withFileTypes: true })
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name)
-        
+
         if (entry.isDirectory()) {
           await scanDirectory(fullPath)
         } else if (entry.name === 'page.tsx' || entry.name === 'page.ts') {
           const content = await fs.readFile(fullPath, 'utf-8')
-          
+
           // Check for authentication patterns
-          const hasAuth = content.includes('getServerSession') ||
-                         content.includes('useSession') ||
-                         content.includes('auth()') ||
-                         content.includes('redirect') && content.includes('/login')
-          
+          const hasAuth =
+            content.includes('getServerSession') ||
+            content.includes('useSession') ||
+            content.includes('auth()') ||
+            (content.includes('redirect') && content.includes('/login'))
+
           if (hasAuth) {
             protectedRoutes.push(fullPath)
           } else {
@@ -450,11 +459,11 @@ async function checkRouteProtection(): Promise<CheckResult> {
         }
       }
     }
-    
+
     await scanDirectory(appDir)
-    
+
     const duration = Date.now() - start
-    
+
     if (unprotectedRoutes.length === 0) {
       return {
         name: 'Route Protection',
@@ -463,7 +472,9 @@ async function checkRouteProtection(): Promise<CheckResult> {
         duration,
       }
     } else {
-      const routes = unprotectedRoutes.map(r => r.replace(process.cwd(), '')).join(', ')
+      const routes = unprotectedRoutes
+        .map((r) => r.replace(process.cwd(), ''))
+        .join(', ')
       return {
         name: 'Route Protection',
         passed: false,
@@ -486,11 +497,17 @@ async function checkRouteProtection(): Promise<CheckResult> {
  */
 async function checkOrgLeakage(): Promise<CheckResult> {
   const start = Date.now()
-  
+
   try {
     // Find all tRPC router files
-    const routersDir = path.join(process.cwd(), 'src', 'server', 'trpc', 'routers')
-    
+    const routersDir = path.join(
+      process.cwd(),
+      'src',
+      'server',
+      'trpc',
+      'routers'
+    )
+
     try {
       await fs.access(routersDir)
     } catch {
@@ -501,43 +518,49 @@ async function checkOrgLeakage(): Promise<CheckResult> {
         duration: Date.now() - start,
       }
     }
-    
+
     const issues: string[] = []
-    
+
     const scanRouters = async (dir: string): Promise<void> => {
       const entries = await fs.readdir(dir, { withFileTypes: true })
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name)
-        
+
         if (entry.isDirectory()) {
           await scanRouters(fullPath)
-        } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
+        } else if (
+          entry.name.endsWith('.ts') &&
+          !entry.name.endsWith('.test.ts')
+        ) {
           const content = await fs.readFile(fullPath, 'utf-8')
-          
+
           // Check for Prisma queries without organizationId filter
-          const prismaCallRegex = /prisma\.(contact|company|deal|activity|pipeline|webhook|apiKey)\.(?:findMany|findFirst|findUnique|count|aggregate)\(/g
+          const prismaCallRegex =
+            /prisma\.(contact|company|deal|activity|pipeline|webhook|apiKey)\.(?:findMany|findFirst|findUnique|count|aggregate)\(/g
           let match: RegExpExecArray | null
-          
+
           while ((match = prismaCallRegex.exec(content)) !== null) {
             const startIndex = match.index
             const endIndex = content.indexOf(')', startIndex)
             const queryBlock = content.slice(startIndex, endIndex + 1)
-            
+
             // Check if organizationId is in the where clause
             if (!queryBlock.includes('organizationId')) {
               const lineNumber = content.slice(0, startIndex).split('\n').length
-              issues.push(`${entry.name}:${lineNumber} - Missing organizationId filter`)
+              issues.push(
+                `${entry.name}:${lineNumber} - Missing organizationId filter`
+              )
             }
           }
         }
       }
     }
-    
+
     await scanRouters(routersDir)
-    
+
     const duration = Date.now() - start
-    
+
     if (issues.length === 0) {
       return {
         name: 'Organization Leakage',
@@ -568,17 +591,17 @@ async function checkOrgLeakage(): Promise<CheckResult> {
  */
 function printSummary() {
   logSection('📊 DEFINITION OF DONE SUMMARY')
-  
-  const passed = results.filter(r => r.passed).length
-  const failed = results.filter(r => !r.passed).length
+
+  const passed = results.filter((r) => r.passed).length
+  const failed = results.filter((r) => !r.passed).length
   const total = results.length
-  
+
   log(`Total Checks: ${total}`, 'bold')
   log(`Passed: ${passed}`, 'green')
   log(`Failed: ${failed}`, failed > 0 ? 'red' : 'green')
-  
+
   console.log()
-  
+
   if (hasFailures) {
     log('❌ DEFINITION OF DONE: FAILED', 'red')
     log('Fix the issues above before deploying.', 'yellow')
@@ -586,7 +609,7 @@ function printSummary() {
     log('✅ DEFINITION OF DONE: PASSED', 'green')
     log('All checks passed. Ready for deployment!', 'cyan')
   }
-  
+
   console.log()
 }
 
@@ -597,61 +620,61 @@ async function main() {
   const args = process.argv.slice(2)
   const skipLighthouse = args.includes('--skip-lighthouse')
   const isCI = args.includes('--ci')
-  
+
   logSection('🚀 DEFINITION OF DONE VALIDATION')
-  
+
   if (skipLighthouse) {
     log('⚠️  Lighthouse checks will be skipped', 'yellow')
   }
-  
+
   if (isCI) {
     log('🤖 Running in CI mode (strict)', 'cyan')
   }
-  
+
   // Run checks sequentially
   logSection('1️⃣  TypeScript Compilation')
   const tsResult = await checkTypeScript()
   results.push(tsResult)
   logResult(tsResult)
-  
+
   logSection('2️⃣  Production Build')
   const buildResult = await checkBuild()
   results.push(buildResult)
   logResult(buildResult)
-  
+
   logSection('3️⃣  Lint Checks')
   const lintResult = await checkLint()
   results.push(lintResult)
   logResult(lintResult)
-  
+
   logSection('4️⃣  Unit Tests')
   const testResult = await checkTests()
   results.push(testResult)
   logResult(testResult)
-  
+
   logSection('5️⃣  Accessibility Violations')
   const a11yResult = await checkAccessibility()
   results.push(a11yResult)
   logResult(a11yResult)
-  
+
   logSection('6️⃣  Lighthouse Scores')
   const lighthouseResult = await checkLighthouse(skipLighthouse)
   results.push(lighthouseResult)
   logResult(lighthouseResult)
-  
+
   logSection('7️⃣  Route Protection')
   const routeResult = await checkRouteProtection()
   results.push(routeResult)
   logResult(routeResult)
-  
+
   logSection('8️⃣  Organization Leakage')
   const orgResult = await checkOrgLeakage()
   results.push(orgResult)
   logResult(orgResult)
-  
+
   // Print summary
   printSummary()
-  
+
   // Exit with appropriate code
   process.exit(hasFailures ? 1 : 0)
 }
@@ -664,4 +687,14 @@ if (require.main === module) {
   })
 }
 
-export { main, checkTypeScript, checkBuild, checkLint, checkTests, checkAccessibility, checkLighthouse, checkRouteProtection, checkOrgLeakage }
+export {
+  main,
+  checkTypeScript,
+  checkBuild,
+  checkLint,
+  checkTests,
+  checkAccessibility,
+  checkLighthouse,
+  checkRouteProtection,
+  checkOrgLeakage,
+}

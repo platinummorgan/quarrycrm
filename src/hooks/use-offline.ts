@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { OfflineStorage, NetworkState, OfflineState } from '@/lib/offline-storage'
+import {
+  OfflineStorage,
+  NetworkState,
+  OfflineState,
+} from '@/lib/offline-storage'
 
 // Network state hook
 export function useNetworkState() {
@@ -150,7 +154,7 @@ export function useConflicts() {
   const refreshConflicts = useCallback(async () => {
     const allConflicts = await OfflineStorage.getConflicts()
     setConflicts(allConflicts)
-    setUnresolvedCount(allConflicts.filter(c => !c.resolved).length)
+    setUnresolvedCount(allConflicts.filter((c) => !c.resolved).length)
   }, [])
 
   useEffect(() => {
@@ -161,10 +165,13 @@ export function useConflicts() {
     return () => clearInterval(interval)
   }, [refreshConflicts])
 
-  const resolveConflict = useCallback(async (id: string, resolution: any, auditEntry?: any) => {
-    await OfflineStorage.resolveConflict(id, resolution, auditEntry)
-    await refreshConflicts()
-  }, [refreshConflicts])
+  const resolveConflict = useCallback(
+    async (id: string, resolution: any, auditEntry?: any) => {
+      await OfflineStorage.resolveConflict(id, resolution, auditEntry)
+      await refreshConflicts()
+    },
+    [refreshConflicts]
+  )
 
   return {
     conflicts,

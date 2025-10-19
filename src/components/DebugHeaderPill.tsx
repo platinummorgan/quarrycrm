@@ -13,7 +13,7 @@ interface WhoAmIResponse {
 
 /**
  * DebugHeaderPill
- * 
+ *
  * Shows a small pill in the top-right corner with role@org for debugging.
  * Only visible in non-production environments.
  * Fetches data from /api/whoami endpoint.
@@ -43,7 +43,7 @@ export function DebugHeaderPill() {
   return (
     <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
       <div
-        className="rounded-full bg-purple-600 px-3 py-1 text-xs font-mono font-medium text-white shadow-lg hover:bg-purple-700"
+        className="rounded-full bg-purple-600 px-3 py-1 font-mono text-xs font-medium text-white shadow-lg hover:bg-purple-700"
         title={`User: ${data.user?.email}\nOrg ID: ${data.orgId}\nRole: ${data.role}\nDemo: ${data.isDemo}`}
       >
         {displayText}

@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Contacts search benchmark failed:', error)
-    return NextResponse.json(
-      { error: 'Benchmark failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Benchmark failed' }, { status: 500 })
   }
 }

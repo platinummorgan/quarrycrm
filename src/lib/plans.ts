@@ -54,7 +54,10 @@ export const PLAN_NAMES: Record<OrganizationPlan, string> = {
   TEAM: 'Team',
 }
 
-export const PLAN_PRICES: Record<OrganizationPlan, { monthly: number; yearly: number }> = {
+export const PLAN_PRICES: Record<
+  OrganizationPlan,
+  { monthly: number; yearly: number }
+> = {
   FREE: { monthly: 0, yearly: 0 },
   PRO: { monthly: 29, yearly: 290 },
   TEAM: { monthly: 99, yearly: 990 },
@@ -75,19 +78,21 @@ export function getUpgradeMessage(
   resourceType: keyof PlanLimits
 ): string {
   const limit = PLAN_LIMITS[plan][resourceType]
-  
+
   if (plan === 'FREE') {
     return `You've reached the ${PLAN_NAMES.FREE} plan limit of ${limit} ${resourceType}. Upgrade to ${PLAN_NAMES.PRO} for more.`
   }
-  
+
   if (plan === 'PRO') {
     return `You've reached the ${PLAN_NAMES.PRO} plan limit of ${limit} ${resourceType}. Upgrade to ${PLAN_NAMES.TEAM} for unlimited.`
   }
-  
+
   return `You've reached your plan limit.`
 }
 
-export async function getOrganizationPlan(orgId: string): Promise<OrganizationPlan> {
+export async function getOrganizationPlan(
+  orgId: string
+): Promise<OrganizationPlan> {
   const { prisma } = await import('@/lib/prisma')
   const org = await prisma.organization.findUnique({
     where: { id: orgId },
@@ -113,7 +118,7 @@ export async function checkPlanLimit(
   let count = currentCount
   if (count === undefined) {
     const { prisma } = await import('@/lib/prisma')
-    
+
     switch (resourceType) {
       case 'contacts':
         count = await prisma.contact.count({

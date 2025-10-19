@@ -26,20 +26,20 @@ export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/admin/demo-reset
- * 
+ *
  * Truncates and reseeds the demo organization data.
- * 
+ *
  * Requirements:
  * - User must be authenticated
  * - User must be OWNER of the Quarry Demo organization
  * - Only works in non-production environments
  * - Idempotent operation
- * 
+ *
  * Process:
  * 1. Verify user is OWNER of Quarry Demo org
  * 2. Delete all demo data (deals, activities, contacts, companies)
  * 3. Run seed-demo script to regenerate data
- * 
+ *
  * Response:
  * {
  *   success: boolean,
@@ -272,10 +272,10 @@ interface DemoResetButtonProps {
 
 /**
  * DemoResetButton
- * 
+ *
  * Button to reset demo organization data.
  * Only visible in non-production and for demo org owners.
- * 
+ *
  * Features:
  * - Confirmation dialog before reset
  * - Loading state during reset
@@ -428,7 +428,7 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
 ```diff
        <div className="space-y-6">
          <WorkspaceCard />
- 
+
 +        {/* Demo Reset Card - Only visible in non-prod for demo org owners */}
 +        <Card className="border-yellow-200 dark:border-yellow-900">
 +          <CardHeader>
@@ -459,7 +459,13 @@ export function DemoResetButton({ variant = 'outline', size = 'sm' }: DemoResetB
 ```tsx
 import { WorkspaceCard } from '@/components/settings/WorkspaceCard'
 import { DemoResetButton } from '@/components/settings/DemoResetButton'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CreditCard, Database } from 'lucide-react'
 import Link from 'next/link'
@@ -496,8 +502,9 @@ export default function SettingsPage() {
           <CardContent>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Regenerate 3,000 contacts, 500 companies, 200 deals, and 300 activities.
-                Only available for demo organization owners in non-production environments.
+                Regenerate 3,000 contacts, 500 companies, 200 deals, and 300
+                activities. Only available for demo organization owners in
+                non-production environments.
               </p>
               <DemoResetButton />
             </div>
@@ -517,9 +524,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Link href="/app/settings/billing">
-              <Button>
-                View Billing
-              </Button>
+              <Button>View Billing</Button>
             </Link>
           </CardContent>
         </Card>
@@ -534,13 +539,16 @@ export default function SettingsPage() {
 ## 📊 Summary
 
 ### Files Created (2)
+
 1. ✅ `src/app/api/admin/demo-reset/route.ts` - API endpoint (228 lines)
 2. ✅ `src/components/settings/DemoResetButton.tsx` - UI component (148 lines)
 
 ### Files Modified (1)
+
 1. ✅ `src/app/(app)/settings/page.tsx` - Added demo reset card (~25 new lines)
 
 ### Total Lines Added
+
 - ~401 new lines of code
 - ~25 modified lines
 

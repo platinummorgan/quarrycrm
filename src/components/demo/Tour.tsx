@@ -23,7 +23,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'contacts-search',
     title: 'Search Contacts',
-    description: 'Use the search bar to quickly find contacts by name, email, or company. Try typing to see instant results.',
+    description:
+      'Use the search bar to quickly find contacts by name, email, or company. Try typing to see instant results.',
     selector: '[data-tour="contacts-search"]',
     position: 'bottom',
     highlightPadding: 8,
@@ -31,7 +32,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'open-drawer',
     title: 'Contact Details',
-    description: 'Click any contact row to open the detail drawer and view full information, activities, and edit details. You can also use deep links like /app/contacts?open=<contactId> to link directly to a contact.',
+    description:
+      'Click any contact row to open the detail drawer and view full information, activities, and edit details. You can also use deep links like /app/contacts?open=<contactId> to link directly to a contact.',
     selector: '[data-tour="contact-row"]',
     position: 'left',
     highlightPadding: 4,
@@ -39,7 +41,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'deals-board',
     title: 'Deals Pipeline',
-    description: 'Navigate to Deals to see your sales pipeline. Drag and drop deals between stages to track progress. Use /app/deals?focus=<dealId> to link to specific deals.',
+    description:
+      'Navigate to Deals to see your sales pipeline. Drag and drop deals between stages to track progress. Use /app/deals?focus=<dealId> to link to specific deals.',
     selector: '[data-tour="deals-nav"]',
     position: 'bottom',
     highlightPadding: 8,
@@ -47,7 +50,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'saved-views',
     title: 'Saved Views',
-    description: 'Create custom views with filters and columns. Save them for quick access to your most important data.',
+    description:
+      'Create custom views with filters and columns. Save them for quick access to your most important data.',
     selector: '[data-tour="saved-views"]',
     position: 'bottom',
     highlightPadding: 8,
@@ -55,7 +59,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'offline-banner',
     title: 'Works Offline',
-    description: 'This CRM works offline! Your data syncs automatically when you\'re back online. Try disconnecting to see it in action.',
+    description:
+      "This CRM works offline! Your data syncs automatically when you're back online. Try disconnecting to see it in action.",
     selector: '[data-tour="offline-indicator"]',
     position: 'bottom',
     highlightPadding: 8,
@@ -69,7 +74,8 @@ export function DemoTour() {
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
 
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
 
   // Check if tour should be shown
   useEffect(() => {
@@ -188,7 +194,7 @@ export function DemoTour() {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/60 z-[9998] transition-opacity"
+        className="fixed inset-0 z-[9998] bg-black/60 transition-opacity"
         onClick={handleSkip}
       />
 
@@ -197,7 +203,7 @@ export function DemoTour() {
         <>
           {/* Top mask */}
           <div
-            className="fixed bg-transparent z-[9999] pointer-events-none"
+            className="pointer-events-none fixed z-[9999] bg-transparent"
             style={{
               top: 0,
               left: 0,
@@ -207,7 +213,7 @@ export function DemoTour() {
           />
           {/* Bottom mask */}
           <div
-            className="fixed bg-transparent z-[9999] pointer-events-none"
+            className="pointer-events-none fixed z-[9999] bg-transparent"
             style={{
               top: highlightRect.bottom + padding,
               left: 0,
@@ -217,7 +223,7 @@ export function DemoTour() {
           />
           {/* Left mask */}
           <div
-            className="fixed bg-transparent z-[9999] pointer-events-none"
+            className="pointer-events-none fixed z-[9999] bg-transparent"
             style={{
               top: highlightRect.top - padding,
               left: 0,
@@ -227,7 +233,7 @@ export function DemoTour() {
           />
           {/* Right mask */}
           <div
-            className="fixed bg-transparent z-[9999] pointer-events-none"
+            className="pointer-events-none fixed z-[9999] bg-transparent"
             style={{
               top: highlightRect.top - padding,
               left: highlightRect.right + padding,
@@ -238,7 +244,7 @@ export function DemoTour() {
 
           {/* Highlight border */}
           <div
-            className="fixed border-2 border-blue-500 rounded-lg z-[9999] pointer-events-none shadow-xl transition-all duration-300"
+            className="pointer-events-none fixed z-[9999] rounded-lg border-2 border-blue-500 shadow-xl transition-all duration-300"
             style={{
               top: highlightRect.top - padding,
               left: highlightRect.left - padding,
@@ -249,7 +255,7 @@ export function DemoTour() {
 
           {/* Pulsing ring effect */}
           <div
-            className="fixed border-2 border-blue-400 rounded-lg z-[9999] pointer-events-none animate-ping"
+            className="pointer-events-none fixed z-[9999] animate-ping rounded-lg border-2 border-blue-400"
             style={{
               top: highlightRect.top - padding,
               left: highlightRect.left - padding,
@@ -263,7 +269,7 @@ export function DemoTour() {
 
       {/* Tooltip */}
       <div
-        className="fixed z-[10000] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-sm transition-all duration-300"
+        className="fixed z-[10000] max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-2xl transition-all duration-300 dark:border-gray-700 dark:bg-gray-800"
         style={{
           top: tooltipPosition.top,
           left: tooltipPosition.left,
@@ -272,24 +278,24 @@ export function DemoTour() {
         {/* Close button */}
         <button
           onClick={handleSkip}
-          className="absolute top-2 right-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          className="absolute right-2 top-2 rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
           aria-label="Close tour"
         >
           <X className="h-4 w-4 text-gray-500" />
         </button>
 
         {/* Step indicator */}
-        <div className="flex items-center space-x-1 mb-3">
+        <div className="mb-3 flex items-center space-x-1">
           {TOUR_STEPS.map((_, index) => (
             <div
               key={index}
               className={cn(
                 'h-1.5 rounded-full transition-all',
                 index === currentStep
-                  ? 'bg-blue-500 w-8'
+                  ? 'w-8 bg-blue-500'
                   : index < currentStep
-                  ? 'bg-blue-300 w-1.5'
-                  : 'bg-gray-300 dark:bg-gray-600 w-1.5'
+                    ? 'w-1.5 bg-blue-300'
+                    : 'w-1.5 bg-gray-300 dark:bg-gray-600'
               )}
             />
           ))}
@@ -297,7 +303,7 @@ export function DemoTour() {
 
         {/* Content */}
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
             {step.title}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -306,7 +312,7 @@ export function DemoTour() {
         </div>
 
         {/* Progress counter */}
-        <div className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+        <div className="mb-4 text-xs text-gray-500 dark:text-gray-500">
           Step {currentStep + 1} of {TOUR_STEPS.length}
         </div>
 
@@ -323,26 +329,22 @@ export function DemoTour() {
 
           <div className="flex space-x-2">
             {currentStep > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrev}
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm" onClick={handlePrev}>
+                <ArrowLeft className="mr-1 h-4 w-4" />
                 Back
               </Button>
             )}
             <Button
               size="sm"
               onClick={handleNext}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 text-white hover:bg-blue-700"
             >
               {currentStep === TOUR_STEPS.length - 1 ? (
                 'Finish'
               ) : (
                 <>
                   Next
-                  <ArrowRight className="h-4 w-4 ml-1" />
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </>
               )}
             </Button>

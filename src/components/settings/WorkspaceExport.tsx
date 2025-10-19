@@ -1,48 +1,61 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
-import { Download, FileJson, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { toast } from 'sonner'
+import {
+  Download,
+  FileJson,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react'
 
 interface ExportJob {
-  jobId: string;
-  status: string;
-  type: string;
-  createdAt: string;
-  completedAt?: string;
+  jobId: string
+  status: string
+  type: string
+  createdAt: string
+  completedAt?: string
   result?: {
-    downloadUrl: string;
-    expiresAt: string;
-    fileSize: number;
+    downloadUrl: string
+    expiresAt: string
+    fileSize: number
     recordCounts: {
-      contacts: number;
-      companies: number;
-      deals: number;
-      pipelines: number;
-      activities: number;
-    };
-  };
-  error?: string;
+      contacts: number
+      companies: number
+      deals: number
+      pipelines: number
+      activities: number
+    }
+  }
+  error?: string
 }
 
-export function WorkspaceExport({ organizationId }: { organizationId: string }) {
-  const [format, setFormat] = useState<'json' | 'csv'>('json');
-  const [exporting, setExporting] = useState(false);
-  const [currentJob, setCurrentJob] = useState<ExportJob | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+export function WorkspaceExport({
+  organizationId,
+}: {
+  organizationId: string
+}) {
+  const [format, setFormat] = useState<'json' | 'csv'>('json')
+  const [exporting, setExporting] = useState(false)
+  const [currentJob, setCurrentJob] = useState<ExportJob | null>(null)
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
+    null
+  )
 
   useEffect(() => {
     return () => {
-      if (pollingInterval) clearInterval(pollingInterval);
-    };
-  }, [pollingInterval]);
+      if (pollingInterval) clearInterval(pollingInterval)
+    }
+  }, [pollingInterval])
 
   async function startExport() {
-    setExporting(true);
+    setExporting(true)
     try {
       const response = await fetch('/api/export', {
         method: 'POST',
@@ -56,78 +69,82 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
           includePipelines: true,
           includeActivities: true,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Export failed');
+        const error = await response.json()
+        throw new Error(error.error || 'Export failed')
       }
 
-      const data = await response.json();
-      toast.success('Export started! Generating your download...');
-      
+      const data = await response.json()
+      toast.success('Export started! Generating your download...')
+
       // Start polling for job status
-      startPolling(data.jobId);
+      startPolling(data.jobId)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to start export');
-      setExporting(false);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to start export'
+      )
+      setExporting(false)
     }
   }
 
   function startPolling(jobId: string) {
     // Poll every 2 seconds
     const interval = setInterval(() => {
-      checkJobStatus(jobId);
-    }, 2000);
-    
-    setPollingInterval(interval);
+      checkJobStatus(jobId)
+    }, 2000)
+
+    setPollingInterval(interval)
   }
 
   async function checkJobStatus(jobId: string) {
     try {
-      const response = await fetch(`/api/export?jobId=${jobId}`);
-      
+      const response = await fetch(`/api/export?jobId=${jobId}`)
+
       if (!response.ok) {
-        throw new Error('Failed to check export status');
+        throw new Error('Failed to check export status')
       }
 
-      const job: ExportJob = await response.json();
-      setCurrentJob(job);
+      const job: ExportJob = await response.json()
+      setCurrentJob(job)
 
       if (job.status === 'COMPLETED') {
-        if (pollingInterval) clearInterval(pollingInterval);
-        setPollingInterval(null);
-        setExporting(false);
+        if (pollingInterval) clearInterval(pollingInterval)
+        setPollingInterval(null)
+        setExporting(false)
         toast.success('Export ready for download!', {
           description: 'Your download link expires in 24 hours',
-        });
+        })
       } else if (job.status === 'FAILED') {
-        if (pollingInterval) clearInterval(pollingInterval);
-        setPollingInterval(null);
-        setExporting(false);
+        if (pollingInterval) clearInterval(pollingInterval)
+        setPollingInterval(null)
+        setExporting(false)
         toast.error('Export failed', {
           description: job.error || 'Unknown error occurred',
-        });
+        })
       }
     } catch (error) {
-      console.error('Failed to check export status:', error);
+      console.error('Failed to check export status:', error)
     }
   }
 
   function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   function formatExpiryTime(expiresAt: string): string {
-    const expires = new Date(expiresAt);
-    const now = new Date();
-    const hours = Math.floor((expires.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
-    if (hours < 1) return 'Expires in less than 1 hour';
-    if (hours === 1) return 'Expires in 1 hour';
-    return `Expires in ${hours} hours`;
+    const expires = new Date(expiresAt)
+    const now = new Date()
+    const hours = Math.floor(
+      (expires.getTime() - now.getTime()) / (1000 * 60 * 60)
+    )
+
+    if (hours < 1) return 'Expires in less than 1 hour'
+    if (hours === 1) return 'Expires in 1 hour'
+    return `Expires in ${hours} hours`
   }
 
   return (
@@ -136,14 +153,16 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
         <div>
           <h3 className="text-lg font-semibold">Export Workspace Data</h3>
           <p className="text-sm text-muted-foreground">
-            Download all your contacts, companies, deals, pipelines, and activities. Export files are stored securely and expire after 24 hours.
+            Download all your contacts, companies, deals, pipelines, and
+            activities. Export files are stored securely and expire after 24
+            hours.
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium">Export Format</label>
-            <div className="flex gap-2 mt-2">
+            <div className="mt-2 flex gap-2">
               <Button
                 variant={format === 'json' ? 'default' : 'outline'}
                 onClick={() => setFormat('json')}
@@ -163,15 +182,15 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
                 CSV
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {format === 'json' 
-                ? 'JSON format preserves all data structure and relationships' 
+            <p className="mt-2 text-xs text-muted-foreground">
+              {format === 'json'
+                ? 'JSON format preserves all data structure and relationships'
                 : 'CSV format is compatible with spreadsheet applications'}
             </p>
           </div>
 
-          <Button 
-            onClick={startExport} 
+          <Button
+            onClick={startExport}
             disabled={exporting}
             className="flex items-center gap-2"
           >
@@ -190,14 +209,14 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
         </div>
 
         {currentJob && (
-          <div className="border rounded-lg p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {currentJob.status === 'COMPLETED' && (
                   <CheckCircle className="h-5 w-5 text-green-600" />
                 )}
                 {currentJob.status === 'PROCESSING' && (
-                  <Clock className="h-5 w-5 text-blue-600 animate-spin" />
+                  <Clock className="h-5 w-5 animate-spin text-blue-600" />
                 )}
                 {currentJob.status === 'FAILED' && (
                   <XCircle className="h-5 w-5 text-red-600" />
@@ -215,7 +234,8 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
               <div className="space-y-2">
                 <Progress value={undefined} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Exporting your data... This may take a few minutes depending on data size.
+                  Exporting your data... This may take a few minutes depending
+                  on data size.
                 </p>
               </div>
             )}
@@ -225,29 +245,45 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-muted-foreground">Contacts:</span>
-                    <span className="ml-2 font-medium">{currentJob.result.recordCounts.contacts.toLocaleString()}</span>
+                    <span className="ml-2 font-medium">
+                      {currentJob.result.recordCounts.contacts.toLocaleString()}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Companies:</span>
-                    <span className="ml-2 font-medium">{currentJob.result.recordCounts.companies.toLocaleString()}</span>
+                    <span className="ml-2 font-medium">
+                      {currentJob.result.recordCounts.companies.toLocaleString()}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Deals:</span>
-                    <span className="ml-2 font-medium">{currentJob.result.recordCounts.deals.toLocaleString()}</span>
+                    <span className="ml-2 font-medium">
+                      {currentJob.result.recordCounts.deals.toLocaleString()}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Activities:</span>
-                    <span className="ml-2 font-medium">{currentJob.result.recordCounts.activities.toLocaleString()}</span>
+                    <span className="ml-2 font-medium">
+                      {currentJob.result.recordCounts.activities.toLocaleString()}
+                    </span>
                   </div>
                 </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t">
+
+                <div className="flex items-center justify-between border-t pt-2">
                   <div className="text-xs text-muted-foreground">
-                    <div>Size: {formatFileSize(currentJob.result.fileSize)}</div>
-                    <div className="text-amber-600">{formatExpiryTime(currentJob.result.expiresAt)}</div>
+                    <div>
+                      Size: {formatFileSize(currentJob.result.fileSize)}
+                    </div>
+                    <div className="text-amber-600">
+                      {formatExpiryTime(currentJob.result.expiresAt)}
+                    </div>
                   </div>
                   <Button size="sm" asChild>
-                    <a href={currentJob.result.downloadUrl} download className="flex items-center gap-2">
+                    <a
+                      href={currentJob.result.downloadUrl}
+                      download
+                      className="flex items-center gap-2"
+                    >
                       <Download className="h-4 w-4" />
                       Download
                     </a>
@@ -259,12 +295,14 @@ export function WorkspaceExport({ organizationId }: { organizationId: string }) 
             {currentJob.status === 'FAILED' && (
               <div className="text-sm text-red-600">
                 <p className="font-medium">Export failed</p>
-                <p className="text-xs mt-1">{currentJob.error || 'An unknown error occurred'}</p>
+                <p className="mt-1 text-xs">
+                  {currentJob.error || 'An unknown error occurred'}
+                </p>
               </div>
             )}
           </div>
         )}
       </div>
     </Card>
-  );
+  )
 }

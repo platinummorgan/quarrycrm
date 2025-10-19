@@ -12,10 +12,10 @@ export interface RateLimitError {
 
 /**
  * Hook to handle rate limit errors with user-friendly toast messages
- * 
+ *
  * @example
  * const handleRateLimit = useRateLimitHandler()
- * 
+ *
  * try {
  *   const response = await fetch('/api/whoami')
  *   if (response.status === 429) {
@@ -36,7 +36,9 @@ export function useRateLimitHandler() {
     try {
       // Get retry-after header (in seconds)
       const retryAfterHeader = response.headers.get('retry-after')
-      const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : null
+      const retryAfter = retryAfterHeader
+        ? parseInt(retryAfterHeader, 10)
+        : null
 
       // Try to parse JSON error message
       let errorData: RateLimitError | null = null
@@ -61,7 +63,9 @@ export function useRateLimitHandler() {
       toast({
         variant: 'destructive',
         title: 'Too many requests',
-        description: errorData?.message || `You've made too many requests. ${retryMessage}`,
+        description:
+          errorData?.message ||
+          `You've made too many requests. ${retryMessage}`,
         duration: 5000,
       })
 
@@ -72,12 +76,12 @@ export function useRateLimitHandler() {
       }
     } catch (error) {
       console.error('Error handling rate limit response:', error)
-      
+
       // Fallback toast
       toast({
         variant: 'destructive',
         title: 'Too many requests',
-        description: 'You\'ve made too many requests. Please try again later.',
+        description: "You've made too many requests. Please try again later.",
         duration: 5000,
       })
 
@@ -91,7 +95,7 @@ export function useRateLimitHandler() {
 
   /**
    * Wrap a fetch call with automatic rate limit handling
-   * 
+   *
    * @example
    * const data = await withRateLimitHandling(
    *   fetch('/api/whoami'),
@@ -141,12 +145,12 @@ export function formatRetryAfter(seconds: number): string {
   if (seconds < 60) {
     return `${seconds} second${seconds !== 1 ? 's' : ''}`
   }
-  
+
   const minutes = Math.ceil(seconds / 60)
   if (minutes < 60) {
     return `${minutes} minute${minutes !== 1 ? 's' : ''}`
   }
-  
+
   const hours = Math.ceil(minutes / 60)
   return `${hours} hour${hours !== 1 ? 's' : ''}`
 }

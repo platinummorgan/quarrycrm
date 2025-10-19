@@ -45,11 +45,13 @@ class RateLimiter {
   private store = new Map<string, RateLimitEntry>()
   private config: RateLimitConfig
 
-  constructor(config: RateLimitConfig = {
-    requestsPerMinute: 60,
-    writesPerMinute: 10,
-    windowMs: 60 * 1000 // 1 minute
-  }) {
+  constructor(
+    config: RateLimitConfig = {
+      requestsPerMinute: 60,
+      writesPerMinute: 10,
+      windowMs: 60 * 1000, // 1 minute
+    }
+  ) {
     this.config = config
 
     // Clean up old entries every 5 minutes
@@ -61,8 +63,8 @@ class RateLimiter {
     const cutoff = now - this.config.windowMs
 
     for (const [ip, entry] of Array.from(this.store.entries())) {
-      entry.requests = entry.requests.filter(timestamp => timestamp > cutoff)
-      entry.writes = entry.writes.filter(timestamp => timestamp > cutoff)
+      entry.requests = entry.requests.filter((timestamp) => timestamp > cutoff)
+      entry.writes = entry.writes.filter((timestamp) => timestamp > cutoff)
 
       // Remove empty entries
       if (entry.requests.length === 0 && entry.writes.length === 0) {
@@ -76,7 +78,7 @@ class RateLimiter {
       this.store.set(ip, {
         requests: [],
         writes: [],
-        lastCleanup: Date.now()
+        lastCleanup: Date.now(),
       })
     }
     return this.store.get(ip)!
@@ -86,11 +88,14 @@ class RateLimiter {
     const now = Date.now()
     const cutoff = now - this.config.windowMs
 
-    entry.requests = entry.requests.filter(timestamp => timestamp > cutoff)
-    entry.writes = entry.writes.filter(timestamp => timestamp > cutoff)
+    entry.requests = entry.requests.filter((timestamp) => timestamp > cutoff)
+    entry.writes = entry.writes.filter((timestamp) => timestamp > cutoff)
   }
 
-  checkRateLimit(ip: string, isWrite: boolean = false): {
+  checkRateLimit(
+    ip: string,
+    isWrite: boolean = false
+  ): {
     allowed: boolean
     remainingRequests: number
     remainingWrites: number
@@ -109,9 +114,12 @@ class RateLimiter {
       if (writeCount > this.config.writesPerMinute) {
         return {
           allowed: false,
-          remainingRequests: Math.max(0, this.config.requestsPerMinute - entry.requests.length),
+          remainingRequests: Math.max(
+            0,
+            this.config.requestsPerMinute - entry.requests.length
+          ),
           remainingWrites: 0,
-          resetTime
+          resetTime,
         }
       }
     }
@@ -123,16 +131,25 @@ class RateLimiter {
       return {
         allowed: false,
         remainingRequests: 0,
-        remainingWrites: Math.max(0, this.config.writesPerMinute - entry.writes.length),
-        resetTime
+        remainingWrites: Math.max(
+          0,
+          this.config.writesPerMinute - entry.writes.length
+        ),
+        resetTime,
       }
     }
 
     return {
       allowed: true,
-      remainingRequests: Math.max(0, this.config.requestsPerMinute - requestCount),
-      remainingWrites: Math.max(0, this.config.writesPerMinute - entry.writes.length),
-      resetTime
+      remainingRequests: Math.max(
+        0,
+        this.config.requestsPerMinute - requestCount
+      ),
+      remainingWrites: Math.max(
+        0,
+        this.config.writesPerMinute - entry.writes.length
+      ),
+      resetTime,
     }
   }
 }
@@ -142,7 +159,7 @@ const demoRateLimiter = new RateLimiter()
 
 // Adapter selection: evaluate at call-time so tests can change the env dynamically
 function getAdapter() {
-  return (process.env.RATE_LIMIT_ADAPTER || 'redis')
+  return process.env.RATE_LIMIT_ADAPTER || 'redis'
 }
 
 function getInMemoryLimiter() {
@@ -159,7 +176,7 @@ function getRedisClientOrNull() {
 
 /**
  * Check rate limit using sliding window algorithm with Redis
- * 
+ *
  * @param identifier - Unique identifier (usually IP address)
  * @param config - Rate limit configuration
  * @returns Rate limit result with success status and timing info
@@ -175,7 +192,9 @@ export async function checkRateLimit(
   // DEBUG: log adapter selection and key for troubleshooting failing tests
   try {
     // eslint-disable-next-line no-console
-    console.debug(`[rate-limit] adapter=${getAdapter()} keyPrefix=${keyPrefix} identifier=${identifier}`)
+    console.debug(
+      `[rate-limit] adapter=${getAdapter()} keyPrefix=${keyPrefix} identifier=${identifier}`
+    )
   } catch {}
 
   // If adapter is memory, use in-memory sliding window keyed by keyPrefix:identifier
@@ -224,7 +243,9 @@ export async function checkRateLimit(
   const redis = getRedisClientOrNull() as RateLimitRedisClient | null
   if (!redis) {
     // Redis not available; fail-open (do not consume tokens)
-    console.warn('Redis client not available for rate limiting; failing open for this check')
+    console.warn(
+      'Redis client not available for rate limiting; failing open for this check'
+    )
     return {
       success: true,
       limit,
@@ -320,7 +341,7 @@ export async function checkRateLimit(
 /**
  * Reset rate limit for a given identifier
  * Useful for testing or manual overrides
- * 
+ *
  * @param identifier - Unique identifier (e.g., IP address)
  * @param keyPrefix - Redis key prefix (default: 'ratelimit')
  */
@@ -351,19 +372,19 @@ export async function resetRateLimit(
 /**
  * Get client IP address from request
  * Handles proxy headers (X-Forwarded-For, X-Real-IP)
- * 
+ *
  * @param request - Next.js request object or Headers
  * @returns IP address or 'unknown'
  */
 export function getClientIp(request: Request | NextRequest): string {
   // Try various headers that might contain the real IP
   const headers = request.headers
-  
+
   // X-Forwarded-For can contain multiple IPs (client, proxy1, proxy2)
   // The first one is typically the real client IP
   const forwardedFor = headers.get('x-forwarded-for')
   if (forwardedFor) {
-    const ips = forwardedFor.split(',').map(ip => ip.trim())
+    const ips = forwardedFor.split(',').map((ip) => ip.trim())
     return ips[0]
   }
 
@@ -441,8 +462,8 @@ export const WriteRateLimits = {
   // Email log ingestion
   EMAIL_LOG: {
     limit: 200, // 200 emails per minute
-  // Keep burst handling but ensure it's >= limit so short bursts are allowed
-  burst: 120, // Allow burst up to 120
+    // Keep burst handling but ensure it's >= limit so short bursts are allowed
+    burst: 120, // Allow burst up to 120
     windowMs: 60 * 1000, // per minute
     keyPrefix: 'ratelimit:write:email',
   } as SlidingWindowConfig & { burst: number },
@@ -462,11 +483,16 @@ export const WriteRateLimits = {
   } as SlidingWindowConfig & { burst: number },
 } as const
 
-export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = false, limiter?: RateLimiter) {
+export function checkDemoRateLimit(
+  request: NextRequest,
+  isWrite: boolean = false,
+  limiter?: RateLimiter
+) {
   const limiterToUse = limiter || demoRateLimiter
-  const ip = request.headers.get('x-forwarded-for') ||
-             request.headers.get('x-real-ip') ||
-             '127.0.0.1'
+  const ip =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    '127.0.0.1'
 
   const result = limiterToUse.checkRateLimit(ip, isWrite)
 
@@ -479,7 +505,7 @@ export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = fals
         message: isWrite
           ? 'Too many write operations. Please try again later.'
           : 'Too many requests. Please try again later.',
-        retryAfter
+        retryAfter,
       }),
       {
         status: 429,
@@ -488,8 +514,8 @@ export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = fals
           'Retry-After': retryAfter.toString(),
           'X-RateLimit-Remaining-Requests': result.remainingRequests.toString(),
           'X-RateLimit-Remaining-Writes': result.remainingWrites.toString(),
-          'X-RateLimit-Reset': new Date(result.resetTime).toISOString()
-        }
+          'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
+        },
       }
     )
   }
@@ -500,7 +526,7 @@ export function checkDemoRateLimit(request: NextRequest, isWrite: boolean = fals
 /**
  * Check rate limit for both IP and organization
  * Uses the more restrictive limit of the two
- * 
+ *
  * @param clientIp - Client IP address
  * @param orgId - Organization ID (optional)
  * @param config - Rate limit configuration
@@ -535,11 +561,17 @@ export async function checkCombinedRateLimit(
         success: false,
         limit: config.limit,
         // Clamp remaining to the configured (non-burst) limit
-        remaining: Math.min(ipResult.remaining, orgResult.remaining, config.limit),
+        remaining: Math.min(
+          ipResult.remaining,
+          orgResult.remaining,
+          config.limit
+        ),
         // reset should be the later reset time among the two
         reset: Math.max(ipResult.reset, orgResult.reset),
         // retryAfter should be the max positive value (or undefined if both undefined)
-        retryAfter: Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0) || undefined,
+        retryAfter:
+          Math.max(ipResult.retryAfter || 0, orgResult.retryAfter || 0) ||
+          undefined,
       }
     }
 
@@ -547,7 +579,11 @@ export async function checkCombinedRateLimit(
     return {
       success: true,
       limit: config.limit,
-      remaining: Math.min(ipResult.remaining, orgResult.remaining, config.limit),
+      remaining: Math.min(
+        ipResult.remaining,
+        orgResult.remaining,
+        config.limit
+      ),
       reset: Math.max(ipResult.reset, orgResult.reset),
     }
   }
@@ -566,12 +602,12 @@ export async function checkCombinedRateLimit(
 /**
  * Middleware wrapper for write endpoints with rate limiting
  * Checks both IP and organization-based limits
- * 
+ *
  * @param handler - The actual route handler
  * @param config - Rate limit configuration
  * @param getOrgId - Optional function to extract org ID from request
  * @returns Wrapped handler with rate limiting
- * 
+ *
  * @example
  * export const POST = withWriteRateLimit(
  *   async (req) => {
@@ -592,19 +628,29 @@ export function withWriteRateLimit<T = any>(
 ) {
   return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
     // Clone request to avoid consuming the body twice (handlers may read it)
-  // clone() returns a standard Request; cast to NextRequest for typing
-  const reqForOrg = (req.clone() as unknown) as NextRequest
+    // clone() returns a standard Request; cast to NextRequest for typing
+    const reqForOrg = req.clone() as unknown as NextRequest
     const clientIp = getClientIp(req)
     const orgId = getOrgId ? await getOrgId(reqForOrg) : null
-    
+
     // Check combined rate limit (IP + Org)
-    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
-    
+    const rateLimitResult = await checkCombinedRateLimit(
+      clientIp,
+      orgId,
+      config
+    )
+
     if (!rateLimitResult.success) {
       // Build headers safely (HeadersInit cannot contain undefined values)
-      const retryAfterStr = rateLimitResult.retryAfter != null
-        ? rateLimitResult.retryAfter.toString()
-        : (rateLimitResult.reset ? Math.max(0, Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))).toString() : undefined)
+      const retryAfterStr =
+        rateLimitResult.retryAfter != null
+          ? rateLimitResult.retryAfter.toString()
+          : rateLimitResult.reset
+            ? Math.max(
+                0,
+                Math.ceil(rateLimitResult.reset - Math.floor(Date.now() / 1000))
+              ).toString()
+            : undefined
 
       const headers: Record<string, string> = {
         'X-RateLimit-Limit': rateLimitResult.limit.toString(),
@@ -630,16 +676,16 @@ export function withWriteRateLimit<T = any>(
         }
       )
     }
-    
-  // If the handler wants to run, call it with the original request
-  // (we cloned earlier to permit body reads in getOrgId)
-  const response = await handler(req, context)
+
+    // If the handler wants to run, call it with the original request
+    // (we cloned earlier to permit body reads in getOrgId)
+    const response = await handler(req, context)
     const headers = new Headers(response.headers)
     headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
     headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
     headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString())
     headers.set('X-RateLimit-Scope', orgId ? 'ip+org' : 'ip')
-    
+
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,

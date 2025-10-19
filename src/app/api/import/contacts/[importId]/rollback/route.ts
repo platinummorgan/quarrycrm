@@ -16,10 +16,7 @@ export async function POST(
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user's organization
@@ -42,7 +39,7 @@ export async function POST(
     // Get the import history and verify ownership
     const importHistory = await prisma.importHistory.findUnique({
       where: { id: importId },
-      include: { rollbacks: true }
+      include: { rollbacks: true },
     })
 
     if (!importHistory) {
@@ -51,19 +48,19 @@ export async function POST(
 
     // Verify the import belongs to the user's organization
     if (importHistory.organizationId !== member.organization.id) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     if (importHistory.status === 'ROLLED_BACK') {
-      return NextResponse.json({ error: 'Import already rolled back' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Import already rolled back' },
+        { status: 400 }
+      )
     }
 
     // Get all rollback entries for this import
     const rollbackEntries = await prisma.importRollback.findMany({
-      where: { importId }
+      where: { importId },
     })
 
     let deletedCount = 0
@@ -73,7 +70,7 @@ export async function POST(
       if (entry.action === 'CREATE' && entry.entityId) {
         try {
           await prisma.contact.delete({
-            where: { id: entry.entityId }
+            where: { id: entry.entityId },
           })
           deletedCount++
         } catch (error) {
@@ -87,19 +84,16 @@ export async function POST(
     await prisma.importHistory.update({
       where: { id: importId },
       data: {
-        status: 'ROLLED_BACK'
-      }
+        status: 'ROLLED_BACK',
+      },
     })
 
     return NextResponse.json({
       message: 'Import rolled back successfully',
-      deletedCount
+      deletedCount,
     })
   } catch (error) {
     console.error('Rollback error:', error)
-    return NextResponse.json(
-      { error: 'Rollback failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Rollback failed' }, { status: 500 })
   }
 }

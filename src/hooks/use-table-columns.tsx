@@ -18,7 +18,7 @@ export const useContactColumns = (isDemo: boolean = false) => {
           type="text"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -37,7 +37,7 @@ export const useContactColumns = (isDemo: boolean = false) => {
           type="text"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -50,13 +50,13 @@ export const useContactColumns = (isDemo: boolean = false) => {
       filterable: true,
       editable: true,
       width: 200,
-      render: (value) => isDemo ? maskPII(value) : (value || '-'),
+      render: (value) => (isDemo ? maskPII(value) : value || '-'),
       editRender: (value, item, onChange) => (
         <input
           type="email"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -67,13 +67,13 @@ export const useContactColumns = (isDemo: boolean = false) => {
       accessor: 'phone',
       editable: true,
       width: 150,
-      render: (value) => isDemo ? maskPII(value) : (value || '-'),
+      render: (value) => (isDemo ? maskPII(value) : value || '-'),
       editRender: (value, item, onChange) => (
         <input
           type="tel"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -118,7 +118,7 @@ export const useCompanyColumns = (isDemo: boolean = false) => {
           type="text"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -129,23 +129,26 @@ export const useCompanyColumns = (isDemo: boolean = false) => {
       accessor: 'website',
       editable: true,
       width: 200,
-      render: (value) => value ? (
-        <a
-          href={value}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {value}
-        </a>
-      ) : '-',
+      render: (value) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {value}
+          </a>
+        ) : (
+          '-'
+        ),
       editRender: (value, item, onChange) => (
         <input
           type="url"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -162,7 +165,7 @@ export const useCompanyColumns = (isDemo: boolean = false) => {
           type="text"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full rounded border px-2 py-1 text-sm"
           onClick={(e) => e.stopPropagation()}
         />
       ),

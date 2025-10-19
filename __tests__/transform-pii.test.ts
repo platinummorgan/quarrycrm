@@ -1,6 +1,6 @@
 /**
  * Server-side PII Transformer Tests
- * 
+ *
  * Tests for server-side data transformation utilities
  */
 
@@ -143,7 +143,12 @@ describe('Transform Companies Array', () => {
     }
 
     const companies = [
-      { id: '1', name: 'Acme', email: 'contact@acme.com', phone: '404-555-1234' },
+      {
+        id: '1',
+        name: 'Acme',
+        email: 'contact@acme.com',
+        phone: '404-555-1234',
+      },
       { id: '2', name: 'Beta', email: 'info@beta.com', phone: '404-555-5678' },
     ]
 

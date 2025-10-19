@@ -7,23 +7,27 @@
 ## What Was Delivered
 
 ### ✅ Schema Extension
+
 - Added `prevHash` field (SHA-256 of previous record)
 - Added `selfHash` field (SHA-256 of this record)
 - Migration SQL ready (not applied)
 
 ### ✅ Chain Computation
+
 - `createAuditRecord()` - Auto-computes chain hashes on insert
 - `computeChainHashes()` - Manual chain hash computation
 - `computeAuditHash()` - SHA-256 of canonicalized payload
 - Canonical JSON with sorted keys for deterministic hashing
 
 ### ✅ Admin Verification Route
+
 - `GET /api/admin/audit-verify?organizationId=<id>`
 - `GET /api/admin/audit-verify?all=true`
 - Development-only (403 in production)
 - Reports mismatches with detailed error types
 
 ### ✅ Tests
+
 - 67 comprehensive tests
 - Covers all security properties
 - Tamper detection, insertion, deletion, reordering
@@ -107,6 +111,7 @@ Subsequent Records:
 ```
 
 Any tampering breaks the chain:
+
 - Modified data → selfHash changes → breaks next prevHash
 - Inserted record → wrong prevHash → chain break
 - Deleted record → next prevHash points to missing hash

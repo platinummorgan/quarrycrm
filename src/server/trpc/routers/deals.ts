@@ -1,4 +1,9 @@
-import { createTRPCRouter, orgProcedure, demoProcedure, rateLimitedProcedure } from '@/server/trpc/trpc'
+import {
+  createTRPCRouter,
+  orgProcedure,
+  demoProcedure,
+  rateLimitedProcedure,
+} from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { WriteRateLimits } from '@/lib/rate-limit'
@@ -482,7 +487,9 @@ export const dealsRouter = createTRPCRouter({
       })
 
       if (!stage) {
-        throw new Error('Stage not found or does not belong to the same pipeline')
+        throw new Error(
+          'Stage not found or does not belong to the same pipeline'
+        )
       }
 
       // Update deal's stage

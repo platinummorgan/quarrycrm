@@ -1,33 +1,43 @@
 # Demo User Write Protection - Implementation Summary
 
 ## Overview
+
 Comprehensive read-only protection for demo users across all write operations in the CRM system.
 
 ## Protection Strategy
+
 Two-layer defense in depth:
+
 1. **Middleware Layer**: JWT token inspection blocks write HTTP methods (POST/PUT/PATCH/DELETE) at request level
 2. **API Route Guards**: Server-side guard utility provides fallback protection within each route handler
 
 ## Response Format
+
 All blocked requests return:
+
 ```json
 {
   "code": "DEMO_READ_ONLY",
   "message": "Demo users cannot perform write operations"
 }
 ```
+
 Status: `403 Forbidden`
 
 ## Files Modified
 
 ### 1. Middleware Protection
+
 **File**: `src/middleware.ts`
+
 - Checks JWT token for `isDemo` flag
 - Blocks POST/PUT/PATCH/DELETE methods for demo users
 - Returns 403 with DEMO_READ_ONLY code
 
 ### 2. Demo Guard Utility
+
 **File**: `src/lib/demo-guard.ts` (NEW)
+
 - Reusable async function: `demoGuard()`
 - Checks server session for `isDemo` flag
 - Returns 403 response or null
@@ -36,23 +46,29 @@ Status: `403 Forbidden`
 ### 3. Protected API Routes
 
 #### Contact Import Routes
+
 - ✅ `src/app/api/import/contacts/route.ts` - POST
 - ✅ `src/app/api/import/contacts/[importId]/rollback/route.ts` - POST
 
 #### Email Logging Routes
+
 - ✅ `src/app/api/email-log/[address]/route.ts` - POST
 
 #### Offline Sync Routes
+
 - ✅ `src/app/api/offline/sync/route.ts` - POST
 
 #### CSV Import/Export Routes
+
 - ✅ `src/app/api/csv/import/route.ts` - POST
 - ✅ `src/app/api/csv/templates/route.ts` - POST, PUT, DELETE
 
 #### Workspace Routes
+
 - ✅ `src/app/api/workspace/route.ts` - PUT
 
 #### File Upload Routes
+
 - ✅ `src/app/api/upload/route.ts` - POST
 
 ## Test Coverage
@@ -60,6 +76,7 @@ Status: `403 Forbidden`
 **File**: `__tests__/api/demo-protection.test.ts`
 
 ### Test Suites (8 total)
+
 1. **Contact Import Routes** (3 tests)
    - Block demo import
    - Allow regular import
@@ -116,6 +133,7 @@ export async function POST(request: NextRequest) {
 ## Session Configuration
 
 **File**: `src/lib/auth.ts`
+
 - Session strategy: `jwt` (required for CredentialsProvider)
 - JWT callback stores `isDemo` flag
 - Session callback exposes `isDemo` to client/server
@@ -123,6 +141,7 @@ export async function POST(request: NextRequest) {
 ## Environment Variables
 
 Required for demo authentication:
+
 - `DEMO_TOKEN_SECRET` - JWT signing secret for demo tokens
 - `NEXTAUTH_SECRET` - NextAuth.js session secret
 

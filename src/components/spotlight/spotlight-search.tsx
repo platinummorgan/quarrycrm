@@ -12,10 +12,10 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
-import { 
-  User, 
-  Building2, 
-  Target, 
+import {
+  User,
+  Building2,
+  Target,
   ArrowRight,
   UserPlus,
   CheckSquare,
@@ -47,14 +47,16 @@ export function SpotlightSearch() {
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [showQuickActions, setShowQuickActions] = useState(false)
-  const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null)
+  const [selectedResult, setSelectedResult] = useState<SearchResult | null>(
+    null
+  )
   const router = useRouter()
   const listRef = useRef<HTMLDivElement>(null)
 
   // Global search query
   const { data: searchResults, isLoading } = trpc.search.global.useQuery(
     { query: search },
-    { 
+    {
       enabled: open && search.length > 0,
       staleTime: 1000,
     }
@@ -87,162 +89,174 @@ export function SpotlightSearch() {
   const results: SearchResult[] = searchResults || []
 
   // Group results by type
-  const groupedResults = results.reduce((acc, result) => {
-    if (!acc[result.type]) {
-      acc[result.type] = []
-    }
-    acc[result.type].push(result)
-    return acc
-  }, {} as Record<string, SearchResult[]>)
+  const groupedResults = results.reduce(
+    (acc, result) => {
+      if (!acc[result.type]) {
+        acc[result.type] = []
+      }
+      acc[result.type].push(result)
+      return acc
+    },
+    {} as Record<string, SearchResult[]>
+  )
 
   // Quick actions for selected result
-  const getQuickActions = useCallback((result: SearchResult): QuickAction[] => {
-    const actions: QuickAction[] = []
+  const getQuickActions = useCallback(
+    (result: SearchResult): QuickAction[] => {
+      const actions: QuickAction[] = []
 
-    switch (result.type) {
-      case 'contact':
-        actions.push(
-          {
-            id: 'assign-owner',
-            label: 'Assign owner',
-            icon: UserPlus,
-            action: () => {
-              router.push(`/contacts/${result.id}?action=assign-owner`)
-              setOpen(false)
+      switch (result.type) {
+        case 'contact':
+          actions.push(
+            {
+              id: 'assign-owner',
+              label: 'Assign owner',
+              icon: UserPlus,
+              action: () => {
+                router.push(`/contacts/${result.id}?action=assign-owner`)
+                setOpen(false)
+              },
             },
-          },
-          {
-            id: 'new-task',
-            label: 'Create task',
-            icon: CheckSquare,
-            action: () => {
-              router.push(`/contacts/${result.id}?action=new-task`)
-              setOpen(false)
+            {
+              id: 'new-task',
+              label: 'Create task',
+              icon: CheckSquare,
+              action: () => {
+                router.push(`/contacts/${result.id}?action=new-task`)
+                setOpen(false)
+              },
             },
-          },
-          {
-            id: 'send-email',
-            label: 'Send email',
-            icon: Mail,
-            action: () => {
-              router.push(`/contacts/${result.id}?action=send-email`)
-              setOpen(false)
+            {
+              id: 'send-email',
+              label: 'Send email',
+              icon: Mail,
+              action: () => {
+                router.push(`/contacts/${result.id}?action=send-email`)
+                setOpen(false)
+              },
+            }
+          )
+          break
+        case 'company':
+          actions.push(
+            {
+              id: 'assign-owner',
+              label: 'Assign owner',
+              icon: UserPlus,
+              action: () => {
+                router.push(`/companies/${result.id}?action=assign-owner`)
+                setOpen(false)
+              },
             },
-          }
-        )
-        break
-      case 'company':
-        actions.push(
-          {
-            id: 'assign-owner',
-            label: 'Assign owner',
-            icon: UserPlus,
-            action: () => {
-              router.push(`/companies/${result.id}?action=assign-owner`)
-              setOpen(false)
+            {
+              id: 'new-task',
+              label: 'Create task',
+              icon: CheckSquare,
+              action: () => {
+                router.push(`/companies/${result.id}?action=new-task`)
+                setOpen(false)
+              },
+            }
+          )
+          break
+        case 'deal':
+          actions.push(
+            {
+              id: 'assign-owner',
+              label: 'Assign owner',
+              icon: UserPlus,
+              action: () => {
+                router.push(`/deals/${result.id}?action=assign-owner`)
+                setOpen(false)
+              },
             },
-          },
-          {
-            id: 'new-task',
-            label: 'Create task',
-            icon: CheckSquare,
-            action: () => {
-              router.push(`/companies/${result.id}?action=new-task`)
-              setOpen(false)
+            {
+              id: 'new-task',
+              label: 'Create task',
+              icon: CheckSquare,
+              action: () => {
+                router.push(`/deals/${result.id}?action=new-task`)
+                setOpen(false)
+              },
             },
-          }
-        )
-        break
-      case 'deal':
-        actions.push(
-          {
-            id: 'assign-owner',
-            label: 'Assign owner',
-            icon: UserPlus,
-            action: () => {
-              router.push(`/deals/${result.id}?action=assign-owner`)
-              setOpen(false)
-            },
-          },
-          {
-            id: 'new-task',
-            label: 'Create task',
-            icon: CheckSquare,
-            action: () => {
-              router.push(`/deals/${result.id}?action=new-task`)
-              setOpen(false)
-            },
-          },
-          {
-            id: 'schedule-meeting',
-            label: 'Schedule meeting',
-            icon: Calendar,
-            action: () => {
-              router.push(`/deals/${result.id}?action=schedule-meeting`)
-              setOpen(false)
-            },
-          }
-        )
-        break
-    }
+            {
+              id: 'schedule-meeting',
+              label: 'Schedule meeting',
+              icon: Calendar,
+              action: () => {
+                router.push(`/deals/${result.id}?action=schedule-meeting`)
+                setOpen(false)
+              },
+            }
+          )
+          break
+      }
 
-    return actions
-  }, [router])
+      return actions
+    },
+    [router]
+  )
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (showQuickActions) {
-      const actions = getQuickActions(selectedResult!)
-      
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedIndex((prev) => Math.min(prev + 1, actions.length - 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedIndex((prev) => Math.max(prev - 1, 0))
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        actions[selectedIndex]?.action()
-      } else if (e.key === 'Escape' || e.key === 'ArrowLeft') {
-        e.preventDefault()
-        setShowQuickActions(false)
-        setSelectedIndex(0)
-      }
-    } else {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedIndex((prev) => Math.max(prev - 1, 0))
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        const result = results[selectedIndex]
-        if (result) {
-          openResult(result)
-        }
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        const result = results[selectedIndex]
-        if (result) {
-          setSelectedResult(result)
-          setShowQuickActions(true)
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (showQuickActions) {
+        const actions = getQuickActions(selectedResult!)
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex((prev) => Math.min(prev + 1, actions.length - 1))
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex((prev) => Math.max(prev - 1, 0))
+        } else if (e.key === 'Enter') {
+          e.preventDefault()
+          actions[selectedIndex]?.action()
+        } else if (e.key === 'Escape' || e.key === 'ArrowLeft') {
+          e.preventDefault()
+          setShowQuickActions(false)
           setSelectedIndex(0)
         }
+      } else {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1))
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex((prev) => Math.max(prev - 1, 0))
+        } else if (e.key === 'Enter') {
+          e.preventDefault()
+          const result = results[selectedIndex]
+          if (result) {
+            openResult(result)
+          }
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          const result = results[selectedIndex]
+          if (result) {
+            setSelectedResult(result)
+            setShowQuickActions(true)
+            setSelectedIndex(0)
+          }
+        }
       }
-    }
-  }, [results, selectedIndex, showQuickActions, selectedResult, getQuickActions])
+    },
+    [results, selectedIndex, showQuickActions, selectedResult, getQuickActions]
+  )
 
   // Open result
-  const openResult = useCallback((result: SearchResult) => {
-    const routes = {
-      contact: '/contacts',
-      company: '/companies',
-      deal: '/deals',
-    }
-    router.push(`${routes[result.type]}/${result.id}`)
-    setOpen(false)
-  }, [router])
+  const openResult = useCallback(
+    (result: SearchResult) => {
+      const routes = {
+        contact: '/contacts',
+        company: '/companies',
+        deal: '/deals',
+      }
+      router.push(`${routes[result.type]}/${result.id}`)
+      setOpen(false)
+    },
+    [router]
+  )
 
   // Get icon for result type
   const getIcon = (type: string) => {
@@ -259,13 +273,13 @@ export function SpotlightSearch() {
   }
 
   return (
-    <CommandDialog 
-      open={open} 
-      onOpenChange={setOpen}
-    >
-      <Command className="rounded-lg border shadow-md" onKeyDown={handleKeyDown}>
-        <CommandInput 
-          placeholder="Search contacts, companies, deals..." 
+    <CommandDialog open={open} onOpenChange={setOpen}>
+      <Command
+        className="rounded-lg border shadow-md"
+        onKeyDown={handleKeyDown}
+      >
+        <CommandInput
+          placeholder="Search contacts, companies, deals..."
           value={search}
           onValueChange={setSearch}
         />
@@ -277,8 +291,8 @@ export function SpotlightSearch() {
               </CommandEmpty>
 
               {Object.entries(groupedResults).map(([type, items]) => (
-                <CommandGroup 
-                  key={type} 
+                <CommandGroup
+                  key={type}
                   heading={type.charAt(0).toUpperCase() + type.slice(1) + 's'}
                 >
                   {items.map((result, index) => {

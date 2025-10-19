@@ -17,7 +17,11 @@ vi.mock('@/lib/prisma', () => ({
             createdAt: new Date(),
             owner: {
               id: 'owner-1',
-              user: { id: 'user-1', name: 'Perf User', email: 'perf@example.com' },
+              user: {
+                id: 'user-1',
+                name: 'Perf User',
+                email: 'perf@example.com',
+              },
             },
           },
         ]),
@@ -30,8 +34,11 @@ import { getContacts } from '@/server/contacts'
 describe('Contacts Performance', () => {
   it('should list contacts quickly', async () => {
     const start = Date.now()
-  // Provide a lightweight context to avoid request-scoped calls during perf tests
-  const result = await getContacts({ limit: 25 }, { orgId: 'test-org-id', userId: 'test-user-id' })
+    // Provide a lightweight context to avoid request-scoped calls during perf tests
+    const result = await getContacts(
+      { limit: 25 },
+      { orgId: 'test-org-id', userId: 'test-user-id' }
+    )
     const duration = Date.now() - start
 
     expect(duration).toBeLessThan(120) // <120ms SLA

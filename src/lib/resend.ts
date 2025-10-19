@@ -2,7 +2,9 @@ import { Resend } from 'resend'
 import MagicLinkEmail from '@/emails/MagicLinkEmail'
 import { getBaseUrl } from './baseUrl'
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null
 
 /**
  * Send magic link email.
@@ -53,7 +55,10 @@ export async function sendMagicLinkEmail({
 
     return { success: true, data }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unexpected error during email send'
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Unexpected error during email send'
     console.error('Failed to send magic link email:', errorMessage)
     return { success: false, error: errorMessage }
   }

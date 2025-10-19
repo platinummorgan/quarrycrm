@@ -2,7 +2,13 @@ import { WorkspaceCard } from '@/components/settings/WorkspaceCard'
 import { DemoResetButton } from '@/components/settings/DemoResetButton'
 export const dynamic = 'force-dynamic'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CreditCard, Database } from 'lucide-react'
 import Link from 'next/link'
@@ -39,8 +45,9 @@ export default function SettingsPage() {
           <CardContent>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Regenerate 3,000 contacts, 500 companies, 200 deals, and 300 activities.
-                Only available for demo organization owners in non-production environments.
+                Regenerate 3,000 contacts, 500 companies, 200 deals, and 300
+                activities. Only available for demo organization owners in
+                non-production environments.
               </p>
               <DemoResetButton />
             </div>
@@ -60,9 +67,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Link href="/app/settings/billing">
-              <Button>
-                View Billing
-              </Button>
+              <Button>View Billing</Button>
             </Link>
           </CardContent>
         </Card>

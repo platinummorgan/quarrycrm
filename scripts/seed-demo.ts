@@ -1,16 +1,16 @@
 /**
  * Demo Data Seeder
- * 
+ *
  * Generates realistic demo data for Quarry CRM:
  * - 3,000 contacts
  * - 500 companies
  * - 200 deals
  * - 300 activities
- * 
+ *
  * Usage:
  *   npm run seed:demo           # Generate all demo data
  *   npm run seed:demo -- --clean # Clean existing data first
- * 
+ *
  * Features:
  * - Masked PII data (emails: first.last@demo.example, phones: ***-***-1234)
  * - Realistic sales pipeline with proper stage distribution
@@ -59,11 +59,61 @@ const DEAL_STAGES = [
 
 // Activity types with realistic distribution
 const ACTIVITY_TYPES = [
-  { type: 'CALL', weight: 30, descriptions: ['Called prospect', 'Follow-up call', 'Discovery call', 'Demo call', 'Negotiation call'] },
-  { type: 'EMAIL', weight: 40, descriptions: ['Sent proposal', 'Follow-up email', 'Introduction email', 'Thank you email', 'Meeting confirmation'] },
-  { type: 'MEETING', weight: 15, descriptions: ['Product demo', 'Discovery meeting', 'Negotiation meeting', 'Contract review', 'Onboarding call'] },
-  { type: 'NOTE', weight: 10, descriptions: ['Added contact notes', 'Meeting summary', 'Deal update', 'Research findings', 'Internal notes'] },
-  { type: 'TASK', weight: 5, descriptions: ['Follow up next week', 'Send contract', 'Schedule demo', 'Prepare proposal', 'Review documents'] },
+  {
+    type: 'CALL',
+    weight: 30,
+    descriptions: [
+      'Called prospect',
+      'Follow-up call',
+      'Discovery call',
+      'Demo call',
+      'Negotiation call',
+    ],
+  },
+  {
+    type: 'EMAIL',
+    weight: 40,
+    descriptions: [
+      'Sent proposal',
+      'Follow-up email',
+      'Introduction email',
+      'Thank you email',
+      'Meeting confirmation',
+    ],
+  },
+  {
+    type: 'MEETING',
+    weight: 15,
+    descriptions: [
+      'Product demo',
+      'Discovery meeting',
+      'Negotiation meeting',
+      'Contract review',
+      'Onboarding call',
+    ],
+  },
+  {
+    type: 'NOTE',
+    weight: 10,
+    descriptions: [
+      'Added contact notes',
+      'Meeting summary',
+      'Deal update',
+      'Research findings',
+      'Internal notes',
+    ],
+  },
+  {
+    type: 'TASK',
+    weight: 5,
+    descriptions: [
+      'Follow up next week',
+      'Send contract',
+      'Schedule demo',
+      'Prepare proposal',
+      'Review documents',
+    ],
+  },
 ]
 
 // Contact titles
@@ -116,14 +166,20 @@ async function cleanDatabase() {
 /**
  * Generate companies in batches
  */
-async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> {
+async function seedCompanies(
+  orgId: string,
+  ownerId: string
+): Promise<string[]> {
   console.log(`📊 Seeding ${CONFIG.COMPANIES.toLocaleString()} companies...\n`)
 
   const companyIds: string[] = []
   const totalBatches = Math.ceil(CONFIG.COMPANIES / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.COMPANIES - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.COMPANIES - batch * CONFIG.BATCH_SIZE
+    )
     const companies = []
 
     for (let i = 0; i < batchSize; i++) {
@@ -151,10 +207,12 @@ async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> 
       take: batchSize,
     })
 
-    companyIds.push(...batchCompanies.map(c => c.id))
+    companyIds.push(...batchCompanies.map((c) => c.id))
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${companyIds.length.toLocaleString()} / ${CONFIG.COMPANIES.toLocaleString()})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${companyIds.length.toLocaleString()} / ${CONFIG.COMPANIES.toLocaleString()})\r`
+    )
   }
 
   console.log(`\n✅ Created ${companyIds.length.toLocaleString()} companies\n`)
@@ -164,21 +222,29 @@ async function seedCompanies(orgId: string, ownerId: string): Promise<string[]> 
 /**
  * Generate contacts in batches
  */
-async function seedContacts(orgId: string, companyIds: string[], ownerId: string): Promise<string[]> {
+async function seedContacts(
+  orgId: string,
+  companyIds: string[],
+  ownerId: string
+): Promise<string[]> {
   console.log(`👥 Seeding ${CONFIG.CONTACTS.toLocaleString()} contacts...\n`)
 
   const contactIds: string[] = []
   const totalBatches = Math.ceil(CONFIG.CONTACTS / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.CONTACTS - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.CONTACTS - batch * CONFIG.BATCH_SIZE
+    )
     const contacts = []
 
     for (let i = 0; i < batchSize; i++) {
       const firstName = faker.person.firstName()
       const lastName = faker.person.lastName()
       // 80% of contacts linked to companies
-      const companyId = Math.random() > 0.2 ? faker.helpers.arrayElement(companyIds) : null
+      const companyId =
+        Math.random() > 0.2 ? faker.helpers.arrayElement(companyIds) : null
 
       contacts.push({
         firstName,
@@ -203,10 +269,12 @@ async function seedContacts(orgId: string, companyIds: string[], ownerId: string
       take: batchSize,
     })
 
-    contactIds.push(...batchContacts.map(c => c.id))
+    contactIds.push(...batchContacts.map((c) => c.id))
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${contactIds.length.toLocaleString()} / ${CONFIG.CONTACTS.toLocaleString()})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${contactIds.length.toLocaleString()} / ${CONFIG.CONTACTS.toLocaleString()})\r`
+    )
   }
 
   console.log(`\n✅ Created ${contactIds.length.toLocaleString()} contacts\n`)
@@ -216,14 +284,24 @@ async function seedContacts(orgId: string, companyIds: string[], ownerId: string
 /**
  * Generate deals in batches
  */
-async function seedDeals(orgId: string, companyIds: string[], contactIds: string[], pipelineId: string, stageIds: string[], ownerId: string): Promise<void> {
+async function seedDeals(
+  orgId: string,
+  companyIds: string[],
+  contactIds: string[],
+  pipelineId: string,
+  stageIds: string[],
+  ownerId: string
+): Promise<void> {
   console.log(`💰 Seeding ${CONFIG.DEALS.toLocaleString()} deals...\n`)
 
   let dealsCreated = 0
   const totalBatches = Math.ceil(CONFIG.DEALS / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.DEALS - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.DEALS - batch * CONFIG.BATCH_SIZE
+    )
     const deals = []
 
     for (let i = 0; i < batchSize; i++) {
@@ -262,8 +340,10 @@ async function seedDeals(orgId: string, companyIds: string[], contactIds: string
 
     dealsCreated += batchSize
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${dealsCreated.toLocaleString()} / ${CONFIG.DEALS.toLocaleString()})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${dealsCreated.toLocaleString()} / ${CONFIG.DEALS.toLocaleString()})\r`
+    )
   }
 
   console.log(`\n✅ Created ${dealsCreated.toLocaleString()} deals\n`)
@@ -272,14 +352,23 @@ async function seedDeals(orgId: string, companyIds: string[], contactIds: string
 /**
  * Generate activities in batches
  */
-async function seedActivities(orgId: string, companyIds: string[], contactIds: string[], dealIds: string[], ownerId: string): Promise<void> {
+async function seedActivities(
+  orgId: string,
+  companyIds: string[],
+  contactIds: string[],
+  dealIds: string[],
+  ownerId: string
+): Promise<void> {
   console.log(`� Seeding ${CONFIG.ACTIVITIES.toLocaleString()} activities...\n`)
 
   let activitiesCreated = 0
   const totalBatches = Math.ceil(CONFIG.ACTIVITIES / CONFIG.BATCH_SIZE)
 
   for (let batch = 0; batch < totalBatches; batch++) {
-    const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.ACTIVITIES - batch * CONFIG.BATCH_SIZE)
+    const batchSize = Math.min(
+      CONFIG.BATCH_SIZE,
+      CONFIG.ACTIVITIES - batch * CONFIG.BATCH_SIZE
+    )
     const activities = []
 
     for (let i = 0; i < batchSize; i++) {
@@ -297,9 +386,12 @@ async function seedActivities(orgId: string, companyIds: string[], contactIds: s
       }
 
       // Randomly link to contact, deal, or company (or combination)
-      const contactId = Math.random() > 0.3 ? faker.helpers.arrayElement(contactIds) : null
-      const dealId = Math.random() > 0.6 ? faker.helpers.arrayElement(dealIds) : null
-      const companyId = Math.random() > 0.7 ? faker.helpers.arrayElement(companyIds) : null
+      const contactId =
+        Math.random() > 0.3 ? faker.helpers.arrayElement(contactIds) : null
+      const dealId =
+        Math.random() > 0.6 ? faker.helpers.arrayElement(dealIds) : null
+      const companyId =
+        Math.random() > 0.7 ? faker.helpers.arrayElement(companyIds) : null
 
       const description = faker.helpers.arrayElement(activityType.descriptions)
       const isTask = activityType.type === 'TASK'
@@ -309,7 +401,10 @@ async function seedActivities(orgId: string, companyIds: string[], contactIds: s
         type: activityType.type as any,
         description,
         subject: activityType.type === 'EMAIL' ? faker.lorem.sentence() : null,
-        body: activityType.type === 'EMAIL' || activityType.type === 'NOTE' ? faker.lorem.paragraphs(2) : null,
+        body:
+          activityType.type === 'EMAIL' || activityType.type === 'NOTE'
+            ? faker.lorem.paragraphs(2)
+            : null,
         dueDate: isTask ? faker.date.future() : null,
         isCompleted,
         contactId,
@@ -326,8 +421,10 @@ async function seedActivities(orgId: string, companyIds: string[], contactIds: s
 
     activitiesCreated += batchSize
 
-    const progress = ((batch + 1) / totalBatches * 100).toFixed(1)
-    process.stdout.write(`  Progress: ${progress}% (${activitiesCreated.toLocaleString()} / ${CONFIG.ACTIVITIES.toLocaleString()})\r`)
+    const progress = (((batch + 1) / totalBatches) * 100).toFixed(1)
+    process.stdout.write(
+      `  Progress: ${progress}% (${activitiesCreated.toLocaleString()} / ${CONFIG.ACTIVITIES.toLocaleString()})\r`
+    )
   }
 
   console.log(`\n✅ Created ${activitiesCreated.toLocaleString()} activities\n`)
@@ -345,7 +442,9 @@ async function printStats(stats: SeedStats) {
   console.log(`  Deals:     ${stats.deals.toLocaleString()}`)
   console.log(`  Activities: ${stats.activities.toLocaleString()}`)
   console.log(`  Duration:  ${(stats.duration / 1000).toFixed(2)}s`)
-  console.log(`  Rate:      ${Math.round((stats.companies + stats.contacts + stats.deals + stats.activities) / (stats.duration / 1000)).toLocaleString()} records/sec`)
+  console.log(
+    `  Rate:      ${Math.round((stats.companies + stats.contacts + stats.deals + stats.activities) / (stats.duration / 1000)).toLocaleString()} records/sec`
+  )
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
   console.log('🚀 Ready for performance testing!')
   console.log('   Visit /speed to run benchmarks\n')
@@ -383,7 +482,8 @@ async function main() {
         data: {
           name: 'Quarry Demo',
           domain: 'demo.example',
-          description: 'Demo organization for Quarry CRM showcasing all features',
+          description:
+            'Demo organization for Quarry CRM showcasing all features',
         },
       })
       console.log('✓ Created Quarry Demo organization\n')
@@ -455,7 +555,14 @@ async function main() {
             create: DEAL_STAGES.map((stage, index) => ({
               name: stage.name,
               order: index,
-              color: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#22c55e', '#ef4444'][index],
+              color: [
+                '#3b82f6',
+                '#10b981',
+                '#f59e0b',
+                '#8b5cf6',
+                '#22c55e',
+                '#ef4444',
+              ][index],
             })),
           },
         },
@@ -470,19 +577,26 @@ async function main() {
       console.log('✓ Using existing pipeline\n')
     }
 
-    const stageIds = pipeline.stages.map(s => s.id)
+    const stageIds = pipeline.stages.map((s) => s.id)
 
     // Seed data in dependency order
     const companyIds = await seedCompanies(org.id, orgMember.id)
     const contactIds = await seedContacts(org.id, companyIds, orgMember.id)
-    await seedDeals(org.id, companyIds, contactIds, pipeline.id, stageIds, orgMember.id)
+    await seedDeals(
+      org.id,
+      companyIds,
+      contactIds,
+      pipeline.id,
+      stageIds,
+      orgMember.id
+    )
 
     // Get deal IDs for linking activities
     const deals = await prisma.deal.findMany({
       where: { organizationId: org.id },
       select: { id: true },
     })
-    const dealIds = deals.map(d => d.id)
+    const dealIds = deals.map((d) => d.id)
 
     await seedActivities(org.id, companyIds, contactIds, dealIds, orgMember.id)
 

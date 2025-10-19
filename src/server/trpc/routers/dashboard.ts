@@ -5,32 +5,33 @@ import { z } from 'zod'
 export const dashboardRouter = createTRPCRouter({
   // Get dashboard stats
   stats: orgProcedure.query(async ({ ctx }) => {
-    const [contactsCount, companiesCount, dealsCount, activitiesCount] = await Promise.all([
-      prisma.contact.count({
-        where: {
-          organizationId: ctx.orgId,
-          deletedAt: null,
-        },
-      }),
-      prisma.company.count({
-        where: {
-          organizationId: ctx.orgId,
-          deletedAt: null,
-        },
-      }),
-      prisma.deal.count({
-        where: {
-          organizationId: ctx.orgId,
-          deletedAt: null,
-        },
-      }),
-      prisma.activity.count({
-        where: {
-          organizationId: ctx.orgId,
-          deletedAt: null,
-        },
-      }),
-    ])
+    const [contactsCount, companiesCount, dealsCount, activitiesCount] =
+      await Promise.all([
+        prisma.contact.count({
+          where: {
+            organizationId: ctx.orgId,
+            deletedAt: null,
+          },
+        }),
+        prisma.company.count({
+          where: {
+            organizationId: ctx.orgId,
+            deletedAt: null,
+          },
+        }),
+        prisma.deal.count({
+          where: {
+            organizationId: ctx.orgId,
+            deletedAt: null,
+          },
+        }),
+        prisma.activity.count({
+          where: {
+            organizationId: ctx.orgId,
+            deletedAt: null,
+          },
+        }),
+      ])
 
     return {
       contacts: contactsCount,

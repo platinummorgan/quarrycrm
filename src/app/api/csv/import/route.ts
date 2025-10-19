@@ -46,13 +46,9 @@ export async function POST(request: NextRequest) {
       sampleRows: rows.slice(0, 5), // First 5 rows for preview
       totalRows: rows.length,
     })
-
   } catch (error) {
     console.error('CSV parse error:', error)
-    return NextResponse.json(
-      { error: 'Failed to parse CSV' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to parse CSV' }, { status: 500 })
   }
 }
 
@@ -60,7 +56,8 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { importId, config }: { importId: string; config: CsvImportConfig } = body
+    const { importId, config }: { importId: string; config: CsvImportConfig } =
+      body
 
     if (!importId || !config) {
       return NextResponse.json(
@@ -97,7 +94,6 @@ export async function PUT(request: NextRequest) {
       importId,
       message: 'Import processing started',
     })
-
   } catch (error) {
     console.error('Import processing error:', error)
     return NextResponse.json(

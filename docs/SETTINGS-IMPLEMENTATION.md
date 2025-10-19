@@ -3,6 +3,7 @@
 ## Overview
 
 Implemented a production-ready Settings panel with workspace management features including:
+
 - ✅ Editable workspace name
 - ✅ Logo upload with preview (stub implementation using `/api/upload`)
 - ✅ Read-only log email address display with copy-to-clipboard functionality
@@ -187,7 +188,7 @@ const updateMutation = trpc.organizations.update.useMutation({
 
 const handleSave = async () => {
   if (!organization) return
-  
+
   if (!name.trim()) {
     toast.error('Workspace name is required')
     return
@@ -224,36 +225,38 @@ const handleCancel = () => {
 }
 
 // Action Buttons
-{isEditing ? (
-  <>
-    <Button
-      type="button"
-      variant="outline"
-      onClick={handleCancel}
-      disabled={updateMutation.isPending}
-    >
-      Cancel
+{
+  isEditing ? (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleCancel}
+        disabled={updateMutation.isPending}
+      >
+        Cancel
+      </Button>
+      <Button
+        type="button"
+        onClick={handleSave}
+        disabled={updateMutation.isPending}
+      >
+        {updateMutation.isPending ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          'Save Changes'
+        )}
+      </Button>
+    </>
+  ) : (
+    <Button type="button" onClick={() => setIsEditing(true)}>
+      Edit Workspace
     </Button>
-    <Button
-      type="button"
-      onClick={handleSave}
-      disabled={updateMutation.isPending}
-    >
-      {updateMutation.isPending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Saving...
-        </>
-      ) : (
-        'Save Changes'
-      )}
-    </Button>
-  </>
-) : (
-  <Button type="button" onClick={() => setIsEditing(true)}>
-    Edit Workspace
-  </Button>
-)}
+  )
+}
 ```
 
 - Toggle between view and edit modes
@@ -268,6 +271,7 @@ const handleCancel = () => {
 **Endpoint:** `POST /api/upload`
 
 **Request:**
+
 ```typescript
 // FormData with file
 const formData = new FormData()
@@ -275,6 +279,7 @@ formData.append('file', file)
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -286,11 +291,13 @@ formData.append('file', file)
 ```
 
 **Validation:**
+
 - Only image files allowed: `image/jpeg`, `image/jpg`, `image/png`, `image/gif`, `image/webp`
-- Maximum file size: 5MB (5 * 1024 * 1024 bytes)
+- Maximum file size: 5MB (5 _ 1024 _ 1024 bytes)
 - Returns 400 error if validation fails
 
 **Stub Implementation:**
+
 - Currently returns fake URLs
 - 500ms simulated delay
 - Ready for production integration with comments:
@@ -324,6 +331,7 @@ model Organization {
 ### `organizations.getCurrent`
 
 Returns current organization including:
+
 - `id`: Organization ID
 - `name`: Workspace name
 - `domain`: Organization domain
@@ -336,6 +344,7 @@ Returns current organization including:
 ### `organizations.update`
 
 **Input:**
+
 ```typescript
 {
   id: string,
@@ -353,12 +362,14 @@ Returns current organization including:
 Same fields as `getCurrent` query
 
 **Security:**
+
 - Validates user can only update their own organization
 - Throws "Unauthorized" error if attempting to update different org
 
 ## Manual Testing Guide
 
 ### Prerequisites
+
 1. Development server running: `npm run dev`
 2. Database seeded with at least one organization
 3. User authenticated and associated with organization
@@ -366,6 +377,7 @@ Same fields as `getCurrent` query
 ### Test Cases
 
 #### 1. View Settings Page
+
 1. Navigate to `/settings`
 2. ✅ Page loads without errors
 3. ✅ Workspace name displays correctly
@@ -375,6 +387,7 @@ Same fields as `getCurrent` query
 7. ✅ "Edit Workspace" button is visible
 
 #### 2. Enter Edit Mode
+
 1. Click "Edit Workspace" button
 2. ✅ Workspace name input becomes enabled
 3. ✅ Logo upload button becomes enabled
@@ -382,12 +395,14 @@ Same fields as `getCurrent` query
 5. ✅ "Edit Workspace" button disappears
 
 #### 3. Edit Workspace Name
+
 1. Clear the workspace name input
 2. Type a new name: "My New Workspace"
 3. ✅ Input updates as you type
 4. ✅ Log email updates to `log@my-new-workspace.quarrycrm.app`
 
 #### 4. Upload Logo
+
 1. Click "Upload Logo" button
 2. Select an image file (PNG/JPG)
 3. ✅ Button shows "Uploading..." with spinner
@@ -396,18 +411,21 @@ Same fields as `getCurrent` query
 6. ✅ Success toast appears: "Logo uploaded successfully"
 
 #### 5. Upload Invalid File
+
 1. Click "Upload Logo" button
 2. Try to select a non-image file (e.g., PDF)
 3. ✅ Error toast appears: "Invalid file type"
 4. ✅ Logo doesn't change
 
 #### 6. Upload Large File
+
 1. Click "Upload Logo" button
 2. Try to select an image > 5MB
 3. ✅ Error toast appears: "File too large"
 4. ✅ Logo doesn't change
 
 #### 7. Save Changes
+
 1. Make changes to workspace name and/or logo
 2. Click "Save Changes" button
 3. ✅ Button shows "Saving..." with spinner
@@ -416,6 +434,7 @@ Same fields as `getCurrent` query
 6. ✅ Changes persist on page refresh
 
 #### 8. Cancel Changes
+
 1. Click "Edit Workspace"
 2. Make changes to workspace name
 3. Click "Cancel" button
@@ -424,6 +443,7 @@ Same fields as `getCurrent` query
 6. ✅ No mutation is triggered
 
 #### 9. Copy Log Email
+
 1. Click the copy button next to log email
 2. ✅ Button icon changes to checkmark (green)
 3. ✅ Success toast appears: "Email copied to clipboard"
@@ -431,6 +451,7 @@ Same fields as `getCurrent` query
 5. ✅ After 2 seconds, icon reverts to copy icon
 
 #### 10. Validation - Empty Name
+
 1. Click "Edit Workspace"
 2. Clear the workspace name completely
 3. Click "Save Changes"
@@ -441,6 +462,7 @@ Same fields as `getCurrent` query
 ## Production Considerations
 
 ### Immediate Production Readiness
+
 - ✅ All features working with stub upload
 - ✅ Proper error handling and validation
 - ✅ Loading states for all async operations
@@ -451,24 +473,26 @@ Same fields as `getCurrent` query
 ### Before Production Deployment
 
 1. **Replace Upload Stub:**
+
    ```typescript
    // In src/app/api/upload/route.ts
    // Replace fake URL generation with real cloud storage:
-   
+
    // Option 1: AWS S3
    import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-   
+
    // Option 2: Cloudflare R2
    import { S3Client } from '@aws-sdk/client-s3' // R2 is S3-compatible
-   
+
    // Option 3: Cloudflare Images
    // Use Cloudflare Images API directly
-   
+
    // Option 4: Vercel Blob Storage
    import { put } from '@vercel/blob'
    ```
 
 2. **Configure CORS for Upload Endpoint:**
+
    ```typescript
    export async function OPTIONS(request: Request) {
      return new Response(null, {
@@ -488,10 +512,11 @@ Same fields as `getCurrent` query
    - Generate multiple sizes (thumbnail, medium, large)
 
 4. **Add Rate Limiting:**
+
    ```typescript
    // Prevent abuse of upload endpoint
    import rateLimit from 'express-rate-limit'
-   
+
    const uploadLimiter = rateLimit({
      windowMs: 15 * 60 * 1000, // 15 minutes
      max: 10, // 10 uploads per window

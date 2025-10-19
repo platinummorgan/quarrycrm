@@ -29,7 +29,10 @@ const globalLock = (() => {
   // Simple in-memory mutex
   let p: Promise<void> = Promise.resolve()
   return <T>(fn: () => Promise<T>) => {
-    const next = p.then(fn, fn).then(() => void 0, () => void 0)
+    const next = p.then(fn, fn).then(
+      () => void 0,
+      () => void 0
+    )
     p = next
     return next
   }
@@ -39,12 +42,14 @@ const globalLock = (() => {
  * Truncate all public tables except `_prisma_migrations`.
  * Resets sequences and cascades FKs.
  * Uses cached table list after first call for performance.
- * 
+ *
  * SAFETY: Only operates on databases with "_test" in DATABASE_URL
  * to prevent accidental TRUNCATE on dev/prod databases.
  * Set ALLOW_UNSAFE_TEST_DB=1 to bypass this check (NOT recommended for CI/prod).
  */
-export async function resetPostgresDb(client?: PrismaClient | Prisma.TransactionClient) {
+export async function resetPostgresDb(
+  client?: PrismaClient | Prisma.TransactionClient
+) {
   // Safety check: Refuse to TRUNCATE unless DATABASE_URL points to a test DB
   // or ALLOW_UNSAFE_TEST_DB=1 was set in test setup
   const databaseUrl = process.env.DATABASE_URL || ''
@@ -54,10 +59,10 @@ export async function resetPostgresDb(client?: PrismaClient | Prisma.Transaction
   if (!isTestDb && !allowUnsafe) {
     throw new Error(
       'Refusing to TRUNCATE: DATABASE_URL must point to a test database. ' +
-      'Expected "_test" in the database URL (e.g., postgres://user:pass@host/quarrycrm_test). ' +
-      `Current: ${databaseUrl.replace(/:[^:@]+@/, ':***@')} ` +
-      'If you see `file:tests/test.db` here, ensure `.env.test` does not override TEST_DATABASE_URL with a file-based fallback. ' +
-      'Set ALLOW_UNSAFE_TEST_DB=1 to bypass this check (NOT recommended for CI/production).'
+        'Expected "_test" in the database URL (e.g., postgres://user:pass@host/quarrycrm_test). ' +
+        `Current: ${databaseUrl.replace(/:[^:@]+@/, ':***@')} ` +
+        'If you see `file:tests/test.db` here, ensure `.env.test` does not override TEST_DATABASE_URL with a file-based fallback. ' +
+        'Set ALLOW_UNSAFE_TEST_DB=1 to bypass this check (NOT recommended for CI/production).'
     )
   }
 
@@ -75,27 +80,31 @@ export async function resetPostgresDb(client?: PrismaClient | Prisma.Transaction
           WHERE schemaname = 'public'
             AND tablename <> '_prisma_migrations'
         `
-        cachedTables = tables.map(t => String(t.tablename))
+        cachedTables = tables.map((t) => String(t.tablename))
       }
 
       // Skip TRUNCATE if no tables to reset
       if (cachedTables.length === 0) return
 
       const qualified = cachedTables
-        .map(t => `"public"."${t.replace(/"/g, '""')}"`)
+        .map((t) => `"public"."${t.replace(/"/g, '""')}"`)
         .join(', ')
 
       // TRUNCATE with RESTART IDENTITY and CASCADE to reset sequences and respect FKs
-      await db.$executeRawUnsafe(`TRUNCATE TABLE ${qualified} RESTART IDENTITY CASCADE;`)
+      await db.$executeRawUnsafe(
+        `TRUNCATE TABLE ${qualified} RESTART IDENTITY CASCADE;`
+      )
     })()
 
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new Error(
-          `DB reset timed out after ${RESET_TIMEOUT_MS}ms. ` +
-          `This may indicate a lock contention issue or slow DB connection. ` +
-          `Consider running tests with --no-file-parallelism or reducing concurrency.`
-        ))
+        reject(
+          new Error(
+            `DB reset timed out after ${RESET_TIMEOUT_MS}ms. ` +
+              `This may indicate a lock contention issue or slow DB connection. ` +
+              `Consider running tests with --no-file-parallelism or reducing concurrency.`
+          )
+        )
       }, RESET_TIMEOUT_MS)
     })
 
@@ -118,7 +127,10 @@ export async function closePrisma(client?: PrismaClient) {
  * Useful for performing reset + seed within the same lock to avoid races
  * between parallel test workers.
  */
-export async function withAdvisoryLock<T>(clientOrFn: any, maybeFn?: (client: any) => Promise<T>) {
+export async function withAdvisoryLock<T>(
+  clientOrFn: any,
+  maybeFn?: (client: any) => Promise<T>
+) {
   const LOCK_ID = 424242
   // Support two call styles:
   // - withAdvisoryLock(fn) -> uses internal client
@@ -143,21 +155,35 @@ export async function withAdvisoryLock<T>(clientOrFn: any, maybeFn?: (client: an
   // Attempt to acquire the lock on the client connection (not inside tx)
   const start = Date.now()
   // eslint-disable-next-line no-console
-  console.debug(`withAdvisoryLock: attempting to acquire advisory lock ${LOCK_ID}`)
+  console.debug(
+    `withAdvisoryLock: attempting to acquire advisory lock ${LOCK_ID}`
+  )
 
   while (true) {
-    const res: Array<{ pg_try_advisory_lock: boolean } | any> = await client.$queryRawUnsafe(
-      `SELECT pg_try_advisory_lock(${LOCK_ID}) as pg_try_advisory_lock`
-    )
-    const acquired = Array.isArray(res) ? Boolean((res[0] && (res[0].pg_try_advisory_lock ?? res[0].pg_try_advisory_lock === 1)) ?? false) : false
+    const res: Array<{ pg_try_advisory_lock: boolean } | any> =
+      await client.$queryRawUnsafe(
+        `SELECT pg_try_advisory_lock(${LOCK_ID}) as pg_try_advisory_lock`
+      )
+    const acquired = Array.isArray(res)
+      ? Boolean(
+          (res[0] &&
+            (res[0].pg_try_advisory_lock ??
+              res[0].pg_try_advisory_lock === 1)) ??
+            false
+        )
+      : false
     if (acquired) {
       // eslint-disable-next-line no-console
-      console.debug(`withAdvisoryLock: acquired lock ${LOCK_ID} after ${Date.now() - start}ms`)
+      console.debug(
+        `withAdvisoryLock: acquired lock ${LOCK_ID} after ${Date.now() - start}ms`
+      )
       break
     }
 
     if (Date.now() - start > MAX_WAIT_MS) {
-      throw new Error(`withAdvisoryLock: failed to acquire advisory lock ${LOCK_ID} within ${MAX_WAIT_MS}ms`)
+      throw new Error(
+        `withAdvisoryLock: failed to acquire advisory lock ${LOCK_ID} within ${MAX_WAIT_MS}ms`
+      )
     }
 
     // Wait then retry
@@ -177,4 +203,3 @@ export async function withAdvisoryLock<T>(clientOrFn: any, maybeFn?: (client: an
     }
   }
 }
-

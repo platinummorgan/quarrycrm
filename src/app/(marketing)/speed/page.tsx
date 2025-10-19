@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -41,20 +47,23 @@ interface SystemInfo {
 }
 
 interface PerformanceMetrics {
-  metrics: Record<string, {
-    operation: string
-    measurements: any[]
-    stats: {
-      count: number
-      min: number
-      max: number
-      avg: number
-      p50: number
-      p95: number
-      p99: number
+  metrics: Record<
+    string,
+    {
+      operation: string
+      measurements: any[]
+      stats: {
+        count: number
+        min: number
+        max: number
+        avg: number
+        p50: number
+        p95: number
+        p99: number
+      }
+      latest: any
     }
-    latest: any
-  }>
+  >
   timestamp: string
 }
 
@@ -68,7 +77,8 @@ export default function SpeedPage() {
     companiesList: number
     dealsList: number
   } | null>(null)
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null)
+  const [performanceMetrics, setPerformanceMetrics] =
+    useState<PerformanceMetrics | null>(null)
 
   // Fetch system info on mount
   useEffect(() => {
@@ -144,7 +154,10 @@ export default function SpeedPage() {
     const newResults: BenchmarkResult[] = []
 
     for (const benchmark of benchmarks) {
-      const result = await runSingleBenchmark(benchmark.endpoint, benchmark.target)
+      const result = await runSingleBenchmark(
+        benchmark.endpoint,
+        benchmark.target
+      )
       newResults.push(result)
       setResults([...newResults])
 
@@ -274,9 +287,9 @@ export default function SpeedPage() {
   const allPassed = results.every((r) => r.passed)
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="mb-2 flex items-center gap-3">
           <Zap className="h-8 w-8 text-yellow-500" />
           <h1 className="text-3xl font-bold">Performance Benchmarks</h1>
         </div>
@@ -295,22 +308,28 @@ export default function SpeedPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
               <div>
                 <p className="text-muted-foreground">Contacts</p>
-                <p className="text-2xl font-bold">{systemInfo.contacts.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {systemInfo.contacts.toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Companies</p>
-                <p className="text-2xl font-bold">{systemInfo.companies.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {systemInfo.companies.toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Deals</p>
-                <p className="text-2xl font-bold">{systemInfo.deals.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {systemInfo.deals.toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Timestamp</p>
-                <p className="text-sm font-mono">
+                <p className="font-mono text-sm">
                   {new Date(systemInfo.timestamp).toLocaleString()}
                 </p>
               </div>
@@ -324,9 +343,10 @@ export default function SpeedPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold mb-1">Run Performance Tests</h3>
+              <h3 className="mb-1 font-semibold">Run Performance Tests</h3>
               <p className="text-sm text-muted-foreground">
-                Executes 20 samples per endpoint to measure p50, p95, p99 latencies
+                Executes 20 samples per endpoint to measure p50, p95, p99
+                latencies
               </p>
             </div>
             <Button
@@ -351,7 +371,9 @@ export default function SpeedPage() {
           {running && (
             <div className="mt-4">
               <Progress value={progress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">{progress}% complete</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {progress}% complete
+              </p>
             </div>
           )}
         </CardContent>
@@ -381,11 +403,11 @@ export default function SpeedPage() {
               <CardContent>
                 <p className="text-lg">
                   {allPassed ? (
-                    <span className="text-green-600 font-semibold">
+                    <span className="font-semibold text-green-600">
                       ✓ All benchmarks passed target latencies
                     </span>
                   ) : (
-                    <span className="text-red-600 font-semibold">
+                    <span className="font-semibold text-red-600">
                       ✗ Some benchmarks exceeded target latencies
                     </span>
                   )}
@@ -396,54 +418,81 @@ export default function SpeedPage() {
             {/* Individual Results */}
             {results.map((result, index) => {
               // Get server metrics for this endpoint
-              const serverMetrics = performanceMetrics?.metrics?.[`${result.endpoint.replace('/', '-')}`]?.stats
-              const clientRenderMetric = uiRenderMetrics?.[result.endpoint as keyof typeof uiRenderMetrics]
+              const serverMetrics =
+                performanceMetrics?.metrics?.[
+                  `${result.endpoint.replace('/', '-')}`
+                ]?.stats
+              const clientRenderMetric =
+                uiRenderMetrics?.[
+                  result.endpoint as keyof typeof uiRenderMetrics
+                ]
 
               return (
                 <Card key={index}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{result.endpoint}</CardTitle>
-                      <Badge variant={result.passed ? 'default' : 'destructive'}>
+                      <CardTitle className="text-lg">
+                        {result.endpoint}
+                      </CardTitle>
+                      <Badge
+                        variant={result.passed ? 'default' : 'destructive'}
+                      >
                         {result.passed ? 'PASS' : 'FAIL'}
                       </Badge>
                     </div>
                     <CardDescription>
-                      Target: &lt;{result.target}ms (p95) • {result.samples} samples
+                      Target: &lt;{result.target}ms (p95) • {result.samples}{' '}
+                      samples
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 md:grid-cols-7 gap-4 mb-4">
+                    <div className="mb-4 grid grid-cols-3 gap-4 md:grid-cols-7">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Min</p>
-                        <p className="text-lg font-mono">{result.min}ms</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Min
+                        </p>
+                        <p className="font-mono text-lg">{result.min}ms</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">p50</p>
-                        <p className="text-lg font-mono font-semibold">{result.p50}ms</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          p50
+                        </p>
+                        <p className="font-mono text-lg font-semibold">
+                          {result.p50}ms
+                        </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">p95</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          p95
+                        </p>
                         <p
-                          className={`text-lg font-mono font-semibold ${result.passed ? 'text-green-600' : 'text-red-600'}`}
+                          className={`font-mono text-lg font-semibold ${result.passed ? 'text-green-600' : 'text-red-600'}`}
                         >
                           {result.p95}ms
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">p99</p>
-                        <p className="text-lg font-mono">{result.p99}ms</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          p99
+                        </p>
+                        <p className="font-mono text-lg">{result.p99}ms</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Max</p>
-                        <p className="text-lg font-mono">{result.max}ms</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Max
+                        </p>
+                        <p className="font-mono text-lg">{result.max}ms</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Avg</p>
-                        <p className="text-lg font-mono">{result.avg}ms</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Avg
+                        </p>
+                        <p className="font-mono text-lg">{result.avg}ms</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Status</p>
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Status
+                        </p>
                         <div className="flex items-center gap-1">
                           {result.passed ? (
                             <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -458,14 +507,20 @@ export default function SpeedPage() {
                     <div className="border-t pt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Server Response</p>
-                          <p className="text-lg font-mono">
-                            {serverMetrics ? `${Math.round(serverMetrics.avg)}ms` : 'N/A'}
+                          <p className="mb-1 text-sm text-muted-foreground">
+                            Server Response
+                          </p>
+                          <p className="font-mono text-lg">
+                            {serverMetrics
+                              ? `${Math.round(serverMetrics.avg)}ms`
+                              : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Client Render</p>
-                          <p className="text-lg font-mono">
+                          <p className="mb-1 text-sm text-muted-foreground">
+                            Client Render
+                          </p>
+                          <p className="font-mono text-lg">
                             {clientRenderMetric && clientRenderMetric > 0
                               ? `${Math.round(clientRenderMetric)}ms`
                               : 'N/A'}
@@ -493,31 +548,37 @@ export default function SpeedPage() {
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Contacts List</p>
-                      <p className="text-xl font-mono">
+                      <p className="mb-1 text-sm text-muted-foreground">
+                        Contacts List
+                      </p>
+                      <p className="font-mono text-xl">
                         {uiRenderMetrics.contactsList > 0
                           ? `${Math.round(uiRenderMetrics.contactsList)}ms`
                           : 'N/A'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Companies List</p>
-                      <p className="text-xl font-mono">
+                      <p className="mb-1 text-sm text-muted-foreground">
+                        Companies List
+                      </p>
+                      <p className="font-mono text-xl">
                         {uiRenderMetrics.companiesList > 0
                           ? `${Math.round(uiRenderMetrics.companiesList)}ms`
                           : 'N/A'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Deals List</p>
-                      <p className="text-xl font-mono">
+                      <p className="mb-1 text-sm text-muted-foreground">
+                        Deals List
+                      </p>
+                      <p className="font-mono text-xl">
                         {uiRenderMetrics.dealsList > 0
                           ? `${Math.round(uiRenderMetrics.dealsList)}ms`
                           : 'N/A'}
                       </p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-4">
+                  <p className="mt-4 text-xs text-muted-foreground">
                     Note: Navigate to respective pages to capture render metrics
                   </p>
                 </CardContent>
@@ -532,27 +593,36 @@ export default function SpeedPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <h4 className="mb-2 flex items-center gap-2 font-semibold">
                     <TrendingUp className="h-4 w-4" />
                     Test Approach
                   </h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                    <li>20 samples per endpoint for statistical significance</li>
-                    <li>100ms delay between samples to avoid server overload</li>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                    <li>
+                      20 samples per endpoint for statistical significance
+                    </li>
+                    <li>
+                      100ms delay between samples to avoid server overload
+                    </li>
                     <li>Standard pagination (50 items per page)</li>
-                    <li>Search queries use term &quot;test&quot; for consistency</li>
+                    <li>
+                      Search queries use term &quot;test&quot; for consistency
+                    </li>
                     <li>
                       Results measured using{' '}
-                      <code className="bg-muted px-1 rounded">performance.now()</code>
+                      <code className="rounded bg-muted px-1">
+                        performance.now()
+                      </code>
                     </li>
                   </ul>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Success Criteria</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <h4 className="mb-2 font-semibold">Success Criteria</h4>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                     <li>
-                      <strong>p95 latency</strong> must be below target (95% of requests faster)
+                      <strong>p95 latency</strong> must be below target (95% of
+                      requests faster)
                     </li>
                     <li>Contacts list: &lt;120ms</li>
                     <li>Contacts search: &lt;150ms</li>
@@ -564,8 +634,8 @@ export default function SpeedPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Reproducibility</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <h4 className="mb-2 font-semibold">Reproducibility</h4>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                     <li>Demo data seeded with fixed seed (12345)</li>
                     <li>10,000 contacts, 2,000 companies, 800 deals</li>
                     <li>Database indexes on critical fields</li>
@@ -574,8 +644,8 @@ export default function SpeedPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Limitations</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <h4 className="mb-2 font-semibold">Limitations</h4>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                     <li>Network latency varies based on connection quality</li>
                     <li>Database performance depends on hardware and load</li>
                     <li>Browser performance affects client-side metrics</li>

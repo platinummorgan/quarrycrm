@@ -39,7 +39,9 @@ export function ContactDrawer({
 }: ContactDrawerProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(controlledOpen || false)
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  )
   const [isCreating, setIsCreating] = useState(false)
   const [isLoadingContact, setIsLoadingContact] = useState(false)
 
@@ -58,12 +60,19 @@ export function ContactDrawer({
   })
 
   // Fetch owners for select input (server-provided formatted options)
-  const { data: ownerOptions } = trpc.contacts.listOwnerOptions.useQuery(undefined, {
-    enabled: isOpen,
-  })
+  const { data: ownerOptions } = trpc.contacts.listOwnerOptions.useQuery(
+    undefined,
+    {
+      enabled: isOpen,
+    }
+  )
 
   // Lightweight whoami endpoint to get current membershipId for preselect
-  const [me, setMe] = useState<{ org?: string; role?: string; membershipId?: string } | null>(null)
+  const [me, setMe] = useState<{
+    org?: string
+    role?: string
+    membershipId?: string
+  } | null>(null)
   useEffect(() => {
     let mounted = true
     if (isOpen) {
@@ -117,12 +126,18 @@ export function ContactDrawer({
       console.debug('contacts.create onSuccess')
       await utils.contacts.list.invalidate()
       handleOpenChange(false)
-      try { window.alert('Contact created successfully') } catch (e) {}
+      try {
+        window.alert('Contact created successfully')
+      } catch (e) {}
       toast.success('Contact created successfully')
     },
     onError: (err) => {
       console.error('contacts.create onError', err)
-      try { window.alert('Failed to create contact: ' + (err?.message || 'unknown error')) } catch (e) {}
+      try {
+        window.alert(
+          'Failed to create contact: ' + (err?.message || 'unknown error')
+        )
+      } catch (e) {}
       // show server-provided message when available
       toast.error(err?.message ?? 'Failed to create contact')
     },
@@ -142,8 +157,10 @@ export function ContactDrawer({
   // Expose mutate function and a robust pending flag (support isPending or fallback to isLoading)
   const { mutate: createMutate } = createMutation
   const { mutate: updateMutate } = updateMutation
-  const createPending = (createMutation as any).isPending ?? createMutation.isLoading
-  const updatePending = (updateMutation as any).isPending ?? updateMutation.isLoading
+  const createPending =
+    (createMutation as any).isPending ?? createMutation.isLoading
+  const updatePending =
+    (updateMutation as any).isPending ?? updateMutation.isLoading
 
   // Handle custom events
   useEffect(() => {
@@ -172,11 +189,17 @@ export function ContactDrawer({
     }
 
     window.addEventListener('contact:create', handleCreateContact)
-    window.addEventListener('contact:select', handleSelectContact as EventListener)
+    window.addEventListener(
+      'contact:select',
+      handleSelectContact as EventListener
+    )
 
     return () => {
       window.removeEventListener('contact:create', handleCreateContact)
-      window.removeEventListener('contact:select', handleSelectContact as EventListener)
+      window.removeEventListener(
+        'contact:select',
+        handleSelectContact as EventListener
+      )
     }
   }, [form, getContactQuery.data])
 
@@ -246,7 +269,8 @@ export function ContactDrawer({
     }
   }
 
-  const isSubmitting = form.formState.isSubmitting || createPending || updatePending
+  const isSubmitting =
+    form.formState.isSubmitting || createPending || updatePending
 
   // Sync getContactQuery result into form when editing
   useEffect(() => {
@@ -272,7 +296,7 @@ export function ContactDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-[540px] overflow-y-auto">
+      <SheetContent className="overflow-y-auto sm:max-w-[540px]">
         <SheetHeader>
           <SheetTitle>
             {isEditMode ? 'Edit Contact' : 'Add New Contact'}
@@ -377,7 +401,11 @@ export function ContactDrawer({
             {/* Owner */}
             {ownerOptions && ownerOptions.length === 1 ? (
               // If only one owner option, preselect and hide the field
-              <input type="hidden" value={ownerOptions[0].id} {...form.register('ownerId')} />
+              <input
+                type="hidden"
+                value={ownerOptions[0].id}
+                {...form.register('ownerId')}
+              />
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="ownerId" className="flex items-center gap-2">
@@ -413,10 +441,7 @@ export function ContactDrawer({
             )}
 
             {/* Company (optional) */}
-            <CompanySelect
-              value={companyId}
-              onChange={setCompanyId}
-            />
+            <CompanySelect value={companyId} onChange={setCompanyId} />
 
             {/* Notes (optional) */}
             <div className="space-y-2">
@@ -443,7 +468,12 @@ export function ContactDrawer({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1" data-testid="contact-form-submit">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1"
+                data-testid="contact-form-submit"
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

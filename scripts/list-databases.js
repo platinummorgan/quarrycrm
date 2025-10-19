@@ -14,7 +14,10 @@ if (fs.existsSync(envPath)) {
     if (eq === -1) continue
     let key = trimmed.slice(0, eq).trim()
     let val = trimmed.slice(eq + 1).trim()
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
       val = val.slice(1, -1)
     }
     process.env[key] = val
@@ -23,7 +26,9 @@ if (fs.existsSync(envPath)) {
 
 const DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL
 if (!DATABASE_URL) {
-  console.error('No TEST_DATABASE_URL or DATABASE_URL found in environment or .env.test')
+  console.error(
+    'No TEST_DATABASE_URL or DATABASE_URL found in environment or .env.test'
+  )
   process.exit(2)
 }
 
@@ -42,17 +47,27 @@ console.log('Connecting to:', url)
 
 const { Client } = require('pg')
 ;(async () => {
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } })
+  const client = new Client({
+    connectionString: url,
+    ssl: { rejectUnauthorized: false },
+  })
   try {
     await client.connect()
-    const res = await client.query("SELECT datname FROM pg_database WHERE datistemplate = false;")
+    const res = await client.query(
+      'SELECT datname FROM pg_database WHERE datistemplate = false;'
+    )
     console.log('Databases:')
     for (const row of res.rows) console.log(' -', row.datname)
     await client.end()
     process.exit(0)
   } catch (err) {
-    console.error('Error listing databases:', err && err.stack ? err.stack : err)
-    try { await client.end() } catch (e) {}
+    console.error(
+      'Error listing databases:',
+      err && err.stack ? err.stack : err
+    )
+    try {
+      await client.end()
+    } catch (e) {}
     process.exit(2)
   }
 })()

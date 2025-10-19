@@ -6,7 +6,13 @@ import { trpc } from '@/lib/trpc'
 import { ActivityType } from '@prisma/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -16,7 +22,7 @@ import {
   Mail,
   CheckSquare,
   Filter,
-  Plus
+  Plus,
 } from 'lucide-react'
 
 interface ActivityTimelineProps {
@@ -50,7 +56,7 @@ export function ActivityTimeline({
   companyId,
   limit = 50,
   showFilters = true,
-  showComposer = true
+  showComposer = true,
 }: ActivityTimelineProps) {
   const [typeFilter, setTypeFilter] = useState<ActivityType | 'all'>('all')
 
@@ -87,7 +93,7 @@ export function ActivityTimeline({
     return formatDistanceToNow(date, { addSuffix: true })
   }
 
-  const getActivityTitle = (activity: typeof activities[0]) => {
+  const getActivityTitle = (activity: (typeof activities)[0]) => {
     switch (activity.type) {
       case ActivityType.TASK:
         return `Task: ${activity.description}`
@@ -96,14 +102,16 @@ export function ActivityTimeline({
       case ActivityType.MEETING:
         return `Meeting: ${activity.description}`
       case ActivityType.EMAIL:
-        return activity.subject ? `Email: ${activity.subject}` : `Email: ${activity.description}`
+        return activity.subject
+          ? `Email: ${activity.subject}`
+          : `Email: ${activity.description}`
       case ActivityType.NOTE:
       default:
         return activity.description
     }
   }
 
-  const getActivitySubtitle = (activity: typeof activities[0]) => {
+  const getActivitySubtitle = (activity: (typeof activities)[0]) => {
     const parts = []
 
     if (activity.contact) {
@@ -122,10 +130,10 @@ export function ActivityTimeline({
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex space-x-3">
-            <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
+            <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-muted rounded animate-pulse" />
-              <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
             </div>
           </div>
         ))}
@@ -140,7 +148,12 @@ export function ActivityTimeline({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             {showFilters && (
-              <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as ActivityType | 'all')}>
+              <Select
+                value={typeFilter}
+                onValueChange={(value) =>
+                  setTypeFilter(value as ActivityType | 'all')
+                }
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -179,7 +192,7 @@ export function ActivityTimeline({
                   day: 'numeric',
                 })}
               </h3>
-              <div className="flex-1 h-px bg-border" />
+              <div className="h-px flex-1 bg-border" />
             </div>
 
             {/* Activities for this date */}
@@ -189,28 +202,33 @@ export function ActivityTimeline({
                 const iconColor = activityColors[activity.type]
 
                 return (
-                  <Card key={activity.id} className="hover:shadow-sm transition-shadow">
+                  <Card
+                    key={activity.id}
+                    className="transition-shadow hover:shadow-sm"
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3">
                         {/* Activity icon */}
-                        <div className={`p-2 rounded-full bg-muted ${iconColor}`}>
+                        <div
+                          className={`rounded-full bg-muted p-2 ${iconColor}`}
+                        >
                           <Icon className="h-4 w-4" />
                         </div>
 
                         {/* Activity content */}
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h4 className="text-sm font-medium">
                                 {getActivityTitle(activity)}
                               </h4>
                               {getActivitySubtitle(activity) && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="mt-1 text-xs text-muted-foreground">
                                   {getActivitySubtitle(activity)}
                                 </p>
                               )}
                               {activity.body && (
-                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                                   {activity.body}
                                 </p>
                               )}
@@ -218,18 +236,28 @@ export function ActivityTimeline({
 
                             {/* Task status and due date */}
                             {activity.type === ActivityType.TASK && (
-                              <div className="flex items-center space-x-2 ml-4">
+                              <div className="ml-4 flex items-center space-x-2">
                                 {activity.dueDate && (
                                   <Badge
-                                    variant={activity.dueDate < new Date() && !activity.isCompleted ? 'destructive' : 'secondary'}
+                                    variant={
+                                      activity.dueDate < new Date() &&
+                                      !activity.isCompleted
+                                        ? 'destructive'
+                                        : 'secondary'
+                                    }
                                     className="text-xs"
                                   >
-                                    Due {formatDistanceToNow(activity.dueDate, { addSuffix: true })}
+                                    Due{' '}
+                                    {formatDistanceToNow(activity.dueDate, {
+                                      addSuffix: true,
+                                    })}
                                   </Badge>
                                 )}
                                 <Button
                                   size="sm"
-                                  variant={activity.isCompleted ? 'default' : 'outline'}
+                                  variant={
+                                    activity.isCompleted ? 'default' : 'outline'
+                                  }
                                   className="h-6 w-6 p-0"
                                 >
                                   <CheckSquare className="h-3 w-3" />
@@ -239,18 +267,22 @@ export function ActivityTimeline({
                           </div>
 
                           {/* Footer with owner and timestamp */}
-                          <div className="flex items-center justify-between mt-3">
+                          <div className="mt-3 flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                               <Avatar className="h-5 w-5">
                                 <AvatarFallback className="text-xs">
                                   {activity.owner.user.name
-                                    ? activity.owner.user.name.split(' ').map(n => n[0]).join('').toUpperCase()
-                                    : activity.owner.user.email[0].toUpperCase()
-                                  }
+                                    ? activity.owner.user.name
+                                        .split(' ')
+                                        .map((n) => n[0])
+                                        .join('')
+                                        .toUpperCase()
+                                    : activity.owner.user.email[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-xs text-muted-foreground">
-                                {activity.owner.user.name || activity.owner.user.email}
+                                {activity.owner.user.name ||
+                                  activity.owner.user.email}
                               </span>
                             </div>
 
@@ -269,7 +301,7 @@ export function ActivityTimeline({
         ))}
 
         {activities.length === 0 && (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <h3 className="mt-4 text-sm font-medium text-muted-foreground">
               No activities yet

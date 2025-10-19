@@ -95,18 +95,18 @@ In Vercel Dashboard → Your Project → Settings → Environment Variables, add
 
 #### Required Variables
 
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/db?sslmode=require` | PostgreSQL connection string |
-| `NEXTAUTH_SECRET` | Generate with `openssl rand -base64 32` | Secret for NextAuth.js sessions |
-| `NEXTAUTH_URL` | `https://your-app.vercel.app` | Your production URL |
+| Variable          | Value                                                 | Description                     |
+| ----------------- | ----------------------------------------------------- | ------------------------------- |
+| `DATABASE_URL`    | `postgresql://user:pass@host:5432/db?sslmode=require` | PostgreSQL connection string    |
+| `NEXTAUTH_SECRET` | Generate with `openssl rand -base64 32`               | Secret for NextAuth.js sessions |
+| `NEXTAUTH_URL`    | `https://your-app.vercel.app`                         | Your production URL             |
 
 #### Optional Variables
 
-| Variable | Value | Default |
-|----------|-------|---------|
-| `NODE_ENV` | `production` | Auto-set by Vercel |
-| `NEXT_TELEMETRY_DISABLED` | `1` | Disable Next.js telemetry |
+| Variable                  | Value        | Default                   |
+| ------------------------- | ------------ | ------------------------- |
+| `NODE_ENV`                | `production` | Auto-set by Vercel        |
+| `NEXT_TELEMETRY_DISABLED` | `1`          | Disable Next.js telemetry |
 
 **Important**: Set environment variables for **Production**, **Preview**, and **Development** environments as needed.
 
@@ -133,6 +133,7 @@ vercel exec -- npx prisma db push
 ```
 
 Alternatively, add a post-build script (already configured in `package.json`):
+
 ```json
 {
   "scripts": {
@@ -169,16 +170,19 @@ Before going live:
 The `vercel.json` file includes:
 
 ### Build Configuration
+
 - **Framework**: Next.js (auto-detected)
 - **Node Version**: 18.x (specified in `.nvmrc`)
 - **Build Command**: `npm run build`
 - **Install Command**: `npm install`
 
 ### Function Configuration
+
 - **Max Duration**: 30s for API routes
 - **Region**: `iad1` (US East, change as needed)
 
 ### Security Headers
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
@@ -190,9 +194,10 @@ The `vercel.json` file includes:
 Default: `iad1` (Washington D.C., USA)
 
 Change in `vercel.json` for better latency:
+
 ```json
 {
-  "regions": ["sfo1"]  // San Francisco
+  "regions": ["sfo1"] // San Francisco
   // or ["lhr1"]       // London
   // or ["hnd1"]       // Tokyo
   // or ["all"]        // Edge functions
@@ -204,6 +209,7 @@ Change in `vercel.json` for better latency:
 ### Build Failures
 
 **TypeScript Errors**:
+
 ```bash
 # Verify types locally
 npm run type-check
@@ -212,12 +218,14 @@ npm run type-check
 ```
 
 **Missing Dependencies**:
+
 ```bash
 # Ensure all deps are in package.json (not just devDependencies)
 npm install --save-prod <package>
 ```
 
 **Prisma Issues**:
+
 ```bash
 # Ensure postinstall script runs
 {
@@ -230,16 +238,19 @@ npm install --save-prod <package>
 ### Runtime Errors
 
 **Database Connection**:
+
 - Verify `DATABASE_URL` is set in Vercel environment variables
 - Check connection string includes `?sslmode=require` for SSL
 - Test connection string locally: `npx prisma db pull`
 
 **NextAuth Issues**:
+
 - Verify `NEXTAUTH_URL` matches deployment URL (https://your-app.vercel.app)
 - Ensure `NEXTAUTH_SECRET` is set (32+ character random string)
 - Check browser console for CORS errors
 
 **API Routes Timeout**:
+
 - Default timeout: 10s (Hobby), 60s (Pro)
 - Optimize slow queries with indexes
 - Use Vercel Edge Functions for faster responses
@@ -253,6 +264,7 @@ npm run seed:demo  # On staging environment
 ```
 
 **Target Metrics**:
+
 - Contacts list: <120ms
 - Contacts search: <150ms
 - Companies/Deals: <100ms
@@ -260,12 +272,15 @@ npm run seed:demo  # On staging environment
 ## 📊 Monitoring
 
 ### Vercel Analytics
+
 Enable in Dashboard → Your Project → Analytics:
+
 - Real User Monitoring (RUM)
 - Web Vitals (LCP, FID, CLS)
 - API route performance
 
 ### Logs
+
 ```bash
 # Stream production logs
 vercel logs --follow
@@ -275,6 +290,7 @@ vercel logs api/contacts
 ```
 
 ### Database Monitoring
+
 - **Vercel Postgres**: Built-in metrics dashboard
 - **Neon**: Usage dashboard at neon.tech
 - **Supabase**: Database metrics in dashboard
@@ -290,12 +306,14 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push:
 5. **DoD Validation**: `npm run dod`
 
 Vercel auto-deploys when CI passes:
+
 - **Main branch**: Production deployment
 - **Other branches**: Preview deployments
 
 ## 🎯 Post-Deployment
 
 ### 1. Create Admin User
+
 ```bash
 # SSH into Vercel (or use Vercel Postgres dashboard)
 vercel exec -- npm run create-admin
@@ -305,17 +323,20 @@ vercel exec -- npm run create-admin
 ```
 
 ### 2. Configure Domain
+
 1. Go to Vercel Dashboard → Your Project → Settings → Domains
 2. Add custom domain: `app.yourcompany.com`
 3. Add DNS records as shown
 4. Update `NEXTAUTH_URL` to custom domain
 
 ### 3. Set Up Monitoring
+
 - Enable Vercel Analytics
 - Set up error tracking (e.g., Sentry)
 - Configure uptime monitoring (e.g., UptimeRobot)
 
 ### 4. Run DoD Validation
+
 ```bash
 # Verify production deployment
 npm run dod -- --skip-lighthouse
@@ -333,6 +354,7 @@ All checks should pass! ✅
 ## 🆘 Support
 
 If you encounter issues:
+
 1. Check [Vercel Status](https://www.vercel-status.com/)
 2. Review [deployment logs](https://vercel.com/docs/concepts/deployments/logs)
 3. Search [Vercel Discussions](https://github.com/vercel/vercel/discussions)

@@ -18,7 +18,7 @@ interface AnalyticsProps {
 export function Analytics({
   provider = 'none',
   apiKey,
-  domain
+  domain,
 }: AnalyticsProps) {
   useEffect(() => {
     // Respect Do Not Track

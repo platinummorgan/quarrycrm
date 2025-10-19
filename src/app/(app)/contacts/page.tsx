@@ -12,7 +12,8 @@ interface ContactsPageProps {
 
 async function ContactsTableWrapper({ searchParams }: ContactsPageProps) {
   const q = typeof searchParams.q === 'string' ? searchParams.q : undefined
-  const cursor = typeof searchParams.cursor === 'string' ? searchParams.cursor : undefined
+  const cursor =
+    typeof searchParams.cursor === 'string' ? searchParams.cursor : undefined
 
   const contactsData = await getContacts({ q, cursor })
 
@@ -30,7 +31,7 @@ function ContactsTableSkeleton() {
     <div className="space-y-4">
       {/* Search and Actions Skeleton */}
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Skeleton className="h-10 w-full" />
         </div>
         <div className="flex items-center gap-2">
@@ -40,24 +41,40 @@ function ContactsTableSkeleton() {
       </div>
 
       {/* Table Skeleton */}
-      <div className="rounded-md border overflow-hidden">
-        <div className="overflow-auto max-h-[calc(100vh-300px)]">
+      <div className="overflow-hidden rounded-md border">
+        <div className="max-h-[calc(100vh-300px)] overflow-auto">
           <table className="w-full">
-            <thead className="sticky top-0 bg-background border-b shadow-sm">
+            <thead className="sticky top-0 border-b bg-background shadow-sm">
               <tr>
-                <th className="h-12 px-4 text-left align-middle font-medium">Name</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Email</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Owner</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Updated</th>
+                <th className="h-12 px-4 text-left align-middle font-medium">
+                  Name
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium">
+                  Email
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium">
+                  Owner
+                </th>
+                <th className="h-12 px-4 text-left align-middle font-medium">
+                  Updated
+                </th>
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: 10 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                  <td className="p-4"><Skeleton className="h-4 w-40" /></td>
-                  <td className="p-4"><Skeleton className="h-4 w-24" /></td>
-                  <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                  <td className="p-4">
+                    <Skeleton className="h-4 w-32" />
+                  </td>
+                  <td className="p-4">
+                    <Skeleton className="h-4 w-40" />
+                  </td>
+                  <td className="p-4">
+                    <Skeleton className="h-4 w-24" />
+                  </td>
+                  <td className="p-4">
+                    <Skeleton className="h-4 w-20" />
+                  </td>
                 </tr>
               ))}
             </tbody>

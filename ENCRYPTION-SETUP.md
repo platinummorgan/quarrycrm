@@ -3,12 +3,14 @@
 ## Current Status
 
 ✅ **Implementation Complete**
+
 - All 41 tests passing
 - AES-256-GCM encryption working
 - Prisma middleware ready
 - Documentation complete
 
 ⚠️ **Pending Setup**
+
 - Database migration not applied (to avoid resetting your DB)
 - Prisma client not regenerated (file lock issue)
 
@@ -17,6 +19,7 @@
 ### Step 1: Stop All Running Processes
 
 **Close these if running:**
+
 1. Next.js dev server (`npm run dev`)
 2. Any Prisma Studio instances
 3. Any running test watchers
@@ -31,6 +34,7 @@ npx prisma generate
 ```
 
 This will update TypeScript types to include the new fields:
+
 - `Contact.notes` (TEXT)
 - `Contact.email_hash` (TEXT)
 - `Contact.phone_hash` (TEXT)
@@ -50,6 +54,7 @@ npx prisma migrate dev --name add_contact_encryption
 ```
 
 **What the migration does:**
+
 - Adds `notes` column (nullable TEXT)
 - Adds `email_hash` column (nullable TEXT)
 - Adds `phone_hash` column (nullable TEXT)
@@ -99,12 +104,14 @@ tsx scripts/encrypt-existing-contacts.ts
 If you get `EPERM: operation not permitted` errors:
 
 ### Option 1: Close Running Processes (Recommended)
+
 1. Stop dev server (Ctrl+C in terminal)
 2. Close VS Code terminal tabs using Prisma
 3. Close Prisma Studio if open
 4. Try `npx prisma generate` again
 
 ### Option 2: Force Kill Node Processes
+
 ```powershell
 # Find processes using port 3000 (or your dev server port)
 netstat -ano | findstr :3000
@@ -117,9 +124,11 @@ taskkill /F /IM node.exe
 ```
 
 ### Option 3: Restart VS Code
+
 Sometimes VS Code's TypeScript server holds file locks. Fully restart VS Code.
 
 ### Option 4: Restart Your Computer
+
 Nuclear option if nothing else works.
 
 ## Testing Without Database Changes
@@ -136,6 +145,7 @@ All 41 tests should pass, proving the encryption works correctly.
 ## What's Been Built
 
 ### Core Files Created
+
 1. **src/lib/crypto/fields.ts** - Encryption library (311 lines)
    - `encryptField()` / `decryptField()`
    - `makeSearchToken()` for searchable hashing
@@ -158,7 +168,7 @@ All 41 tests should pass, proving the encryption works correctly.
    - Batch encrypt existing records
    - Dry-run support
 
-6. **__tests__/field-encryption.test.ts** - Test suite (339 lines)
+6. ****tests**/field-encryption.test.ts** - Test suite (339 lines)
    - 41 comprehensive tests
    - All passing ✅
 
@@ -168,14 +178,17 @@ All 41 tests should pass, proving the encryption works correctly.
 ## Security Notes
 
 🔐 **Never commit encryption keys to git**
+
 - Use environment variables only
 - Add to `.gitignore`: `.env.local`, `.env.production.local`
 
 💾 **Back up your keys securely**
+
 - Lost keys = permanently lost data
 - Store in password manager or secret management service
 
 🔄 **Key rotation is supported**
+
 - Add `ENCRYPTION_KEY_V2` when ready to rotate
 - Old encrypted data still decrypts with v1 key
 - New data encrypts with v2 key

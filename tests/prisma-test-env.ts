@@ -25,7 +25,9 @@ if (!process.env.DATABASE_URL && !process.env.TEST_DATABASE_URL) {
 } else {
   // Respect existing configuration - avoid overriding a configured test DB
   // eslint-disable-next-line no-console
-  console.log('prisma-test-env: DATABASE_URL or TEST_DATABASE_URL already set; skipping sqlite fallback')
+  console.log(
+    'prisma-test-env: DATABASE_URL or TEST_DATABASE_URL already set; skipping sqlite fallback'
+  )
 }
 
 // Run prisma generate and migrate deploy (fallback to db push) so schema/client are ready
@@ -33,18 +35,27 @@ try {
   console.log('Prisma: generating client...')
   execSync('npx prisma generate', { stdio: 'inherit' })
 } catch (e) {
-  console.warn('Prisma generate failed (continuing):', e && (e as Error).message)
+  console.warn(
+    'Prisma generate failed (continuing):',
+    e && (e as Error).message
+  )
 }
 
 try {
   console.log('Prisma: applying migrations for test SQLite DB...')
   execSync('npx prisma migrate deploy', { stdio: 'inherit' })
 } catch (e) {
-  console.warn('prisma migrate deploy failed, falling back to db push:', e && (e as Error).message)
+  console.warn(
+    'prisma migrate deploy failed, falling back to db push:',
+    e && (e as Error).message
+  )
   try {
     execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' })
   } catch (pushErr) {
-    console.error('prisma db push also failed during test setup:', pushErr && (pushErr as Error).message)
+    console.error(
+      'prisma db push also failed during test setup:',
+      pushErr && (pushErr as Error).message
+    )
     throw pushErr
   }
 }

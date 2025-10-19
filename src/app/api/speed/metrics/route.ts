@@ -7,12 +7,15 @@ export async function GET(request: NextRequest) {
     const metrics = PerformanceUtils.getMetrics()
 
     // Filter to only include the operations we're interested in
-    const filteredMetrics = Object.entries(metrics).reduce((acc, [key, data]) => {
-      if (key.includes('contacts-list') || key.includes('deals-list')) {
-        acc[key] = data
-      }
-      return acc
-    }, {} as Record<string, any>)
+    const filteredMetrics = Object.entries(metrics).reduce(
+      (acc, [key, data]) => {
+        if (key.includes('contacts-list') || key.includes('deals-list')) {
+          acc[key] = data
+        }
+        return acc
+      },
+      {} as Record<string, any>
+    )
 
     return NextResponse.json({
       metrics: filteredMetrics,

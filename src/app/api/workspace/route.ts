@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Apply rate limiting for demo users
@@ -73,10 +70,7 @@ export async function PUT(request: NextRequest) {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Apply rate limiting for demo users
@@ -106,7 +100,10 @@ export async function PUT(request: NextRequest) {
     const { name, logo } = body
 
     // Validate input
-    if (name !== undefined && (!name || typeof name !== 'string' || name.trim().length === 0)) {
+    if (
+      name !== undefined &&
+      (!name || typeof name !== 'string' || name.trim().length === 0)
+    ) {
       return NextResponse.json(
         { error: 'Name is required and must be a non-empty string' },
         { status: 400 }

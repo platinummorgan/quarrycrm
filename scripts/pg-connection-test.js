@@ -16,7 +16,10 @@ if (fs.existsSync(envPath)) {
     if (eq === -1) continue
     let key = trimmed.slice(0, eq).trim()
     let val = trimmed.slice(eq + 1).trim()
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
       val = val.slice(1, -1)
     }
     process.env[key] = val
@@ -25,7 +28,9 @@ if (fs.existsSync(envPath)) {
 
 const DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL
 if (!DATABASE_URL) {
-  console.error('No TEST_DATABASE_URL or DATABASE_URL found in environment or .env.test')
+  console.error(
+    'No TEST_DATABASE_URL or DATABASE_URL found in environment or .env.test'
+  )
   process.exit(2)
 }
 
@@ -48,7 +53,9 @@ async function tryConnect(ssl) {
   } catch (err) {
     console.error('Connection error (ssl=' + ssl + '):')
     console.error(err && err.stack ? err.stack : err)
-    try { await client.end() } catch (e) {}
+    try {
+      await client.end()
+    } catch (e) {}
     return { ok: false, err }
   }
 }
@@ -67,7 +74,9 @@ async function tryConnect(ssl) {
     const r3 = await tryConnect(false)
     if (r3.ok) return process.exit(0)
 
-    console.error('\nAll attempts failed. See errors above. If you expect Neon to require TLS, ensure your client supports the TLS settings required by Neon and that your IP is allowed. In CI, prefer using a local docker test DB to run tests when possible.')
+    console.error(
+      '\nAll attempts failed. See errors above. If you expect Neon to require TLS, ensure your client supports the TLS settings required by Neon and that your IP is allowed. In CI, prefer using a local docker test DB to run tests when possible.'
+    )
     process.exit(2)
   } catch (e) {
     console.error('Unexpected error:', e && e.stack ? e.stack : e)

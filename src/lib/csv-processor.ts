@@ -7,7 +7,15 @@ export enum EntityType {
   DEAL = 'DEAL',
 }
 
-export type FieldType = 'string' | 'email' | 'phone' | 'number' | 'date' | 'url' | 'reference' | 'array'
+export type FieldType =
+  | 'string'
+  | 'email'
+  | 'phone'
+  | 'number'
+  | 'date'
+  | 'url'
+  | 'reference'
+  | 'array'
 
 export type FieldDefinition = {
   type: FieldType
@@ -20,7 +28,15 @@ export const csvColumnMappingSchema = z.object({
   csvColumn: z.string(),
   field: z.string(),
   confidence: z.number().min(0).max(1),
-  transform: z.enum(['none', 'normalize_phone', 'normalize_email', 'lowercase', 'uppercase']).optional(),
+  transform: z
+    .enum([
+      'none',
+      'normalize_phone',
+      'normalize_email',
+      'lowercase',
+      'uppercase',
+    ])
+    .optional(),
   treatAsTag: z.boolean().optional(),
 })
 
@@ -42,8 +58,16 @@ export const ENTITY_FIELDS = {
     lastName: { type: 'string' as const, required: true, label: 'Last Name' },
     email: { type: 'email' as const, required: false, label: 'Email' },
     phone: { type: 'phone' as const, required: false, label: 'Phone' },
-    companyId: { type: 'reference' as const, required: false, label: 'Company ID' },
-    companyName: { type: 'string' as const, required: false, label: 'Company Name' },
+    companyId: {
+      type: 'reference' as const,
+      required: false,
+      label: 'Company ID',
+    },
+    companyName: {
+      type: 'string' as const,
+      required: false,
+      label: 'Company Name',
+    },
     ownerId: { type: 'reference' as const, required: false, label: 'Owner ID' },
     tags: { type: 'array' as const, required: false, label: 'Tags' },
   },
@@ -51,7 +75,11 @@ export const ENTITY_FIELDS = {
     name: { type: 'string' as const, required: true, label: 'Company Name' },
     website: { type: 'url' as const, required: false, label: 'Website' },
     industry: { type: 'string' as const, required: false, label: 'Industry' },
-    description: { type: 'string' as const, required: false, label: 'Description' },
+    description: {
+      type: 'string' as const,
+      required: false,
+      label: 'Description',
+    },
     domain: { type: 'string' as const, required: false, label: 'Domain' },
     ownerId: { type: 'reference' as const, required: false, label: 'Owner ID' },
     tags: { type: 'array' as const, required: false, label: 'Tags' },
@@ -59,13 +87,41 @@ export const ENTITY_FIELDS = {
   [EntityType.DEAL]: {
     title: { type: 'string' as const, required: true, label: 'Deal Title' },
     value: { type: 'number' as const, required: false, label: 'Value' },
-    probability: { type: 'number' as const, required: false, label: 'Probability (%)' },
-    expectedClose: { type: 'date' as const, required: false, label: 'Expected Close Date' },
-    contactId: { type: 'reference' as const, required: false, label: 'Contact ID' },
-    contactEmail: { type: 'email' as const, required: false, label: 'Contact Email' },
-    companyId: { type: 'reference' as const, required: false, label: 'Company ID' },
-    companyName: { type: 'string' as const, required: false, label: 'Company Name' },
-    pipelineId: { type: 'reference' as const, required: false, label: 'Pipeline ID' },
+    probability: {
+      type: 'number' as const,
+      required: false,
+      label: 'Probability (%)',
+    },
+    expectedClose: {
+      type: 'date' as const,
+      required: false,
+      label: 'Expected Close Date',
+    },
+    contactId: {
+      type: 'reference' as const,
+      required: false,
+      label: 'Contact ID',
+    },
+    contactEmail: {
+      type: 'email' as const,
+      required: false,
+      label: 'Contact Email',
+    },
+    companyId: {
+      type: 'reference' as const,
+      required: false,
+      label: 'Company ID',
+    },
+    companyName: {
+      type: 'string' as const,
+      required: false,
+      label: 'Company Name',
+    },
+    pipelineId: {
+      type: 'reference' as const,
+      required: false,
+      label: 'Pipeline ID',
+    },
     stageId: { type: 'reference' as const, required: false, label: 'Stage ID' },
     ownerId: { type: 'reference' as const, required: false, label: 'Owner ID' },
     tags: { type: 'array' as const, required: false, label: 'Tags' },
@@ -76,7 +132,14 @@ export const ENTITY_FIELDS = {
 export const COLUMN_NAME_VARIATIONS = {
   // Contact fields
   firstName: ['first name', 'firstname', 'first_name', 'fname', 'given name'],
-  lastName: ['last name', 'lastname', 'last_name', 'lname', 'surname', 'family name'],
+  lastName: [
+    'last name',
+    'lastname',
+    'last_name',
+    'lname',
+    'surname',
+    'family name',
+  ],
   email: ['email', 'email address', 'e-mail', 'mail'],
   phone: ['phone', 'phone number', 'telephone', 'mobile', 'cell', 'tel'],
   companyName: ['company', 'company name', 'organization', 'org', 'employer'],
@@ -111,7 +174,7 @@ export function autoDetectMappings(
   const mappings: CsvColumnMapping[] = []
   const entityFields = ENTITY_FIELDS[entityType]
 
-  headers.forEach(header => {
+  headers.forEach((header) => {
     const normalizedHeader = header.toLowerCase().trim()
 
     // Find the best matching field
@@ -121,20 +184,27 @@ export function autoDetectMappings(
       if (!(field in entityFields)) continue
 
       // Exact match gets highest confidence
-      const exactMatch = (variations as readonly string[]).includes(normalizedHeader)
+      const exactMatch = (variations as readonly string[]).includes(
+        normalizedHeader
+      )
       if (exactMatch) {
         bestMatch = { field, confidence: 1.0 }
         break
       }
 
       // Partial match gets lower confidence
-      const partialMatch = (variations as readonly string[]).find(v => normalizedHeader.includes(v) || v.includes(normalizedHeader))
+      const partialMatch = (variations as readonly string[]).find(
+        (v) => normalizedHeader.includes(v) || v.includes(normalizedHeader)
+      )
       if (partialMatch && (!bestMatch || bestMatch.confidence < 0.8)) {
         bestMatch = { field, confidence: 0.8 }
       }
 
       // Fuzzy match for common patterns
-      if (normalizedHeader.includes(field.toLowerCase()) && (!bestMatch || bestMatch.confidence < 0.6)) {
+      if (
+        normalizedHeader.includes(field.toLowerCase()) &&
+        (!bestMatch || bestMatch.confidence < 0.6)
+      ) {
         bestMatch = { field, confidence: 0.6 }
       }
     }
@@ -152,11 +222,17 @@ export function autoDetectMappings(
 }
 
 // Normalize data based on field type
-export function normalizeField(field: string, value: string, entityType: EntityType): any {
+export function normalizeField(
+  field: string,
+  value: string,
+  entityType: EntityType
+): any {
   if (!value || value.trim() === '') return null
 
   const entityFields = ENTITY_FIELDS[entityType]
-  const fieldDef = entityFields[field as keyof typeof entityFields] as FieldDefinition | undefined
+  const fieldDef = entityFields[field as keyof typeof entityFields] as
+    | FieldDefinition
+    | undefined
 
   if (!fieldDef) return value.trim()
 
@@ -173,13 +249,18 @@ export function normalizeField(field: string, value: string, entityType: EntityT
       return isNaN(date.getTime()) ? null : date
     case 'url':
       try {
-        const url = new URL(value.startsWith('http') ? value : `https://${value}`)
+        const url = new URL(
+          value.startsWith('http') ? value : `https://${value}`
+        )
         return url.href
       } catch {
         return null
       }
     case 'array':
-      return value.split(/[;,]/).map(tag => tag.trim()).filter(Boolean)
+      return value
+        .split(/[;,]/)
+        .map((tag) => tag.trim())
+        .filter(Boolean)
     default:
       return value.trim()
   }
@@ -214,34 +295,39 @@ export function detectDuplicates(
     case EntityType.CONTACT:
       // Match by email first, then by name
       if (row.email) {
-        const existing = existingRecords.find(c => c.email === row.email)
-        if (existing) return { isDuplicate: true, existingId: existing.id, confidence: 1.0 }
+        const existing = existingRecords.find((c) => c.email === row.email)
+        if (existing)
+          return { isDuplicate: true, existingId: existing.id, confidence: 1.0 }
       }
       if (row.firstName && row.lastName) {
         const existing = existingRecords.find(
-          c => c.firstName === row.firstName && c.lastName === row.lastName
+          (c) => c.firstName === row.firstName && c.lastName === row.lastName
         )
-        if (existing) return { isDuplicate: true, existingId: existing.id, confidence: 0.8 }
+        if (existing)
+          return { isDuplicate: true, existingId: existing.id, confidence: 0.8 }
       }
       break
 
     case EntityType.COMPANY:
       // Match by name or domain
       if (row.name) {
-        const existing = existingRecords.find(c => c.name === row.name)
-        if (existing) return { isDuplicate: true, existingId: existing.id, confidence: 1.0 }
+        const existing = existingRecords.find((c) => c.name === row.name)
+        if (existing)
+          return { isDuplicate: true, existingId: existing.id, confidence: 1.0 }
       }
       if (row.domain) {
-        const existing = existingRecords.find(c => c.domain === row.domain)
-        if (existing) return { isDuplicate: true, existingId: existing.id, confidence: 0.9 }
+        const existing = existingRecords.find((c) => c.domain === row.domain)
+        if (existing)
+          return { isDuplicate: true, existingId: existing.id, confidence: 0.9 }
       }
       break
 
     case EntityType.DEAL:
       // Match by title
       if (row.title) {
-        const existing = existingRecords.find(d => d.title === row.title)
-        if (existing) return { isDuplicate: true, existingId: existing.id, confidence: 0.9 }
+        const existing = existingRecords.find((d) => d.title === row.title)
+        if (existing)
+          return { isDuplicate: true, existingId: existing.id, confidence: 0.9 }
       }
       break
   }
@@ -268,7 +354,9 @@ export function validateRow(
   for (const [field, value] of Object.entries(row)) {
     if (!value || value.toString().trim() === '') continue
 
-    const fieldDef = entityFields[field as keyof typeof entityFields] as FieldDefinition | undefined
+    const fieldDef = entityFields[field as keyof typeof entityFields] as
+      | FieldDefinition
+      | undefined
     if (!fieldDef) continue
 
     switch (fieldDef.type) {

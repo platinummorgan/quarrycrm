@@ -110,7 +110,7 @@ export class PerformanceTimer {
    * Get measurements for a specific operation
    */
   getMeasurementsFor(operation: string): LatencyMeasurement[] {
-    return this.measurements.filter(m => m.operation === operation)
+    return this.measurements.filter((m) => m.operation === operation)
   }
 
   /**
@@ -138,8 +138,8 @@ export class PerformanceTimer {
       : this.measurements
 
     const durations = measurements
-      .filter(m => m.duration !== undefined)
-      .map(m => m.duration!)
+      .filter((m) => m.duration !== undefined)
+      .map((m) => m.duration!)
       .sort((a, b) => a - b)
 
     if (durations.length === 0) return null
@@ -191,7 +191,11 @@ export const PerformanceUtils = {
   /**
    * Record a performance metric
    */
-  recordMetric: (name: string, value: number, metadata?: Record<string, any>): void => {
+  recordMetric: (
+    name: string,
+    value: number,
+    metadata?: Record<string, any>
+  ): void => {
     const metric: PerformanceMetric = {
       name,
       value,
@@ -247,7 +251,8 @@ export const PerformanceUtils = {
       const durations = measurements.map((m: LatencyMeasurement) => m.duration)
       metricsByOperation[operation].stats = globalTimer.getStats(operation)
       metricsByOperation[operation].count = measurements.length
-      metricsByOperation[operation].latest = measurements[measurements.length - 1]
+      metricsByOperation[operation].latest =
+        measurements[measurements.length - 1]
     })
 
     return metricsByOperation

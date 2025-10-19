@@ -7,6 +7,7 @@ Implemented a comprehensive performance testing system with demo data seeding an
 ## Files Created/Modified
 
 ### Scripts
+
 - **`scripts/seed-demo.ts`** - Generates 10k contacts, 2k companies, 800 deals for performance testing
   - Uses fixed seed (12345) for reproducible data
   - Batched inserts for optimal performance
@@ -14,6 +15,7 @@ Implemented a comprehensive performance testing system with demo data seeding an
   - Rate: ~367 records/second
 
 ### Pages
+
 - **`app/(marketing)/speed/page.tsx`** - Performance benchmarking dashboard
   - Server endpoint timing measurements (contacts list/search, deals list)
   - UI render time measurement with `performance.now()`
@@ -23,14 +25,17 @@ Implemented a comprehensive performance testing system with demo data seeding an
 ## Usage
 
 ### 1. Seed Demo Data
+
 ```bash
 npm run seed:demo
 ```
+
 - Generates 10,000 contacts, 2,000 companies, 800 deals
 - Takes ~35 seconds on typical hardware
 - Uses fixed seed for reproducible benchmarks
 
 ### 2. Run Performance Tests
+
 1. Navigate to `/speed`
 2. Click "Run Benchmarks"
 3. View results with p50/p95/p99 latencies
@@ -45,6 +50,7 @@ npm run seed:demo
 ## Technical Implementation
 
 ### Demo Data Generation
+
 - **Contacts**: 10k with realistic names, emails, phones, company links
 - **Companies**: 2k with names, websites, industries, descriptions
 - **Deals**: 800 with values, probabilities, stages, expected close dates
@@ -52,6 +58,7 @@ npm run seed:demo
 - **Relationships**: Proper foreign key relationships maintained
 
 ### Benchmarking Methodology
+
 - **Samples**: 20 requests per endpoint for statistical significance
 - **Delay**: 100ms between samples to avoid server overload
 - **Pagination**: Standard 50 items per page
@@ -59,7 +66,9 @@ npm run seed:demo
 - **Timing**: `performance.now()` for high-precision measurements
 
 ### Performance Targets
+
 Based on 10k contacts dataset:
+
 - **Contacts List**: <120ms server response time
 - **Contacts Search**: <150ms server response time
 - **UI Render**: Measured client-side with performance markers
@@ -67,6 +76,7 @@ Based on 10k contacts dataset:
 ## API Endpoints Tested
 
 ### Speed API Routes
+
 - `POST /api/speed/contacts/list` - Paginated contacts list
 - `POST /api/speed/contacts/search` - Contact search with query
 - `POST /api/speed/companies/list` - Paginated companies list
@@ -78,6 +88,7 @@ Based on 10k contacts dataset:
 ## Database Indexes
 
 Ensure optimal performance with these indexes (already configured):
+
 - Contacts: `organizationId`, `ownerId`, `organizationId+email`
 - Companies: `organizationId`, `ownerId`, `organizationId+name`
 - Deals: `organizationId`, `ownerId`, `pipelineId`, `stageId`
@@ -85,12 +96,14 @@ Ensure optimal performance with these indexes (already configured):
 ## Results Interpretation
 
 ### Latency Metrics
+
 - **p50**: Median response time (50% of requests faster)
 - **p95**: 95th percentile (95% of requests faster than this)
 - **p99**: 99th percentile (99% of requests faster than this)
 - **Target**: p95 must be below target for "PASS"
 
 ### UI Render Times
+
 - Measured using Performance API marks/measures
 - Captures client-side rendering performance
 - Requires navigation to respective pages for measurement

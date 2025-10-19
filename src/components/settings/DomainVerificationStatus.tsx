@@ -1,37 +1,39 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { DomainVerificationStatus } from '@/lib/email-verification';
-import { toast } from 'sonner';
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { DomainVerificationStatus } from '@/lib/email-verification'
+import { toast } from 'sonner'
 
 interface Props {
-  domain: string;
+  domain: string
 }
 
 export function DomainVerificationStatusCard({ domain }: Props) {
-  const [status, setStatus] = useState<DomainVerificationStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [sendingTest, setSendingTest] = useState(false);
+  const [status, setStatus] = useState<DomainVerificationStatus | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [sendingTest, setSendingTest] = useState(false)
 
   async function checkStatus() {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await fetch(`/api/dev/test-email?domain=${encodeURIComponent(domain)}`);
-      const data = await response.json();
-      setStatus(data.status);
+      const response = await fetch(
+        `/api/dev/test-email?domain=${encodeURIComponent(domain)}`
+      )
+      const data = await response.json()
+      setStatus(data.status)
     } catch (error) {
-      toast.error('Failed to check domain status');
+      toast.error('Failed to check domain status')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function sendTestEmail() {
-    setSendingTest(true);
+    setSendingTest(true)
     try {
       const response = await fetch('/api/dev/test-email', {
         method: 'POST',
@@ -40,34 +42,34 @@ export function DomainVerificationStatusCard({ domain }: Props) {
           to: 'test@example.com',
           domain,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        toast.success('Test email sent successfully!');
+        toast.success('Test email sent successfully!')
       } else {
-        toast.error(`Failed to send email: ${data.error}`);
+        toast.error(`Failed to send email: ${data.error}`)
       }
     } catch (error) {
-      toast.error('Failed to send test email');
+      toast.error('Failed to send test email')
     } finally {
-      setSendingTest(false);
+      setSendingTest(false)
     }
   }
 
   const getStatusBadge = (recordStatus: string) => {
     switch (recordStatus) {
       case 'verified':
-        return <Badge className="bg-green-500">Verified</Badge>;
+        return <Badge className="bg-green-500">Verified</Badge>
       case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+        return <Badge className="bg-yellow-500">Pending</Badge>
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
+        return <Badge variant="destructive">Failed</Badge>
       default:
-        return <Badge variant="secondary">Not Found</Badge>;
+        return <Badge variant="secondary">Not Found</Badge>
     }
-  };
+  }
 
   return (
     <Card className="p-6">
@@ -104,7 +106,7 @@ export function DomainVerificationStatusCard({ domain }: Props) {
 
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">DNS Records</h4>
-              <div className="space-y-2 border rounded-lg p-4">
+              <div className="space-y-2 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">DKIM:</span>
                   {getStatusBadge(status.records.dkim.status)}
@@ -121,7 +123,11 @@ export function DomainVerificationStatusCard({ domain }: Props) {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={checkStatus} variant="outline" disabled={loading}>
+              <Button
+                onClick={checkStatus}
+                variant="outline"
+                disabled={loading}
+              >
                 Refresh
               </Button>
               <Button onClick={sendTestEmail} disabled={sendingTest}>
@@ -132,5 +138,5 @@ export function DomainVerificationStatusCard({ domain }: Props) {
         )}
       </div>
     </Card>
-  );
+  )
 }

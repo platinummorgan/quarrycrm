@@ -40,14 +40,19 @@ async function rotateKeys({ dryRun = false, limit = 10 } = {}) {
         if (currentVersion !== latestKeyId) {
           updates[field] = rotateFieldKey(value, latestKeyId)
           needsUpdate = true
-          console.log(`🔄 ${field} for contact ${contact.id}: ${currentVersion} → ${latestKeyId}`)
+          console.log(
+            `🔄 ${field} for contact ${contact.id}: ${currentVersion} → ${latestKeyId}`
+          )
         }
       }
     }
 
     if (needsUpdate) {
       if (!dryRun) {
-        await prisma.contact.update({ where: { id: contact.id }, data: updates })
+        await prisma.contact.update({
+          where: { id: contact.id },
+          data: updates,
+        })
         console.log(`✅ Updated contact ${contact.id}`)
       } else {
         console.log(`🔍 [DRY RUN] Would update contact ${contact.id}`)

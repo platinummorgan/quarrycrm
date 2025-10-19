@@ -1,6 +1,6 @@
 /**
  * Redis client for token replay protection and caching
- * 
+ *
  * For production: Use Upstash Redis or Redis Labs
  * For development: Falls back to in-memory Map (not distributed)
  */
@@ -17,7 +17,7 @@ class InMemoryRedis implements RedisClient {
   async setex(key: string, ttlSeconds: number, value: string): Promise<void> {
     const expiresAt = Date.now() + ttlSeconds * 1000
     this.store.set(key, { value, expiresAt })
-    
+
     // Clean up expired entries periodically
     setTimeout(() => {
       const entry = this.store.get(key)
@@ -30,12 +30,12 @@ class InMemoryRedis implements RedisClient {
   async get(key: string): Promise<string | null> {
     const entry = this.store.get(key)
     if (!entry) return null
-    
+
     if (Date.now() >= entry.expiresAt) {
       this.store.delete(key)
       return null
     }
-    
+
     return entry.value
   }
 
@@ -95,7 +95,9 @@ export function getRedisClient(): RedisClient {
   if (redisClient) return redisClient
   // Allow tests/dev to force an in-memory adapter via env
   if (process.env.RATE_LIMIT_ADAPTER === 'memory') {
-    console.log('Using in-memory Redis adapter due to RATE_LIMIT_ADAPTER=memory')
+    console.log(
+      'Using in-memory Redis adapter due to RATE_LIMIT_ADAPTER=memory'
+    )
     redisClient = new InMemoryRedis()
     return redisClient
   }
@@ -108,7 +110,9 @@ export function getRedisClient(): RedisClient {
     console.log('Using Upstash Redis for token storage')
     redisClient = new UpstashRedis(upstashUrl, upstashToken)
   } else {
-    console.warn('Redis not configured, using in-memory store (not suitable for production)')
+    console.warn(
+      'Redis not configured, using in-memory store (not suitable for production)'
+    )
     redisClient = new InMemoryRedis()
   }
 
@@ -120,7 +124,10 @@ export function getRedisClient(): RedisClient {
  * @param jti - Unique token identifier
  * @param ttlSeconds - Time to live in seconds
  */
-export async function storeTokenJti(jti: string, ttlSeconds: number): Promise<void> {
+export async function storeTokenJti(
+  jti: string,
+  ttlSeconds: number
+): Promise<void> {
   const redis = getRedisClient()
   const key = `demo:token:${jti}`
   await redis.setex(key, ttlSeconds, '1')

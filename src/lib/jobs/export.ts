@@ -1,12 +1,17 @@
 /**
  * Workspace Export Job Processor
- * 
+ *
  * Handles async export of workspace data to JSON/CSV
  * Uploads to S3/R2 and generates signed download URL
  */
 
 import { prisma } from '@/lib/prisma'
-import { uploadExport, generateSignedDownloadUrl, generateExportKey, isStorageConfigured } from '@/lib/storage'
+import {
+  uploadExport,
+  generateSignedDownloadUrl,
+  generateExportKey,
+  isStorageConfigured,
+} from '@/lib/storage'
 
 export type ExportFormat = 'json' | 'csv'
 
@@ -34,7 +39,7 @@ export interface ExportResult {
 
 /**
  * Process export job
- * 
+ *
  * @param jobId - WorkspaceJob ID
  * @returns Export result with download URL
  */
@@ -59,12 +64,14 @@ export async function processExportJob(jobId: string): Promise<ExportResult> {
       data: { status: 'PROCESSING' },
     })
 
-  const options = ((job.metadata as unknown) as ExportOptions) || {}
+    const options = (job.metadata as unknown as ExportOptions) || {}
     const format = options.format || 'json'
 
     // Check storage configuration
     if (!isStorageConfigured()) {
-      throw new Error('Storage not configured. Set R2_* or AWS_* environment variables.')
+      throw new Error(
+        'Storage not configured. Set R2_* or AWS_* environment variables.'
+      )
     }
 
     // Export data
@@ -134,7 +141,10 @@ export async function processExportJob(jobId: string): Promise<ExportResult> {
 /**
  * Export workspace data
  */
-async function exportWorkspaceData(organizationId: string, options: ExportOptions) {
+async function exportWorkspaceData(
+  organizationId: string,
+  options: ExportOptions
+) {
   const data: any = {
     exportedAt: new Date().toISOString(),
     organizationId,
@@ -158,7 +168,12 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
       where: { organizationId },
       include: {
         company: { select: { id: true, name: true } },
-        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
+        owner: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     })
   }
@@ -168,7 +183,12 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
     data.companies = await prisma.company.findMany({
       where: { organizationId },
       include: {
-        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
+        owner: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     })
   }
@@ -182,7 +202,12 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
         stage: { select: { id: true, name: true } },
         contact: { select: { id: true, firstName: true, lastName: true } },
         company: { select: { id: true, name: true } },
-        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
+        owner: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     })
   }
@@ -194,7 +219,12 @@ async function exportWorkspaceData(organizationId: string, options: ExportOption
       include: {
         contact: { select: { id: true, firstName: true, lastName: true } },
         deal: { select: { id: true, title: true } },
-        owner: { select: { id: true, user: { select: { id: true, name: true, email: true } } } },
+        owner: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     })
   }
@@ -227,14 +257,15 @@ function convertToCSV(data: any): string {
 
     // Get headers from first object
     const headers = Object.keys(objects[0])
-    lines.push(headers.map(h => `"${h}"`).join(','))
+    lines.push(headers.map((h) => `"${h}"`).join(','))
 
     // Add rows
     for (const obj of objects) {
-      const values = headers.map(h => {
+      const values = headers.map((h) => {
         const value = obj[h]
         if (value === null || value === undefined) return '""'
-        if (typeof value === 'object') return `"${JSON.stringify(value).replace(/"/g, '""')}"`
+        if (typeof value === 'object')
+          return `"${JSON.stringify(value).replace(/"/g, '""')}"`
         return `"${String(value).replace(/"/g, '""')}"`
       })
       lines.push(values.join(','))
@@ -252,7 +283,8 @@ function convertToCSV(data: any): string {
   if (data.contacts) sections.push(objectsToCsv(data.contacts, 'Contacts'))
   if (data.companies) sections.push(objectsToCsv(data.companies, 'Companies'))
   if (data.deals) sections.push(objectsToCsv(data.deals, 'Deals'))
-  if (data.activities) sections.push(objectsToCsv(data.activities, 'Activities'))
+  if (data.activities)
+    sections.push(objectsToCsv(data.activities, 'Activities'))
   if (data.pipelines) sections.push(objectsToCsv(data.pipelines, 'Pipelines'))
 
   return sections.join('\n')

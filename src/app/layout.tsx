@@ -13,30 +13,43 @@ import dynamic from 'next/dynamic'
 const inter = Inter({ subsets: ['latin'] })
 
 // Dynamically import DemoBanner to avoid SSR issues
-const DemoBanner = dynamic(() => import('@/components/DemoBanner').then(mod => ({ default: mod.DemoBanner })), {
-  ssr: false,
-})
+const DemoBanner = dynamic(
+  () =>
+    import('@/components/DemoBanner').then((mod) => ({
+      default: mod.DemoBanner,
+    })),
+  {
+    ssr: false,
+  }
+)
 
 // Dynamically import DemoTour to avoid SSR issues
-const DemoTour = dynamic(() => import('@/components/demo/Tour').then(mod => ({ default: mod.DemoTour })), {
-  ssr: false,
-})
+const DemoTour = dynamic(
+  () =>
+    import('@/components/demo/Tour').then((mod) => ({ default: mod.DemoTour })),
+  {
+    ssr: false,
+  }
+)
 
 export async function generateMetadata(): Promise<Metadata> {
   const isPreview = process.env.NEXT_PUBLIC_APP_ENV === 'preview'
-  
+
   // Note: Demo subdomain robots handling is done via middleware X-Robots-Tag header
   // This ensures proper SEO exclusion regardless of metadata cache
-  
+
   return {
     title: 'Quarry CRM - Modern CRM for the Browser Era',
-    description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+    description:
+      'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
     manifest: '/manifest.json',
-    keywords: 'CRM,customer relationship management,contacts,companies,deals,sales,business,offline,PWA,progressive web app',
+    keywords:
+      'CRM,customer relationship management,contacts,companies,deals,sales,business,offline,PWA,progressive web app',
     robots: isPreview ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
       title: 'Quarry CRM - Modern CRM for the Browser Era',
-      description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      description:
+        'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
       url: 'http://localhost:3000',
       siteName: 'Quarry CRM',
       locale: 'en_US',
@@ -54,7 +67,8 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       creator: '@quarrycrm',
       title: 'Quarry CRM - Modern CRM for the Browser Era',
-      description: 'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      description:
+        'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
       images: ['http://localhost:3000/og-image.png'],
     },
     alternates: {
@@ -72,7 +86,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
       </head>
       <body className={inter.className}>
         <PreviewBanner />

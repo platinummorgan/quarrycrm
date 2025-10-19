@@ -1,11 +1,20 @@
 /**
  * PII Masking Usage Examples
- * 
+ *
  * Demonstrates how to use the PII masking utilities in different scenarios
  */
 
-import { maskEmail, maskPhone, maskPII, isRequestFromDemo } from '@/lib/mask-pii'
-import { transformContacts, transformResponse, getMaskingStatus } from '@/lib/server/transform-pii'
+import {
+  maskEmail,
+  maskPhone,
+  maskPII,
+  isRequestFromDemo,
+} from '@/lib/mask-pii'
+import {
+  transformContacts,
+  transformResponse,
+  getMaskingStatus,
+} from '@/lib/server/transform-pii'
 import type { Session } from 'next-auth'
 
 // ============================================================================
@@ -28,12 +37,8 @@ function ContactCard({ contact, session }: ContactCardProps) {
   return (
     <div className="contact-card">
       <h3>{contact.name}</h3>
-      <p>
-        Email: {isDemo ? maskEmail(contact.email) : contact.email}
-      </p>
-      <p>
-        Phone: {isDemo ? maskPhone(contact.phone) : contact.phone}
-      </p>
+      <p>Email: {isDemo ? maskEmail(contact.email) : contact.email}</p>
+      <p>Phone: {isDemo ? maskPhone(contact.phone) : contact.phone}</p>
     </div>
   )
 }
@@ -145,7 +150,9 @@ function useContact(contactId: string) {
   const isDemo = isRequestFromDemo(session)
 
   // Fetch contact (using tRPC, React Query, etc.)
-  const { data: contact, isLoading } = trpc.contact.getById.useQuery({ id: contactId })
+  const { data: contact, isLoading } = trpc.contact.getById.useQuery({
+    id: contactId,
+  })
 
   // Memoize masked version (though server should already mask)
   const maskedContact = useMemo(() => {
@@ -224,7 +231,10 @@ export async function GET_DebugMasking(request: NextRequest) {
 // Example 7: Bulk Export with Masking
 // ============================================================================
 
-export async function exportContactsCSV(organizationId: string, session: Session | null) {
+export async function exportContactsCSV(
+  organizationId: string,
+  session: Session | null
+) {
   const contacts = await prisma.contact.findMany({
     where: { organizationId },
   })
@@ -235,8 +245,7 @@ export async function exportContactsCSV(organizationId: string, session: Session
   // Generate CSV
   const csv = transformed
     .map(
-      (c) =>
-        `${c.firstName},${c.lastName},${c.email || ''},${c.phone || ''}`
+      (c) => `${c.firstName},${c.lastName},${c.email || ''},${c.phone || ''}`
     )
     .join('\n')
 
@@ -284,9 +293,7 @@ export default async function ContactsPage() {
     <div>
       <h1>Contacts</h1>
       {isRequestFromDemo(session) && (
-        <div className="alert">
-          Demo Mode - PII data is masked
-        </div>
+        <div className="alert">Demo Mode - PII data is masked</div>
       )}
       <ContactList contacts={transformedContacts} />
     </div>

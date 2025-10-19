@@ -64,7 +64,8 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
   const { toast } = useToast()
   const sessionResult = useSession()
   const session = sessionResult?.data
-  const isDemo = session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
+  const isDemo =
+    session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [editingField, setEditingField] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
 
@@ -114,7 +115,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
   const detail = detailQuery.data
 
   const handleFieldEdit = (field: string, value: any) => {
-    setFieldValues(prev => ({ ...prev, [field]: value }))
+    setFieldValues((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleFieldSave = (field: string) => {
@@ -130,7 +131,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
   }
 
   const handleFieldCancel = (field: string) => {
-    setFieldValues(prev => {
+    setFieldValues((prev) => {
       const newValues = { ...prev }
       delete newValues[field]
       return newValues
@@ -149,14 +150,15 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
     const currentValue = fieldValues[field] ?? value
 
     // Apply PII masking for demo users
-    const displayValue = isDemo && (field === 'email' || field === 'phone') 
-      ? maskPII(currentValue) 
-      : currentValue
+    const displayValue =
+      isDemo && (field === 'email' || field === 'phone')
+        ? maskPII(currentValue)
+        : currentValue
 
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium flex items-center space-x-2">
+          <label className="flex items-center space-x-2 text-sm font-medium">
             {icon}
             <span>{label}</span>
           </label>
@@ -220,7 +222,8 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16">
             <AvatarFallback className="text-lg">
-              {detail.firstName?.[0]}{detail.lastName?.[0]}
+              {detail.firstName?.[0]}
+              {detail.lastName?.[0]}
             </AvatarFallback>
           </Avatar>
           <div>
@@ -305,16 +308,21 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
             <div className="space-y-3">
               {detail.activities?.slice(0, 5).map((activity: any) => (
                 <div key={activity.id} className="flex items-start space-x-3">
-                  <ActivityIcon className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <ActivityIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                   <div className="flex-1">
                     <p className="text-sm">{activity.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(activity.createdAt), 'MMM d, yyyy h:mm a')}
+                      {format(
+                        new Date(activity.createdAt),
+                        'MMM d, yyyy h:mm a'
+                      )}
                     </p>
                   </div>
                 </div>
               )) || (
-                <p className="text-sm text-muted-foreground">No recent activity</p>
+                <p className="text-sm text-muted-foreground">
+                  No recent activity
+                </p>
               )}
             </div>
           </CardContent>
@@ -338,7 +346,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
           <div>
             <h2 className="text-2xl font-bold">{detail.name}</h2>
             <p className="text-muted-foreground">{detail.website}</p>
-            <div className="flex items-center space-x-2 mt-1">
+            <div className="mt-1 flex items-center space-x-2">
               <Badge variant="secondary">
                 {detail._count?.contacts || 0} contacts
               </Badge>
@@ -388,9 +396,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
     const [newActivity, setNewActivity] = useState('')
     const [activityType, setActivityType] = useState('NOTE')
 
-    const activities = entity === 'contacts'
-      ? detail.activities
-      : [] // Companies don't have direct activities in this schema
+    const activities = entity === 'contacts' ? detail.activities : [] // Companies don't have direct activities in this schema
 
     return (
       <div className="space-y-6">
@@ -431,7 +437,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
               disabled={!newActivity.trim() || createActivityMutation.isLoading}
               className="w-full"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Add Activity
             </Button>
           </CardContent>
@@ -447,22 +453,25 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
               {activities?.map((activity: any) => (
                 <div key={activity.id} className="flex items-start space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                       <ActivityIcon className="h-4 w-4 text-primary" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline">{activity.type}</Badge>
                       <span className="text-sm text-muted-foreground">
-                        {format(new Date(activity.createdAt), 'MMM d, yyyy h:mm a')}
+                        {format(
+                          new Date(activity.createdAt),
+                          'MMM d, yyyy h:mm a'
+                        )}
                       </span>
                     </div>
-                    <p className="text-sm mt-1">{activity.description}</p>
+                    <p className="mt-1 text-sm">{activity.description}</p>
                   </div>
                 </div>
               )) || (
-                <p className="text-center text-muted-foreground py-8">
+                <p className="py-8 text-center text-muted-foreground">
                   No activities yet
                 </p>
               )}
@@ -487,7 +496,13 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
           </CardHeader>
           <CardContent className="space-y-4">
             {Object.entries(detail).map(([key, value]) => {
-              if (key === 'id' || key === 'organizationId' || key === 'createdAt' || key === 'updatedAt' || key === 'deletedAt') {
+              if (
+                key === 'id' ||
+                key === 'organizationId' ||
+                key === 'createdAt' ||
+                key === 'updatedAt' ||
+                key === 'deletedAt'
+              ) {
                 return null
               }
 
@@ -498,8 +513,10 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
                   <label className="text-sm font-medium capitalize">
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </label>
-                  <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value || 'Not set')}
+                  <div className="rounded bg-muted p-2 text-sm text-muted-foreground">
+                    {typeof value === 'object'
+                      ? JSON.stringify(value, null, 2)
+                      : String(value || 'Not set')}
                   </div>
                 </div>
               )
@@ -512,7 +529,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
             {entity === 'contacts' ? 'Contact Details' : 'Company Details'}
@@ -520,8 +537,8 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
         </SheetHeader>
 
         {detailQuery.isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
           </div>
         ) : detail ? (
           <Tabs defaultValue="summary" className="mt-6">
@@ -532,7 +549,9 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
             </TabsList>
 
             <TabsContent value="summary" className="mt-6">
-              {entity === 'contacts' ? renderContactSummary() : renderCompanySummary()}
+              {entity === 'contacts'
+                ? renderContactSummary()
+                : renderCompanySummary()}
             </TabsContent>
 
             <TabsContent value="activity" className="mt-6">
@@ -544,7 +563,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex h-64 items-center justify-center">
             <p className="text-muted-foreground">Failed to load details</p>
           </div>
         )}

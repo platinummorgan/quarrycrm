@@ -1,6 +1,6 @@
 /**
  * Design Tokens
- * 
+ *
  * Centralized design system tokens ensuring consistency across the application.
  * All colors meet WCAG AA contrast requirements (4.5:1 for normal text, 3:1 for large text).
  */
@@ -12,15 +12,15 @@ export const designTokens = {
    */
   typography: {
     fontSize: {
-      xs: '0.75rem',    // 12px
-      sm: '0.875rem',   // 14px
-      base: '1rem',     // 16px
-      lg: '1.125rem',   // 18px
-      xl: '1.25rem',    // 20px
-      '2xl': '1.5rem',  // 24px
+      xs: '0.75rem', // 12px
+      sm: '0.875rem', // 14px
+      base: '1rem', // 16px
+      lg: '1.125rem', // 18px
+      xl: '1.25rem', // 20px
+      '2xl': '1.5rem', // 24px
       '3xl': '1.875rem', // 30px
       '4xl': '2.25rem', // 36px
-      '5xl': '3rem',    // 48px
+      '5xl': '3rem', // 48px
     },
     fontWeight: {
       normal: '400',
@@ -47,24 +47,24 @@ export const designTokens = {
   spacing: {
     0: '0',
     px: '1px',
-    0.5: '0.125rem',  // 2px
-    1: '0.25rem',     // 4px
-    1.5: '0.375rem',  // 6px
-    2: '0.5rem',      // 8px
-    2.5: '0.625rem',  // 10px
-    3: '0.75rem',     // 12px
-    3.5: '0.875rem',  // 14px
-    4: '1rem',        // 16px
-    5: '1.25rem',     // 20px
-    6: '1.5rem',      // 24px
-    7: '1.75rem',     // 28px
-    8: '2rem',        // 32px
-    9: '2.25rem',     // 36px
-    10: '2.5rem',     // 40px
-    12: '3rem',       // 48px
-    16: '4rem',       // 64px
-    20: '5rem',       // 80px
-    24: '6rem',       // 96px
+    0.5: '0.125rem', // 2px
+    1: '0.25rem', // 4px
+    1.5: '0.375rem', // 6px
+    2: '0.5rem', // 8px
+    2.5: '0.625rem', // 10px
+    3: '0.75rem', // 12px
+    3.5: '0.875rem', // 14px
+    4: '1rem', // 16px
+    5: '1.25rem', // 20px
+    6: '1.5rem', // 24px
+    7: '1.75rem', // 28px
+    8: '2rem', // 32px
+    9: '2.25rem', // 36px
+    10: '2.5rem', // 40px
+    12: '3rem', // 48px
+    16: '4rem', // 64px
+    20: '5rem', // 80px
+    24: '6rem', // 96px
   },
 
   /**
@@ -72,12 +72,12 @@ export const designTokens = {
    */
   borderRadius: {
     none: '0',
-    sm: '0.125rem',   // 2px
+    sm: '0.125rem', // 2px
     DEFAULT: '0.25rem', // 4px
-    md: '0.375rem',   // 6px
-    lg: '0.5rem',     // 8px
-    xl: '0.75rem',    // 12px
-    '2xl': '1rem',    // 16px
+    md: '0.375rem', // 6px
+    lg: '0.5rem', // 8px
+    xl: '0.75rem', // 12px
+    '2xl': '1rem', // 16px
     full: '9999px',
   },
 
@@ -127,12 +127,12 @@ export const designTokens = {
    * All combinations tested against WCAG AA standards
    */
   accessibility: {
-    minContrastNormal: 4.5,   // WCAG AA for normal text
-    minContrastLarge: 3,       // WCAG AA for large text (18px+ or 14px+ bold)
-    minContrastAAA: 7,         // WCAG AAA for normal text
-    touchTargetMin: '44px',    // Minimum touch target size
-    focusRingWidth: '2px',     // Focus indicator width
-    focusRingOffset: '2px',    // Focus indicator offset
+    minContrastNormal: 4.5, // WCAG AA for normal text
+    minContrastLarge: 3, // WCAG AA for large text (18px+ or 14px+ bold)
+    minContrastAAA: 7, // WCAG AAA for normal text
+    touchTargetMin: '44px', // Minimum touch target size
+    focusRingWidth: '2px', // Focus indicator width
+    focusRingOffset: '2px', // Focus indicator offset
   },
 
   /**
@@ -150,8 +150,8 @@ export const designTokens = {
    * Content Width
    */
   maxWidth: {
-    prose: '65ch',        // Optimal reading width
-    container: '1280px',  // Max container width
+    prose: '65ch', // Optimal reading width
+    container: '1280px', // Max container width
     dialog: {
       sm: '384px',
       md: '512px',
@@ -168,38 +168,38 @@ export const designTokens = {
 export const semanticColors = {
   status: {
     success: {
-      background: 'hsl(142 76% 36%)',      // Green-600, contrast: 4.5:1
-      foreground: 'hsl(0 0% 100%)',        // White
-      muted: 'hsl(142 71% 45%)',           // Green-500
+      background: 'hsl(142 76% 36%)', // Green-600, contrast: 4.5:1
+      foreground: 'hsl(0 0% 100%)', // White
+      muted: 'hsl(142 71% 45%)', // Green-500
     },
     warning: {
-      background: 'hsl(38 92% 50%)',       // Amber-500, contrast: 4.5:1
-      foreground: 'hsl(0 0% 0%)',          // Black
-      muted: 'hsl(43 96% 56%)',            // Amber-400
+      background: 'hsl(38 92% 50%)', // Amber-500, contrast: 4.5:1
+      foreground: 'hsl(0 0% 0%)', // Black
+      muted: 'hsl(43 96% 56%)', // Amber-400
     },
     error: {
-      background: 'hsl(0 84% 60%)',        // Red-500, contrast: 4.5:1
-      foreground: 'hsl(0 0% 100%)',        // White
-      muted: 'hsl(0 72% 51%)',             // Red-600
+      background: 'hsl(0 84% 60%)', // Red-500, contrast: 4.5:1
+      foreground: 'hsl(0 0% 100%)', // White
+      muted: 'hsl(0 72% 51%)', // Red-600
     },
     info: {
-      background: 'hsl(217 91% 60%)',      // Blue-500, contrast: 4.5:1
-      foreground: 'hsl(0 0% 100%)',        // White
-      muted: 'hsl(221 83% 53%)',           // Blue-600
+      background: 'hsl(217 91% 60%)', // Blue-500, contrast: 4.5:1
+      foreground: 'hsl(0 0% 100%)', // White
+      muted: 'hsl(221 83% 53%)', // Blue-600
     },
   },
-  
+
   role: {
     owner: {
-      background: 'hsl(271 81% 56%)',      // Purple-500
+      background: 'hsl(271 81% 56%)', // Purple-500
       foreground: 'hsl(0 0% 100%)',
     },
     admin: {
-      background: 'hsl(217 91% 60%)',      // Blue-500
+      background: 'hsl(217 91% 60%)', // Blue-500
       foreground: 'hsl(0 0% 100%)',
     },
     member: {
-      background: 'hsl(215 20% 65%)',      // Neutral
+      background: 'hsl(215 20% 65%)', // Neutral
       foreground: 'hsl(0 0% 0%)',
     },
   },
@@ -235,7 +235,7 @@ export const animations = {
  * Helper function to get consistent spacing
  */
 export function spacing(...values: (keyof typeof designTokens.spacing)[]) {
-  return values.map(v => designTokens.spacing[v]).join(' ')
+  return values.map((v) => designTokens.spacing[v]).join(' ')
 }
 
 /**
@@ -246,11 +246,12 @@ export function meetsContrastRequirement(
   level: 'AA' | 'AAA' = 'AA',
   isLargeText = false
 ): boolean {
-  const minContrast = level === 'AAA' 
-    ? designTokens.accessibility.minContrastAAA
-    : isLargeText 
-    ? designTokens.accessibility.minContrastLarge
-    : designTokens.accessibility.minContrastNormal
-  
+  const minContrast =
+    level === 'AAA'
+      ? designTokens.accessibility.minContrastAAA
+      : isLargeText
+        ? designTokens.accessibility.minContrastLarge
+        : designTokens.accessibility.minContrastNormal
+
   return contrast >= minContrast
 }

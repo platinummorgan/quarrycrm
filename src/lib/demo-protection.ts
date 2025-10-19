@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 
 /**
  * Check if the current session is a demo session
@@ -13,27 +13,29 @@ export async function isDemoSession(request?: NextRequest): Promise<boolean> {
   } catch (err: any) {
     // Next.js throws when headers() is called outside a request scope in unit tests.
     // Tests mock getServerSession, so swallow this and treat as no session.
-    if (String(err.message).includes('headers') || String(err.message).includes('next-dynamic-api-wrong-context')) {
+    if (
+      String(err.message).includes('headers') ||
+      String(err.message).includes('next-dynamic-api-wrong-context')
+    ) {
       return false
     }
     throw err
   }
-  
+
   if (!session?.user) {
-    return false;
+    return false
   }
 
   // Check if user has demo flag or demo role
   return (
-    session.user.isDemo === true ||
-    session.user.currentOrg?.role === 'DEMO'
-  );
+    session.user.isDemo === true || session.user.currentOrg?.role === 'DEMO'
+  )
 }
 
 /**
  * Middleware to block write operations for demo users
  * Returns 403 response if demo user attempts POST/PUT/PATCH/DELETE
- * 
+ *
  * @example
  * export const POST = withDemoProtection(async (req) => {
  *   // Your handler code - only runs if not demo
@@ -45,17 +47,18 @@ export function withDemoProtection<T = any>(
 ) {
   return async (req: NextRequest, context?: any): Promise<NextResponse<T>> => {
     // Check if this is a write operation
-    const method = req.method.toUpperCase();
-    const isWriteOperation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+    const method = req.method.toUpperCase()
+    const isWriteOperation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
 
     if (isWriteOperation) {
-      const isDemo = await isDemoSession(req);
+      const isDemo = await isDemoSession(req)
 
       if (isDemo) {
         return NextResponse.json(
           {
             error: 'Operation not permitted',
-            message: 'Write operations are disabled in demo mode. Create your own workspace to make changes.',
+            message:
+              'Write operations are disabled in demo mode. Create your own workspace to make changes.',
             code: 'DEMO_WRITE_FORBIDDEN',
           } as any,
           {
@@ -64,7 +67,7 @@ export function withDemoProtection<T = any>(
               'X-Demo-Mode': 'true',
             },
           }
-        );
+        )
       }
     }
 
@@ -74,31 +77,31 @@ export function withDemoProtection<T = any>(
       return handler(req as NextRequest)
     }
     return handler(req, context)
-  };
+  }
 }
 
 /**
  * Check if a specific organization is the demo organization
- * 
+ *
  * @param organizationId - Organization ID to check
  * @returns true if this is the demo org
  */
 export function isDemoOrganization(organizationId: string): boolean {
-  const demoOrgId = process.env.DEMO_ORG_ID;
-  return !!demoOrgId && organizationId === demoOrgId;
+  const demoOrgId = process.env.DEMO_ORG_ID
+  return !!demoOrgId && organizationId === demoOrgId
 }
 
 /**
  * Get demo organization ID from environment
  */
 export function getDemoOrgId(): string | undefined {
-  return process.env.DEMO_ORG_ID ?? undefined;
+  return process.env.DEMO_ORG_ID ?? undefined
 }
 
 /**
  * Combined middleware for demo protection AND rate limiting
  * Use this for write endpoints that need both protections
- * 
+ *
  * @example
  * export const POST = withDemoProtectionAndRateLimit(
  *   async (req) => { ... },
@@ -110,9 +113,9 @@ export function withDemoProtectionAndRateLimit<T = any>(
   rateLimitConfig: { limit: number; windowMs: number; keyPrefix?: string }
 ) {
   // Import rate limiting here to avoid circular dependencies
-  const withWriteRateLimit = require('@/lib/rate-limit').withWriteRateLimit;
-  
+  const withWriteRateLimit = require('@/lib/rate-limit').withWriteRateLimit
+
   // Chain middlewares: demo protection -> rate limiting -> handler
-  const rateLimited = withWriteRateLimit(handler, rateLimitConfig);
-  return withDemoProtection(rateLimited);
+  const rateLimited = withWriteRateLimit(handler, rateLimitConfig)
+  return withDemoProtection(rateLimited)
 }

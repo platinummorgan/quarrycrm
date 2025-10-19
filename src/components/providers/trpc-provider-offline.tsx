@@ -7,14 +7,17 @@ import superjson from 'superjson'
 import { trpc } from '@/lib/trpc'
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        cacheTime: 10 * 60 * 1000, // 10 minutes (legacy name)
-      },
-    },
-  }))
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            cacheTime: 10 * 60 * 1000, // 10 minutes (legacy name)
+          },
+        },
+      })
+  )
 
   const [trpcClient] = useState(() =>
     trpc.createClient({
@@ -25,14 +28,20 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
           // Ensure browser requests send cookies so server can read NextAuth session
           // and include selected org id (if present) to support multi-org flows.
           fetch: (input, init) => {
-            const headers = new Headers(init?.headers as HeadersInit || undefined)
+            const headers = new Headers(
+              (init?.headers as HeadersInit) || undefined
+            )
             try {
               const orgId = localStorage.getItem('orgId')
               if (orgId) headers.set('x-org-id', orgId)
             } catch (e) {
               // ignore if localStorage is unavailable
             }
-            return fetch(input as RequestInfo, { ...init, credentials: 'include', headers })
+            return fetch(input as RequestInfo, {
+              ...init,
+              credentials: 'include',
+              headers,
+            })
           },
         }),
       ],

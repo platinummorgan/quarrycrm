@@ -7,6 +7,7 @@ Implemented comprehensive Redis-based sliding window rate limiting with per-IP a
 ## Features Implemented
 
 ### ✅ Sliding Window Algorithm
+
 - **Per-IP Rate Limiting**: Tracks requests by client IP address
 - **Per-Organization Rate Limiting**: Tracks requests by organization ID
 - **Combined Enforcement**: Uses the more restrictive of IP or org limits
@@ -15,17 +16,18 @@ Implemented comprehensive Redis-based sliding window rate limiting with per-IP a
 
 ### ✅ Rate Limits Applied
 
-| Endpoint | Normal Limit | Burst Limit | Scope |
-|----------|-------------|-------------|-------|
-| **Contacts** (create/update/delete) | 60/min | 120/min | IP + Org |
-| **Deals** (create/update/delete) | 60/min | 120/min | IP + Org |
-| **Import** (bulk operations) | 60/min | 120/min | IP + Org |
-| **Email Log** (inbound emails) | 60/min | 120/min | IP + Org |
+| Endpoint                            | Normal Limit | Burst Limit | Scope    |
+| ----------------------------------- | ------------ | ----------- | -------- |
+| **Contacts** (create/update/delete) | 60/min       | 120/min     | IP + Org |
+| **Deals** (create/update/delete)    | 60/min       | 120/min     | IP + Org |
+| **Import** (bulk operations)        | 60/min       | 120/min     | IP + Org |
+| **Email Log** (inbound emails)      | 60/min       | 120/min     | IP + Org |
 
 ### ✅ Error Handling
+
 - **429 Status Code**: Standard HTTP rate limit response
 - **Retry-After Header**: Tells clients when to retry (in seconds)
-- **X-RateLimit-* Headers**: Exposes limit, remaining, reset, and scope
+- **X-RateLimit-\* Headers**: Exposes limit, remaining, reset, and scope
 - **Graceful Degradation**: Allows requests if Redis fails (fail-open)
 - **UI Toast Notifications**: User-friendly messages with retry timing
 
@@ -94,7 +96,7 @@ Retry-After: 30
 
 ### Tests
 
-9. **__tests__/rate-limit-combined.test.ts** (New - 355 lines)
+9. ****tests**/rate-limit-combined.test.ts** (New - 355 lines)
    - Tests combined IP + Org rate limiting
    - Tests burst capacity behavior
    - Tests middleware integration
@@ -206,16 +208,16 @@ try {
   await trpc.contacts.create.mutate({
     firstName: 'John',
     lastName: 'Doe',
-    email: 'john@example.com'
+    email: 'john@example.com',
   })
 } catch (error) {
   const rateLimitInfo = extractRateLimitInfo(error)
-  
+
   if (rateLimitInfo.isRateLimited) {
     toast({
       variant: 'destructive',
       title: 'Rate limit exceeded',
-      description: `Please wait ${rateLimitInfo.retryAfter}s before trying again.`
+      description: `Please wait ${rateLimitInfo.retryAfter}s before trying again.`,
     })
   }
 }
@@ -238,8 +240,8 @@ Edit `src/lib/rate-limit.ts`:
 ```typescript
 export const WriteRateLimits = {
   CONTACTS: {
-    limit: 60,       // Normal limit (per minute)
-    burst: 120,      // Burst limit (short spikes)
+    limit: 60, // Normal limit (per minute)
+    burst: 120, // Burst limit (short spikes)
     windowMs: 60000, // Window size (1 minute)
     keyPrefix: 'ratelimit:write:contacts',
   },
@@ -307,7 +309,7 @@ const { withRateLimitHandling } = useRateLimitHandler()
 const data = await withRateLimitHandling(
   fetch('/api/import/contacts', {
     method: 'POST',
-    body: JSON.stringify(importData)
+    body: JSON.stringify(importData),
   }),
   { fallbackValue: null }
 )
@@ -337,6 +339,7 @@ const data = await withRateLimitHandling(
 ### IP Spoofing Protection
 
 Uses multiple headers in priority order:
+
 1. `x-forwarded-for` (first IP in chain)
 2. `cf-connecting-ip` (Cloudflare)
 3. `x-real-ip` (nginx)
@@ -366,7 +369,7 @@ if (!rateLimitResult.success) {
     ip: clientIp,
     orgId: orgId,
     endpoint: req.url,
-    retryAfter: rateLimitResult.retryAfter
+    retryAfter: rateLimitResult.retryAfter,
   })
 }
 ```
@@ -382,25 +385,29 @@ if (!rateLimitResult.success) {
 ### Suggested Improvements
 
 1. **Dynamic Limits**: Adjust limits based on plan tier
+
    ```typescript
    const limit = user.plan === 'ENTERPRISE' ? 300 : 60
    ```
 
 2. **Whitelist Support**: Bypass rate limits for trusted IPs
+
    ```typescript
    const WHITELIST = ['203.0.113.0/24']
    if (isWhitelisted(ip)) return { success: true, ... }
    ```
 
 3. **Detailed Analytics**: Track rate limit metrics per endpoint
+
    ```typescript
    await metrics.increment('rate_limit.hit', {
      endpoint: 'contacts.create',
-     reason: 'org_limit'
+     reason: 'org_limit',
    })
    ```
 
 4. **Redis Cluster**: Scale to multiple Redis instances
+
    ```typescript
    const redis = new RedisCluster([...nodes])
    ```
@@ -415,12 +422,14 @@ if (!rateLimitResult.success) {
 ### Common Issues
 
 **Issue**: Rate limits too restrictive
+
 ```typescript
 // Solution: Increase burst capacity
 burst: 200 // from 120
 ```
 
 **Issue**: Redis connection failures
+
 ```bash
 # Check Redis URL
 echo $UPSTASH_REDIS_REST_URL
@@ -431,6 +440,7 @@ curl -H "Authorization: Bearer $UPSTASH_REDIS_REST_TOKEN" \
 ```
 
 **Issue**: Rate limits not working
+
 ```typescript
 // Ensure middleware is applied
 export const POST = withWriteRateLimit(
@@ -453,6 +463,7 @@ export const POST = withWriteRateLimit(
 **Security**: IP spoofing protection, DDoS mitigation, dual enforcement
 
 **Next Steps**:
+
 1. Deploy to staging environment
 2. Monitor 429 response rates
 3. Adjust limits based on real usage patterns

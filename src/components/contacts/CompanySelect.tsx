@@ -24,7 +24,7 @@ export function CompanySelect({ value, onChange }: CompanySelectProps) {
     { enabled: isOpen || !!query }
   )
 
-  const selectedCompany = companies.find(c => c.id === value)
+  const selectedCompany = companies.find((c) => c.id === value)
 
   return (
     <div className="space-y-2">
@@ -42,7 +42,10 @@ export function CompanySelect({ value, onChange }: CompanySelectProps) {
               onChange={(e) => {
                 setQuery(e.target.value)
                 setIsOpen(true)
-                if (selectedCompany && e.target.value !== selectedCompany.name) {
+                if (
+                  selectedCompany &&
+                  e.target.value !== selectedCompany.name
+                ) {
                   onChange(undefined)
                 }
               }}
@@ -55,7 +58,7 @@ export function CompanySelect({ value, onChange }: CompanySelectProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-muted"
                 onClick={(e) => {
                   e.stopPropagation()
                   onChange(undefined)
@@ -76,7 +79,7 @@ export function CompanySelect({ value, onChange }: CompanySelectProps) {
                 <button
                   key={company.id}
                   type="button"
-                  className={`w-full text-left px-3 py-2 hover:bg-muted transition-colors ${
+                  className={`w-full px-3 py-2 text-left transition-colors hover:bg-muted ${
                     value === company.id ? 'bg-muted font-medium' : ''
                   }`}
                   onClick={() => {

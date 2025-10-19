@@ -33,11 +33,13 @@ Definition of Done (DoD) is a checklist of criteria that code must meet before b
 **Why it matters**: Prevents runtime type errors in production.
 
 **How to fix**:
+
 ```bash
 npm run type-check
 ```
 
 Common issues:
+
 - Missing type definitions
 - Incorrect function signatures
 - Type mismatches in components
@@ -49,11 +51,13 @@ Common issues:
 **Why it matters**: Catches build-time errors that dev mode might miss.
 
 **How to fix**:
+
 ```bash
 npm run build
 ```
 
 Common issues:
+
 - Missing environment variables
 - Import errors
 - Invalid page exports
@@ -65,11 +69,13 @@ Common issues:
 **Why it matters**: Maintains code quality and consistency.
 
 **How to fix**:
+
 ```bash
 npm run lint:fix
 ```
 
 Common issues:
+
 - Unused imports
 - Missing React dependencies in useEffect
 - Console.log statements (use proper logging)
@@ -81,11 +87,13 @@ Common issues:
 **Why it matters**: Prevents regressions and validates functionality.
 
 **How to fix**:
+
 ```bash
 npm run test:run
 ```
 
 Common issues:
+
 - Outdated snapshots
 - Mock data inconsistencies
 - Async timing issues
@@ -97,12 +105,14 @@ Common issues:
 **Why it matters**: Ensures app is usable by everyone, including people with disabilities.
 
 **Thresholds**:
+
 - Critical: 0 (must fix)
 - Serious: ≤2
 - Moderate: ≤5
 - Minor: ≤10
 
 **Tested Pages**:
+
 - `/` - Home page
 - `/contacts` - Contacts list
 - `/companies` - Companies list
@@ -133,6 +143,7 @@ Common issues:
 ```
 
 Common issues:
+
 - Missing alt text on images
 - Insufficient color contrast
 - Missing ARIA labels
@@ -149,15 +160,16 @@ Common issues:
 
 **Targets** (Desktop):
 
-| Category | Score | What it measures |
-|----------|-------|------------------|
-| Performance | ≥90 | Load time, FCP, LCP, CLS, TTI |
-| Accessibility | ≥90 | WCAG compliance, ARIA, semantics |
-| Best Practices | ≥90 | HTTPS, console errors, deprecated APIs |
-| SEO | ≥90 | Meta tags, structured data, crawlability |
-| PWA | ≥90 | Service worker, manifest, installable |
+| Category       | Score | What it measures                         |
+| -------------- | ----- | ---------------------------------------- |
+| Performance    | ≥90   | Load time, FCP, LCP, CLS, TTI            |
+| Accessibility  | ≥90   | WCAG compliance, ARIA, semantics         |
+| Best Practices | ≥90   | HTTPS, console errors, deprecated APIs   |
+| SEO            | ≥90   | Meta tags, structured data, crawlability |
+| PWA            | ≥90   | Service worker, manifest, installable    |
 
 **How to run manually**:
+
 ```bash
 # Install Lighthouse CI
 npm install -g @lhci/cli
@@ -173,27 +185,32 @@ lhci autorun
 **How to fix**:
 
 Performance issues:
+
 - Optimize images (use Next.js `<Image>`)
 - Remove unused JavaScript
 - Enable caching headers
 - Use code splitting
 
 Accessibility issues:
+
 - Add ARIA labels
 - Improve color contrast
 - Fix heading hierarchy
 
 Best practices:
+
 - Use HTTPS
 - Remove console.log statements
 - Update deprecated APIs
 
 SEO issues:
+
 - Add meta descriptions
 - Use semantic HTML
 - Add Open Graph tags
 
 PWA issues:
+
 - Configure service worker
 - Add web manifest
 - Make app installable
@@ -207,6 +224,7 @@ PWA issues:
 **Why it matters**: Prevents unauthorized access to protected pages.
 
 **How it works**:
+
 - Scans all `page.tsx` files in `(app)` folder
 - Checks for authentication patterns:
   - `getServerSession()`
@@ -228,11 +246,11 @@ import { redirect } from 'next/navigation'
 
 export default async function ContactsPage() {
   const session = await getServerSession()
-  
+
   if (!session) {
     redirect('/login')
   }
-  
+
   return <div>Contacts</div>
 }
 
@@ -243,15 +261,15 @@ import { redirect } from 'next/navigation'
 
 export default function ContactsPage() {
   const { data: session, status } = useSession()
-  
+
   if (status === 'unauthenticated') {
     redirect('/login')
   }
-  
+
   if (status === 'loading') {
     return <div>Loading...</div>
   }
-  
+
   return <div>Contacts</div>
 }
 ```
@@ -263,11 +281,13 @@ export default function ContactsPage() {
 **Why it matters**: Prevents data leakage between organizations in multi-tenant system.
 
 **How it works**:
+
 - Scans all files in `src/server/trpc/routers/`
 - Finds Prisma queries: `findMany`, `findFirst`, `findUnique`, `count`, `aggregate`
 - Verifies `organizationId` is in the `where` clause
 
 **Entities checked**:
+
 - contacts
 - companies
 - deals
@@ -345,6 +365,7 @@ jobs:
 ### Pull Request Checks
 
 When you open a PR, GitHub Actions will:
+
 1. Run all DoD checks
 2. Report results in the PR
 3. Block merge if checks fail
@@ -422,19 +443,19 @@ Edit `scripts/dod.ts` to adjust validation criteria:
 const CONFIG = {
   // Accessibility thresholds (number of violations allowed)
   accessibility: {
-    critical: 0,   // No critical violations allowed
-    serious: 2,    // Up to 2 serious violations
-    moderate: 5,   // Up to 5 moderate violations
-    minor: 10,     // Up to 10 minor violations
+    critical: 0, // No critical violations allowed
+    serious: 2, // Up to 2 serious violations
+    moderate: 5, // Up to 5 moderate violations
+    minor: 10, // Up to 10 minor violations
   },
-  
+
   // Lighthouse thresholds (0-100 scale)
   lighthouse: {
-    performance: 90,    // Must score 90+ on performance
-    accessibility: 90,  // Must score 90+ on accessibility
-    bestPractices: 90,  // Must score 90+ on best practices
-    seo: 90,           // Must score 90+ on SEO
-    pwa: 90,           // Must score 90+ on PWA
+    performance: 90, // Must score 90+ on performance
+    accessibility: 90, // Must score 90+ on accessibility
+    bestPractices: 90, // Must score 90+ on best practices
+    seo: 90, // Must score 90+ on SEO
+    pwa: 90, // Must score 90+ on PWA
   },
 }
 ```
@@ -482,6 +503,7 @@ Lighthouse runs in CI automatically.
 ### "All tests fail in CI but pass locally"
 
 Environment differences:
+
 - Check DATABASE_URL in GitHub Secrets
 - Ensure test database is seeded
 - Check Node.js version matches
@@ -491,10 +513,11 @@ Environment differences:
 The script looks for authentication patterns. If you have a custom auth solution, update the regex in `checkRouteProtection()`:
 
 ```typescript
-const hasAuth = content.includes('getServerSession') ||
-               content.includes('useSession') ||
-               content.includes('auth()') ||
-               content.includes('yourCustomAuthFunction')
+const hasAuth =
+  content.includes('getServerSession') ||
+  content.includes('useSession') ||
+  content.includes('auth()') ||
+  content.includes('yourCustomAuthFunction')
 ```
 
 ### "Organization leakage false positives"
@@ -557,7 +580,8 @@ A: GitHub Actions tab in your repository: `https://github.com/your-username/quar
 
 ---
 
-**Need Help?** 
+**Need Help?**
+
 - Check the troubleshooting section above
 - Review CI logs in GitHub Actions
 - Open an issue with the error message and steps to reproduce

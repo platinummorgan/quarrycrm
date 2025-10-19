@@ -1,6 +1,6 @@
 /**
  * PII Masking Unit Tests
- * 
+ *
  * Tests for email/phone masking utilities and transformers
  */
 
@@ -30,8 +30,12 @@ describe('Email Masking', () => {
   })
 
   it('should handle very long local parts', () => {
-    expect(maskEmail('very.long.email.address@example.com')).toBe('v***@example.com')
-    expect(maskEmail('firstname.middlename.lastname@company.com')).toBe('f***@company.com')
+    expect(maskEmail('very.long.email.address@example.com')).toBe(
+      'v***@example.com'
+    )
+    expect(maskEmail('firstname.middlename.lastname@company.com')).toBe(
+      'f***@company.com'
+    )
   })
 
   it('should handle null and undefined', () => {
@@ -50,7 +54,9 @@ describe('Email Masking', () => {
 
   it('should handle emails with subdomains', () => {
     expect(maskEmail('user@mail.company.com')).toBe('u***@mail.company.com')
-    expect(maskEmail('admin@internal.corp.example.org')).toBe('a***@internal.corp.example.org')
+    expect(maskEmail('admin@internal.corp.example.org')).toBe(
+      'a***@internal.corp.example.org'
+    )
   })
 })
 
@@ -220,9 +226,7 @@ describe('PII Array Masking', () => {
   })
 
   it('should not mask when isDemo is false', () => {
-    const data = [
-      { id: '1', email: 'john@example.com', phone: '404-555-9231' },
-    ]
+    const data = [{ id: '1', email: 'john@example.com', phone: '404-555-9231' }]
 
     const result = maskPIIArray(data, false)
     expect(result[0].email).toBe('john@example.com')

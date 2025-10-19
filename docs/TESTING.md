@@ -9,6 +9,7 @@ The test suite includes safety checks to prevent accidental TRUNCATE operations 
 **All tests MUST use a dedicated test database** to prevent data loss. The `DATABASE_URL` must contain `_test` in the database name.
 
 Examples:
+
 - ✅ `postgres://user:pass@host/quarrycrm_test`
 - ✅ `postgres://user:pass@host/neondb_test`
 - ❌ `postgres://user:pass@host/quarrycrm` (will be rejected)
@@ -91,21 +92,25 @@ The safety check is implemented in two places:
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
 
 ### Run Specific Test Files
+
 ```bash
 npx vitest run src/server/trpc/routers/contacts.smoke.test.ts
 ```
 
 ### Run Tests Sequentially (for DB-heavy tests)
+
 ```bash
 npx vitest run --no-file-parallelism
 ```
 
 ### Watch Mode
+
 ```bash
 npx vitest watch
 ```
@@ -126,7 +131,8 @@ Target reset times: **<100-200ms per reset on local PostgreSQL**
 
 **Cause**: DATABASE_URL doesn't contain `_test`
 
-**Solution**: 
+**Solution**:
+
 1. Create a dedicated test database with `_test` in the name
 2. Update DATABASE_URL to point to it
 3. For local dev ONLY, set `ALLOW_UNSAFE_TEST_DB=1` (see warning above)
@@ -136,6 +142,7 @@ Target reset times: **<100-200ms per reset on local PostgreSQL**
 **Cause**: Test database doesn't exist
 
 **Solution**: Create the test database before running tests:
+
 ```bash
 # For local PostgreSQL
 createdb quarrycrm_test
@@ -148,7 +155,8 @@ createdb quarrycrm_test
 
 **Cause**: Lock contention or slow DB connection
 
-**Solution**: 
+**Solution**:
+
 - Run tests with `--no-file-parallelism`
 - Reduce concurrency in `vitest.config.ts`
 - Check database connection speed
@@ -158,6 +166,7 @@ createdb quarrycrm_test
 **Cause**: Tests running in parallel are interfering with each other
 
 **Solution**: Run mutate-heavy test suites sequentially:
+
 ```bash
 npx vitest run --no-file-parallelism
 ```

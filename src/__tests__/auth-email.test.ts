@@ -21,7 +21,10 @@ describe('auth-email', () => {
     process.env.NEXTAUTH_URL = 'https://www.quarrycrm.com'
     sendMock.mockResolvedValue({ id: 'abc' })
 
-    const res = await authEmail.sendMagicLinkEmail('user@example.com', 'https://preview.vercel.app/api/auth/callback?token=123')
+    const res = await authEmail.sendMagicLinkEmail(
+      'user@example.com',
+      'https://preview.vercel.app/api/auth/callback?token=123'
+    )
 
     expect(sendMock).toHaveBeenCalled()
     const args = sendMock.mock.calls[0][0]
@@ -35,7 +38,10 @@ describe('auth-email', () => {
     sendMock.mockResolvedValue({ error: { message: 'oh no' } })
 
     await expect(
-      authEmail.sendMagicLinkEmail('user@example.com', 'https://preview.vercel.app/api/auth/callback?token=123')
+      authEmail.sendMagicLinkEmail(
+        'user@example.com',
+        'https://preview.vercel.app/api/auth/callback?token=123'
+      )
     ).rejects.toThrow(/Email send failed/)
   })
 })

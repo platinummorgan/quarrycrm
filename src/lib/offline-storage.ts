@@ -5,7 +5,7 @@ localforage.config({
   name: 'CRM-Offline',
   version: 1.0,
   storeName: 'crm_offline_store',
-  description: 'Offline storage for CRM application'
+  description: 'Offline storage for CRM application',
 })
 
 // Storage keys
@@ -146,7 +146,9 @@ export class OfflineStorage {
   }
 
   // Mutation outbox
-  static async addToOutbox(mutation: Omit<QueuedMutation, 'id' | 'timestamp' | 'retryCount'>): Promise<string> {
+  static async addToOutbox(
+    mutation: Omit<QueuedMutation, 'id' | 'timestamp' | 'retryCount'>
+  ): Promise<string> {
     const outbox = await this.getOutbox()
     const id = `mutation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -170,9 +172,12 @@ export class OfflineStorage {
     return (await localforage.getItem(STORAGE_KEYS.MUTATION_OUTBOX)) || []
   }
 
-  static async updateMutationInOutbox(id: string, updates: Partial<QueuedMutation>): Promise<void> {
+  static async updateMutationInOutbox(
+    id: string,
+    updates: Partial<QueuedMutation>
+  ): Promise<void> {
     const outbox = await this.getOutbox()
-    const index = outbox.findIndex(m => m.id === id)
+    const index = outbox.findIndex((m) => m.id === id)
 
     if (index !== -1) {
       outbox[index] = { ...outbox[index], ...updates }
@@ -182,7 +187,7 @@ export class OfflineStorage {
 
   static async removeFromOutbox(id: string): Promise<void> {
     const outbox = await this.getOutbox()
-    const filtered = outbox.filter(m => m.id !== id)
+    const filtered = outbox.filter((m) => m.id !== id)
     await localforage.setItem(STORAGE_KEYS.MUTATION_OUTBOX, filtered)
 
     // Update offline state
@@ -199,14 +204,16 @@ export class OfflineStorage {
 
     return {
       total: outbox.length,
-      pending: outbox.filter(m => !m.error).length,
-      failed: outbox.filter(m => m.error && m.retryCount >= 3).length,
-      retrying: outbox.filter(m => m.error && m.retryCount < 3).length,
+      pending: outbox.filter((m) => !m.error).length,
+      failed: outbox.filter((m) => m.error && m.retryCount >= 3).length,
+      retrying: outbox.filter((m) => m.error && m.retryCount < 3).length,
     }
   }
 
   // Conflicts
-  static async addConflict(conflict: Omit<DataConflict, 'id'>): Promise<string> {
+  static async addConflict(
+    conflict: Omit<DataConflict, 'id'>
+  ): Promise<string> {
     const conflicts = await this.getConflicts()
     const id = `conflict_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -219,7 +226,9 @@ export class OfflineStorage {
     await localforage.setItem(STORAGE_KEYS.CONFLICTS, conflicts)
 
     // Update offline state
-    await this.updateOfflineState({ unresolvedConflicts: conflicts.filter(c => !c.resolved).length })
+    await this.updateOfflineState({
+      unresolvedConflicts: conflicts.filter((c) => !c.resolved).length,
+    })
 
     return id
   }
@@ -228,9 +237,13 @@ export class OfflineStorage {
     return (await localforage.getItem(STORAGE_KEYS.CONFLICTS)) || []
   }
 
-  static async resolveConflict(id: string, resolution: DataConflict['resolution'], auditEntry?: any): Promise<void> {
+  static async resolveConflict(
+    id: string,
+    resolution: DataConflict['resolution'],
+    auditEntry?: any
+  ): Promise<void> {
     const conflicts = await this.getConflicts()
-    const index = conflicts.findIndex(c => c.id === id)
+    const index = conflicts.findIndex((c) => c.id === id)
 
     if (index !== -1) {
       conflicts[index] = {
@@ -242,31 +255,41 @@ export class OfflineStorage {
       await localforage.setItem(STORAGE_KEYS.CONFLICTS, conflicts)
 
       // Update offline state
-      await this.updateOfflineState({ unresolvedConflicts: conflicts.filter(c => !c.resolved).length })
+      await this.updateOfflineState({
+        unresolvedConflicts: conflicts.filter((c) => !c.resolved).length,
+      })
     }
   }
 
   static async removeConflict(id: string): Promise<void> {
     const conflicts = await this.getConflicts()
-    const filtered = conflicts.filter(c => c.id !== id)
+    const filtered = conflicts.filter((c) => c.id !== id)
     await localforage.setItem(STORAGE_KEYS.CONFLICTS, filtered)
 
     // Update offline state
-    await this.updateOfflineState({ unresolvedConflicts: filtered.filter(c => !c.resolved).length })
+    await this.updateOfflineState({
+      unresolvedConflicts: filtered.filter((c) => !c.resolved).length,
+    })
   }
 
   // Offline state
   static async getOfflineState(): Promise<OfflineState> {
-    const state = await localforage.getItem(STORAGE_KEYS.OFFLINE_STATE) as OfflineState | null
-    return state || {
-      networkState: 'online' as NetworkState,
-      lastOnline: Date.now(),
-      pendingMutations: 0,
-      unresolvedConflicts: 0,
-    }
+    const state = (await localforage.getItem(
+      STORAGE_KEYS.OFFLINE_STATE
+    )) as OfflineState | null
+    return (
+      state || {
+        networkState: 'online' as NetworkState,
+        lastOnline: Date.now(),
+        pendingMutations: 0,
+        unresolvedConflicts: 0,
+      }
+    )
   }
 
-  static async updateOfflineState(updates: Partial<OfflineState>): Promise<void> {
+  static async updateOfflineState(
+    updates: Partial<OfflineState>
+  ): Promise<void> {
     const current = await this.getOfflineState()
     const updated = { ...current, ...updates }
     await localforage.setItem(STORAGE_KEYS.OFFLINE_STATE, updated)

@@ -35,7 +35,10 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
 
   // 3) session current org
   if (!orgId && (session as any)?.user) {
-    orgId = (session as any).user?.currentOrg?.id || (session as any).user?.currentOrganizationId || null
+    orgId =
+      (session as any).user?.currentOrg?.id ||
+      (session as any).user?.currentOrganizationId ||
+      null
   }
 
   // 4) fallback: if logged in and no org, try quick membership lookup then auto-provision
@@ -53,14 +56,20 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
         orgId = membership.organizationId
       } else {
         // Auto-provision a personal org for first-time users
-        const created = await ensureOrgForUser(prisma, { id: userId, email: (session as any).user?.email || null })
+        const created = await ensureOrgForUser(prisma, {
+          id: userId,
+          email: (session as any).user?.email || null,
+        })
         orgId = created.id
         createdOrg = true
       }
     } catch (e) {
       // fallback to existing logic: try to auto-create via helper
       try {
-        const created = await ensureOrgForUser(prisma, { id: (session as any).user.id, email: (session as any).user?.email || null })
+        const created = await ensureOrgForUser(prisma, {
+          id: (session as any).user.id,
+          email: (session as any).user?.email || null,
+        })
         orgId = created.id
         createdOrg = true
       } catch (e) {
@@ -71,7 +80,10 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
 
   // 5) final guard
   if (!orgId) {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context found' })
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'No organization context found',
+    })
   }
 
   // If we created the org, attempt to set a cookie on the response headers
@@ -83,7 +95,9 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
       } else if (typeof resHeaders?.set === 'function') {
         const existing = resHeaders.get && resHeaders.get('Set-Cookie')
         if (existing) {
-          const combined = Array.isArray(existing) ? existing.join('\n') + '\n' + setCookieHeader : `${existing}\n${setCookieHeader}`
+          const combined = Array.isArray(existing)
+            ? existing.join('\n') + '\n' + setCookieHeader
+            : `${existing}\n${setCookieHeader}`
           resHeaders.set('Set-Cookie', combined)
         } else {
           resHeaders.set('Set-Cookie', setCookieHeader)
@@ -111,7 +125,12 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
     if (org && (session as any)?.user?.id) {
       try {
         membership = await prisma.orgMember.findUnique({
-          where: { organizationId_userId: { organizationId: orgId, userId: (session as any).user.id } },
+          where: {
+            organizationId_userId: {
+              organizationId: orgId,
+              userId: (session as any).user.id,
+            },
+          },
           select: { id: true, role: true },
         })
       } catch (e) {
@@ -172,7 +191,10 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
 export const orgProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   // Ensure the user is authenticated (protectedProcedure already does this)
   if (!ctx.session?.user) {
-    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You must be logged in to access this resource' })
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to access this resource',
+    })
   }
 
   // Prefer the `org` object from the context (added by createTRPCContext).
@@ -181,7 +203,10 @@ export const orgProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
   // If org is still missing, default to FORBIDDEN as a safety guard
   if (!orgIdFromCtx) {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context found' })
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'No organization context found',
+    })
   }
 
   // Derive userId and role from session or DB lookup
@@ -190,7 +215,9 @@ export const orgProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
   try {
     const membership = await prisma.orgMember.findUnique({
-      where: { organizationId_userId: { organizationId: orgIdFromCtx, userId } },
+      where: {
+        organizationId_userId: { organizationId: orgIdFromCtx, userId },
+      },
     })
 
     if (membership) orgRole = membership.role
@@ -244,23 +271,34 @@ export const demoProcedure = orgProcedure.use(async ({ ctx, next }) => {
   if (ctx.orgRole === 'DEMO') {
     throw new TRPCError({
       code: 'FORBIDDEN',
-      message: 'Demo accounts are read-only. Contact your administrator to upgrade.',
+      message:
+        'Demo accounts are read-only. Contact your administrator to upgrade.',
     })
   }
   return next()
 })
 
 // Rate-limited procedure for write operations
-import { checkCombinedRateLimit, getClientIp, type SlidingWindowConfig } from '@/lib/rate-limit'
+import {
+  checkCombinedRateLimit,
+  getClientIp,
+  type SlidingWindowConfig,
+} from '@/lib/rate-limit'
 
-export function rateLimitedProcedure(config: SlidingWindowConfig & { burst?: number }) {
+export function rateLimitedProcedure(
+  config: SlidingWindowConfig & { burst?: number }
+) {
   return orgProcedure.use(async ({ ctx, next }) => {
     // Extract IP from request headers
     const clientIp = getClientIp(ctx.req)
     const orgId = ctx.orgId
 
     // Check rate limit
-    const rateLimitResult = await checkCombinedRateLimit(clientIp, orgId, config)
+    const rateLimitResult = await checkCombinedRateLimit(
+      clientIp,
+      orgId,
+      config
+    )
 
     if (!rateLimitResult.success) {
       throw new TRPCError({

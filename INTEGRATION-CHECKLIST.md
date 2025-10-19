@@ -7,42 +7,46 @@ Use this checklist to integrate PII masking into your CRM application.
 ### API Routes
 
 - [ ] **Contacts Routes**
+
   ```typescript
   // In contacts/route.ts
   import { transformContacts } from '@/lib/server/transform-pii'
-  
+
   const contacts = await prisma.contact.findMany(...)
   const transformed = transformContacts(contacts, session)
   return NextResponse.json(transformed)
   ```
 
 - [ ] **Companies Routes**
+
   ```typescript
   // In companies/route.ts
   import { transformCompanies } from '@/lib/server/transform-pii'
-  
+
   const companies = await prisma.company.findMany(...)
   const transformed = transformCompanies(companies, session)
   return NextResponse.json(transformed)
   ```
 
 - [ ] **Deals Routes**
+
   ```typescript
   // In deals/route.ts
   import { transformDeals } from '@/lib/server/transform-pii'
-  
+
   const deals = await prisma.deal.findMany({
-    include: { contact: true, company: true }
+    include: { contact: true, company: true },
   })
   const transformed = transformDeals(deals, session)
   return NextResponse.json(transformed)
   ```
 
 - [ ] **Activities Routes**
+
   ```typescript
   // In activities/route.ts
   import { transformActivities } from '@/lib/server/transform-pii'
-  
+
   const activities = await prisma.activity.findMany(...)
   const transformed = transformActivities(activities, session)
   return NextResponse.json(transformed)
@@ -51,10 +55,11 @@ Use this checklist to integrate PII masking into your CRM application.
 ### tRPC Procedures
 
 - [ ] **Contact Router**
+
   ```typescript
   // In server/routers/contact.ts
   import { transformResponse } from '@/lib/server/transform-pii'
-  
+
   list: orgProcedure.query(async ({ ctx }) => {
     const contacts = await ctx.prisma.contact.findMany(...)
     return transformResponse(contacts, ctx.session)
@@ -62,10 +67,11 @@ Use this checklist to integrate PII masking into your CRM application.
   ```
 
 - [ ] **Company Router**
+
   ```typescript
   // In server/routers/company.ts
   import { transformResponse } from '@/lib/server/transform-pii'
-  
+
   list: orgProcedure.query(async ({ ctx }) => {
     const companies = await ctx.prisma.company.findMany(...)
     return transformResponse(companies, ctx.session)
@@ -73,13 +79,14 @@ Use this checklist to integrate PII masking into your CRM application.
   ```
 
 - [ ] **Deal Router**
+
   ```typescript
   // In server/routers/deal.ts
   import { transformResponse } from '@/lib/server/transform-pii'
-  
+
   list: orgProcedure.query(async ({ ctx }) => {
     const deals = await ctx.prisma.deal.findMany({
-      include: { contact: true, company: true }
+      include: { contact: true, company: true },
     })
     return transformResponse(deals, ctx.session)
   })
@@ -90,9 +97,10 @@ Use this checklist to integrate PII masking into your CRM application.
 ### UI Components
 
 - [ ] **Contact Card**
+
   ```typescript
   import { maskEmail, maskPhone, isRequestFromDemo } from '@/lib/mask-pii'
-  
+
   function ContactCard({ contact, session }) {
     const isDemo = isRequestFromDemo(session)
     return (
@@ -105,9 +113,10 @@ Use this checklist to integrate PII masking into your CRM application.
   ```
 
 - [ ] **Contact List**
+
   ```typescript
   import { isRequestFromDemo } from '@/lib/mask-pii'
-  
+
   function ContactList({ contacts, session }) {
     const isDemo = isRequestFromDemo(session)
     return (
@@ -126,6 +135,7 @@ Use this checklist to integrate PII masking into your CRM application.
   - [ ] Any other PII fields
 
 - [ ] **Company Card**
+
   ```typescript
   function CompanyCard({ company, session }) {
     const isDemo = isRequestFromDemo(session)
@@ -152,14 +162,15 @@ Use this checklist to integrate PII masking into your CRM application.
 ### Custom Hooks
 
 - [ ] **useContact Hook**
+
   ```typescript
   import { isRequestFromDemo } from '@/lib/mask-pii'
-  
+
   function useContact(contactId: string) {
     const { data: session } = useSession()
     const isDemo = isRequestFromDemo(session)
     const { data: contact } = trpc.contact.getById.useQuery({ id: contactId })
-    
+
     // Server should already mask, but double-check for safety
     return { contact, isDemo }
   }
@@ -171,7 +182,7 @@ Use this checklist to integrate PII masking into your CRM application.
     const { data: session } = useSession()
     const isDemo = isRequestFromDemo(session)
     const { data: company } = trpc.company.getById.useQuery({ id: companyId })
-    
+
     return { company, isDemo }
   }
   ```
@@ -204,6 +215,7 @@ Use this checklist to integrate PII masking into your CRM application.
 ### Automated Testing
 
 - [ ] **Run Unit Tests**
+
   ```bash
   npm run test:run __tests__/mask-pii.test.ts
   npm run test:run __tests__/transform-pii.test.ts
@@ -215,15 +227,15 @@ Use this checklist to integrate PII masking into your CRM application.
   describe('API PII Masking', () => {
     it('should mask contacts for demo user', async () => {
       const response = await fetch('/api/contacts', {
-        headers: { Authorization: `Bearer ${demoToken}` }
+        headers: { Authorization: `Bearer ${demoToken}` },
       })
       const data = await response.json()
       expect(data[0].email).toMatch(/^[a-z]\*\*\*@/)
     })
-    
+
     it('should not mask for regular user', async () => {
       const response = await fetch('/api/contacts', {
-        headers: { Authorization: `Bearer ${regularToken}` }
+        headers: { Authorization: `Bearer ${regularToken}` },
       })
       const data = await response.json()
       expect(data[0].email).not.toMatch(/\*\*\*/)
@@ -236,25 +248,27 @@ Use this checklist to integrate PII masking into your CRM application.
 ### Add Logging
 
 - [ ] **Server-Side Logging**
+
   ```typescript
   import { getMaskingStatus } from '@/lib/server/transform-pii'
-  
+
   export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions)
     const status = getMaskingStatus(session)
-    
+
     console.log('[API] Masking status:', status)
     // { isDemo: true, reason: 'currentOrg.role === DEMO' }
   }
   ```
 
 - [ ] **Client-Side Logging**
+
   ```typescript
   import { isRequestFromDemo } from '@/lib/mask-pii'
-  
+
   function ContactCard({ contact, session }) {
     const isDemo = isRequestFromDemo(session)
-    
+
     if (isDemo) {
       console.log('[UI] Demo mode active - masking PII')
     }
@@ -264,15 +278,16 @@ Use this checklist to integrate PII masking into your CRM application.
 ### Debug Endpoint
 
 - [ ] **Create Debug Route**
+
   ```typescript
   // In app/api/debug/masking/route.ts
   import { getMaskingStatus } from '@/lib/server/transform-pii'
   import { maskEmail, maskPhone } from '@/lib/mask-pii'
-  
+
   export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions)
     const status = getMaskingStatus(session)
-    
+
     return NextResponse.json({
       session: {
         email: session?.user?.email,
@@ -306,6 +321,7 @@ Use this checklist to integrate PII masking into your CRM application.
   - [ ] Check for any hardcoded PII
 
 - [ ] **Run Full Test Suite**
+
   ```bash
   npm run test:run
   npm run build
@@ -321,6 +337,7 @@ Use this checklist to integrate PII masking into your CRM application.
 ### Deployment
 
 - [ ] **Deploy to Production**
+
   ```bash
   git add .
   git commit -m "feat: Add PII masking for demo users"
@@ -386,10 +403,15 @@ Use this checklist to integrate PII masking into your CRM application.
 
 ```typescript
 // Client-side
-import { maskEmail, maskPhone, maskPII, isRequestFromDemo } from '@/lib/mask-pii'
+import {
+  maskEmail,
+  maskPhone,
+  maskPII,
+  isRequestFromDemo,
+} from '@/lib/mask-pii'
 
 // Server-side
-import { 
+import {
   transformContact,
   transformContacts,
   transformCompany,
@@ -397,7 +419,7 @@ import {
   transformDeal,
   transformDeals,
   transformResponse,
-  getMaskingStatus 
+  getMaskingStatus,
 } from '@/lib/server/transform-pii'
 ```
 

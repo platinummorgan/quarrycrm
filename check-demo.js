@@ -25,7 +25,6 @@ async function checkDemoData() {
       },
     })
     console.log('Demo membership:', membership)
-
   } catch (error) {
     console.error('Error:', error)
   } finally {

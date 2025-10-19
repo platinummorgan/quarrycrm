@@ -5,11 +5,13 @@
 ### 1. Lazy-Loaded PrismaClient in `tests/db-reset.ts`
 
 **Before**:
+
 ```typescript
 const prisma = new PrismaClient() // Created at import time
 ```
 
 **After**:
+
 ```typescript
 let prisma: PrismaClient | null = null
 
@@ -22,6 +24,7 @@ function getPrismaClient(): PrismaClient {
 ```
 
 **Benefits**:
+
 - ✅ Defers connection until first use
 - ✅ Allows test setup to modify `DATABASE_URL` before connection
 - ✅ Safety checks run before any database operations
@@ -29,11 +32,13 @@ function getPrismaClient(): PrismaClient {
 ### 2. Lazy-Loaded PrismaClient in `tests/utils/seed.ts`
 
 **Before**:
+
 ```typescript
 import { prisma } from '@/lib/prisma' // Creates client at import
 ```
 
 **After**:
+
 ```typescript
 import { PrismaClient } from '@prisma/client'
 
@@ -48,17 +53,27 @@ function getPrismaClient(): PrismaClient {
 ```
 
 **Updated Function Signatures**:
+
 ```typescript
 // Changed from: client?: typeof prisma
 // Changed to:   client?: PrismaClient
 
 export async function seedOrgUser(client?: PrismaClient)
-export async function seedPipelines(orgId: string, ownerMemberId: string, client?: PrismaClient)
-export async function seedContacts(orgId: string, ownerId: string, count: number, 
-  options?: { companyId?: string; client?: PrismaClient })
+export async function seedPipelines(
+  orgId: string,
+  ownerMemberId: string,
+  client?: PrismaClient
+)
+export async function seedContacts(
+  orgId: string,
+  ownerId: string,
+  count: number,
+  options?: { companyId?: string; client?: PrismaClient }
+)
 ```
 
 **Benefits**:
+
 - ✅ No import-time connection to app's prisma instance
 - ✅ Independent client for test utilities
 - ✅ Type-safe with proper PrismaClient typing
@@ -78,12 +93,12 @@ Created comprehensive documentation:
 
 ### ✅ All Modules Safe
 
-| Module | Status | Details |
-|--------|--------|---------|
-| `tests/db-reset.ts` | ✅ Safe | Lazy-loaded PrismaClient |
-| `tests/utils/seed.ts` | ✅ Safe | Lazy-loaded PrismaClient |
-| `tests/setup.ts` | ✅ Safe | No Prisma imports |
-| `__tests__/setup.ts` | ✅ Safe | No Prisma imports |
+| Module                   | Status        | Details                                 |
+| ------------------------ | ------------- | --------------------------------------- |
+| `tests/db-reset.ts`      | ✅ Safe       | Lazy-loaded PrismaClient                |
+| `tests/utils/seed.ts`    | ✅ Safe       | Lazy-loaded PrismaClient                |
+| `tests/setup.ts`         | ✅ Safe       | No Prisma imports                       |
+| `__tests__/setup.ts`     | ✅ Safe       | No Prisma imports                       |
 | Test files (`*.test.ts`) | ⚠️ Acceptable | Import app prisma but use in hooks only |
 
 ### Connection Timeline
@@ -190,6 +205,7 @@ To verify no import-time connections:
 ## Performance Impact
 
 **No negative impact** - lazy loading adds negligible overhead:
+
 - First connection: Same as before (happens in first test)
 - Subsequent operations: Uses cached client
 - Table list caching: Saves ~50-100ms per reset after first

@@ -11,10 +11,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.currentOrg) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const importId = params.importId
@@ -115,7 +112,6 @@ export async function POST(
       message: `Successfully rolled back ${affectedIds.length} records`,
       affectedCount: affectedIds.length,
     })
-
   } catch (error) {
     console.error('Rollback error:', error)
     return NextResponse.json(
