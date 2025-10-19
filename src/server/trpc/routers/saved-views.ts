@@ -139,6 +139,7 @@ export const savedViewsRouter = createTRPCRouter({
       return prisma.savedView.create({
         data: {
           ...input,
+          entity: input.entityType,
           viewUrl,
           organizationId: orgId,
           ownerId: userId,
@@ -168,6 +169,24 @@ export const savedViewsRouter = createTRPCRouter({
           id,
           organizationId: orgId,
           ownerId: userId, // Only owner can update
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          entity: true,
+          entityType: true,
+          filters: true,
+          sortBy: true,
+          sortOrder: true,
+          isPublic: true,
+          isStarred: true,
+          viewUrl: true,
+          organizationId: true,
+          ownerId: true,
+          createdById: true,
+          createdAt: true,
+          updatedAt: true,
         },
       })
 
@@ -248,6 +267,15 @@ export const savedViewsRouter = createTRPCRouter({
             { isPublic: true },
           ],
         },
+        select: {
+          name: true,
+          description: true,
+          entityType: true,
+          filters: true,
+          sortBy: true,
+          sortOrder: true,
+          isPublic: true,
+        },
       })
 
       if (!originalView) {
@@ -265,6 +293,7 @@ export const savedViewsRouter = createTRPCRouter({
           name: input.name || `${originalView.name} (Copy)`,
           description: originalView.description,
           entityType: originalView.entityType,
+          entity: originalView.entityType!,
           filters: originalView.filters as any,
           sortBy: originalView.sortBy,
           sortOrder: originalView.sortOrder,

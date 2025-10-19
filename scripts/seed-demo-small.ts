@@ -131,6 +131,7 @@ async function createDemoOrganization() {
         organizationId: org.id,
         userId: user.id,
         role: OrgMemberRole.DEMO,
+        onboardingProgress: {},
       },
     })
     console.log('✅ Created org member with DEMO role')

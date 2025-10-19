@@ -9,6 +9,12 @@ export default withAuth(
       const url = new URL(req.url)
       const host = url.host
       const isAuthRoute = url.pathname.startsWith('/api/auth/')
+      
+      // Don't redirect auth callbacks - let NextAuth handle them completely
+      if (url.pathname.startsWith('/api/auth/callback')) {
+        return NextResponse.next()
+      }
+      
       if (host === 'quarrycrm.vercel.app' && !isAuthRoute) {
         url.host = 'www.quarrycrm.com'
         return NextResponse.redirect(url, 308)
@@ -67,15 +73,19 @@ export default withAuth(
     }
 
     // Redirect authenticated users away from auth pages
+    // UNLESS there's an error parameter (e.g., from failed email verification)
     if (isAuthPage && isAuth) {
-      const response = NextResponse.redirect(new URL('/app', req.url))
-      
-      // Add X-Robots-Tag for non-production
-      if (!isProduction) {
-        response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+      const hasError = req.nextUrl.searchParams.has('error')
+      if (!hasError) {
+        const response = NextResponse.redirect(new URL('/app', req.url))
+        
+        // Add X-Robots-Tag for non-production
+        if (!isProduction) {
+          response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+        }
+        
+        return response
       }
-      
-      return response
     }
 
     // Allow access to auth routes and demo route
@@ -115,7 +125,22 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ req, token }) => {
+        // Always allow NextAuth callback routes
+        if (req.nextUrl.pathname.startsWith('/api/auth/')) {
+          return true
+        }
+        // Always allow auth pages
+        if (req.nextUrl.pathname.startsWith('/auth')) {
+          return true
+        }
+        // For app routes, require token
+        if (req.nextUrl.pathname.startsWith('/app')) {
+          return !!token
+        }
+        // Allow everything else
+        return true
+      },
     },
   }
 )

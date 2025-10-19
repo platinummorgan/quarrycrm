@@ -66,6 +66,7 @@ export const authOptions: NextAuthOptions = {
               organizationId: org.id,
               userId: user.id,
               role: 'OWNER',
+              onboardingProgress: {},
             },
           })
         }
@@ -127,6 +128,7 @@ export const authOptions: NextAuthOptions = {
               organizationId: payload.orgId,
               userId: demoUser.id,
               role: 'DEMO',
+              onboardingProgress: {},
             },
             include: {
               organization: {
@@ -258,6 +260,7 @@ export const authOptions: NextAuthOptions = {
                 organizationId: org.id,
                 userId: user.id,
                 role: 'OWNER',
+                onboardingProgress: {},
               }
             })
             

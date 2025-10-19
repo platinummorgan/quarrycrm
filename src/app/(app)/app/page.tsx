@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import {
   Card,
   CardContent,
@@ -50,19 +52,12 @@ async function getDashboardData(orgId: string) {
         id: true,
         type: true,
         description: true,
-        subject: true,
         createdAt: true,
         contact: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
-          },
-        },
-        company: {
-          select: {
-            id: true,
-            name: true,
           },
         },
         deal: {
@@ -91,6 +86,14 @@ async function getDashboardData(orgId: string) {
     }),
   ])
 
+  // Compute a UI-safe `subject` for each activity instead of selecting a
+  // non-existent `subject` field from Prisma. This prevents Prisma validation
+  // errors in production while still providing a subject string for the UI.
+  const recentActivitiesForUi = (recentActivities as any[]).map((a: any) => ({
+    ...a,
+    subject: a.deal?.title ?? (a.description ? a.description.slice(0, 120) : 'Activity'),
+  }))
+
   return {
     stats: {
       contacts: contactsCount,
@@ -98,16 +101,37 @@ async function getDashboardData(orgId: string) {
       deals: dealsCount,
       activities: activitiesCount,
     },
-    recentActivities,
+    recentActivities: recentActivitiesForUi,
   }
 }
 
 export default async function AppDashboard() {
   const { orgId } = await requireOrg()
-  const [{ stats, recentActivities }, onboardingState] = await Promise.all([
-    getDashboardData(orgId),
-    checkOnboardingProgress(),
-  ])
+
+  // Run dashboard data and onboarding checks separately and guard them with
+  // try/catch so a single failing server-side dependency (missing DB columns,
+  // transient DB errors, etc.) won't cause the entire Server Component render
+  // to fail in production (which shows an opaque digest-only error).
+  let stats = { contacts: 0, companies: 0, deals: 0, activities: 0 }
+  let recentActivities: any[] = []
+  let onboardingState = null
+
+  try {
+    const data = await getDashboardData(orgId)
+    stats = data.stats
+    recentActivities = data.recentActivities
+  } catch (err) {
+    // Log the error server-side (visible in Vercel logs). Avoid re-throwing
+    // so the UI can still render a best-effort dashboard.
+    console.error('getDashboardData failed on dashboard render:', err)
+  }
+
+  try {
+    onboardingState = await checkOnboardingProgress()
+  } catch (err) {
+    console.error('checkOnboardingProgress failed on dashboard render:', err)
+    onboardingState = null
+  }
 
   const statsConfig = [
     {
@@ -228,7 +252,7 @@ export default async function AppDashboard() {
                         <span>by {activity.owner.user.name}</span>
                       )}
                     </div>
-                    {(activity.contact || activity.company || activity.deal) && (
+                    {(activity.contact || activity.deal) && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {activity.contact && (
                           <Link
@@ -236,14 +260,6 @@ export default async function AppDashboard() {
                             className="hover:underline"
                           >
                             {activity.contact.firstName} {activity.contact.lastName}
-                          </Link>
-                        )}
-                        {activity.company && (
-                          <Link
-                            href={`/app/companies/${activity.company.id}`}
-                            className="hover:underline"
-                          >
-                            {activity.company.name}
                           </Link>
                         )}
                         {activity.deal && (

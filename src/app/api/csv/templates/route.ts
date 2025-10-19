@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         entityType,
-        mappings,
+        template: mappings,
         isDefault,
         organizationId: orgId,
         ownerId: userId,
@@ -146,7 +146,7 @@ export async function PUT(request: NextRequest) {
       },
       data: {
         ...(name && { name }),
-        ...(mappings && { mappings }),
+        ...(mappings && { template: mappings }),
         ...(isDefault !== undefined && { isDefault }),
       },
     })

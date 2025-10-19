@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { Suspense } from 'react'
 import { ContactsTable } from '@/components/contacts/ContactsTable'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'

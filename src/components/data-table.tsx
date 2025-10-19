@@ -571,6 +571,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
               iconLabel={`No ${entity} icon`}
               title={`No ${entity} yet`}
               description={`Get started by adding your first ${entity.slice(0, -1)} or importing from a CSV file.`}
+              showCta={entity !== 'companies'}
               actions={[
                 {
                   label: `Add ${entity.slice(0, -1)}`,
@@ -753,6 +754,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
               iconLabel={`No ${entity} icon`}
               title={`No ${entity} yet`}
               description={`Get started by adding your first ${entity.slice(0, -1)} or importing from a CSV file.`}
+              showCta={entity !== 'companies'}
               actions={[
                 {
                   label: `Add ${entity.slice(0, -1)}`,

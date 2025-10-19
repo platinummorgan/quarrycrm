@@ -61,12 +61,6 @@ export const dashboardRouter = createTRPCRouter({
               lastName: true,
             },
           },
-          company: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
           deal: {
             select: {
               id: true,

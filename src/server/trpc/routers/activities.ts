@@ -7,10 +7,9 @@ import { ActivityType } from '@prisma/client'
 const activityFiltersSchema = z.object({
   q: z.string().optional(), // Search query
   owner: z.string().optional(), // Filter by owner ID
-  type: z.nativeEnum(ActivityType).optional(), // Filter by activity type
+  type: z.nativeEnum(ActivityType).optional(),
   contact: z.string().optional(), // Filter by contact ID
   deal: z.string().optional(), // Filter by deal ID
-  company: z.string().optional(), // Filter by company ID
   isCompleted: z.boolean().optional(), // Filter by completion status (for tasks)
   overdue: z.boolean().optional(), // Filter for overdue tasks
   updatedSince: z.date().optional(), // Filter by updated date
@@ -65,12 +64,6 @@ const activityListResponseSchema = z.object({
           title: z.string(),
         })
         .nullable(),
-      company: z
-        .object({
-          id: z.string(),
-          name: z.string(),
-        })
-        .nullable(),
       owner: z.object({
         id: z.string(),
         user: z.object({
@@ -94,7 +87,7 @@ export const activitiesRouter = createTRPCRouter({
     .input(activityFiltersSchema)
     .output(activityListResponseSchema)
     .query(async ({ ctx, input }) => {
-      const { q, owner, type, contact, deal, company, isCompleted, overdue, updatedSince, limit, cursor } =
+      const { q, owner, type, contact, deal, isCompleted, overdue, updatedSince, limit, cursor } =
         input
 
       // Build where clause
@@ -124,9 +117,6 @@ export const activitiesRouter = createTRPCRouter({
       }
       if (deal) {
         where.dealId = deal
-      }
-      if (company) {
-        where.companyId = company
       }
       if (isCompleted !== undefined) {
         where.isCompleted = isCompleted
@@ -183,12 +173,6 @@ export const activitiesRouter = createTRPCRouter({
             select: {
               id: true,
               title: true,
-            },
-          },
-          company: {
-            select: {
-              id: true,
-              name: true,
             },
           },
           owner: {
@@ -278,14 +262,6 @@ export const activitiesRouter = createTRPCRouter({
               },
             },
           },
-          company: {
-            select: {
-              id: true,
-              name: true,
-              website: true,
-              domain: true,
-            },
-          },
           owner: {
             select: {
               id: true,
@@ -340,12 +316,6 @@ export const activitiesRouter = createTRPCRouter({
             select: {
               id: true,
               title: true,
-            },
-          },
-          company: {
-            select: {
-              id: true,
-              name: true,
             },
           },
           owner: {
@@ -460,12 +430,6 @@ export const activitiesRouter = createTRPCRouter({
               id: true,
               firstName: true,
               lastName: true,
-            },
-          },
-          company: {
-            select: {
-              id: true,
-              name: true,
             },
           },
           deal: {

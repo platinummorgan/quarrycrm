@@ -1,6 +1,7 @@
 import { createTRPCRouter, orgProcedure, demoProcedure, rateLimitedProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { TRPCError } from '@trpc/server'
 import { checkPlanLimit } from '@/lib/plans'
 import { WriteRateLimits } from '@/lib/rate-limit'
 
@@ -17,8 +18,11 @@ const contactFiltersSchema = z.object({
 const contactCreateSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  companyId: z.string().optional().nullable(),
+  ownerId: z.string().cuid().optional(),
+  notes: z.string().optional().nullable(),
 })
 
 const contactUpdateSchema = z.object({
@@ -172,6 +176,24 @@ export const contactsRouter = createTRPCRouter({
       }
     }),
 
+  // List owner options for dropdowns
+  listOwnerOptions: orgProcedure.query(async ({ ctx }) => {
+    const members = await prisma.orgMember.findMany({
+      where: { organizationId: (ctx as any).org.id },
+      select: {
+        id: true,
+        user: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    return members.map((m) => ({
+      id: m.id,
+      label: m.user?.name ?? m.user?.email ?? 'Member',
+      subLabel: m.user?.email ?? '',
+    }))
+  }),
+
   // Get contact by ID
   getById: orgProcedure
     .input(z.object({ id: z.string() }))
@@ -217,40 +239,88 @@ export const contactsRouter = createTRPCRouter({
     .use(demoProcedure._def.middlewares[0]) // Apply demo check
     .input(contactCreateSchema)
     .mutation(async ({ ctx, input }) => {
-      // Check plan limits
-      const limitCheck = await checkPlanLimit(ctx.orgId, 'contacts')
-      if (!limitCheck.allowed) {
-        throw new Error(limitCheck.message || 'Plan limit reached')
+      // 1) Ensure org + membership exist on the request context
+      const org = (ctx as any).org
+      const me = (ctx as any).membership
+      if (!org || !me) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'No organization context found',
+        })
       }
 
-      return await prisma.contact.create({
-        data: {
-          ...input,
-          organizationId: ctx.orgId,
-          ownerId: ctx.userId,
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          phone: true,
-          owner: {
-            select: {
-              id: true,
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-            },
-          },
-          updatedAt: true,
-          createdAt: true,
-        },
+      // 2) Pick an owner: explicit or default to current member
+      const ownerId = input.ownerId ?? me.id
+
+      // 3) Validate owner belongs to this org
+      const owner = await prisma.orgMember.findFirst({
+        where: { id: ownerId, organizationId: org.id },
+        select: { id: true },
       })
+      if (!owner) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Owner must be a member of this organization',
+        })
+      }
+
+      // 4) If a company is provided, validate it belongs to this org
+      if (input.companyId) {
+        const company = await prisma.company.findFirst({
+          where: { id: input.companyId, organizationId: org.id },
+          select: { id: true },
+        })
+        if (!company) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Company not found in this organization',
+          })
+        }
+      }
+
+      // 5) Create the contact
+      try {
+        const contact = await prisma.contact.create({
+          data: {
+            organizationId: org.id,
+            ownerId,
+            companyId: input.companyId ?? null,
+            firstName: input.firstName,
+            lastName: input.lastName,
+            email: input.email ?? null,
+            phone: input.phone ?? null,
+            notes: input.notes ?? null,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            ownerId: true,
+            companyId: true,
+            createdAt: true,
+          },
+        })
+        return contact
+      } catch (err: any) {
+        // Map common Prisma errors to clear API errors
+        if (err?.code === 'P2002') {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'A contact with this unique value already exists',
+          })
+        }
+        if (err?.code === 'P2003') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Foreign key constraint failed (owner/company/org)',
+          })
+        }
+        // Fallthrough
+        console.error('contacts.create failed:', err)
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' })
+      }
     }),
 
   // Update contact (partial)

@@ -1,5 +1,7 @@
 import { WorkspaceCard } from '@/components/settings/WorkspaceCard'
 import { DemoResetButton } from '@/components/settings/DemoResetButton'
+export const dynamic = 'force-dynamic'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CreditCard, Database } from 'lucide-react'

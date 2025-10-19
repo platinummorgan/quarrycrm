@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClient) {
   const db = (client ?? prisma) as any
@@ -17,6 +17,7 @@ export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClie
       organizationId: org.id,
       userId: user.id,
       role: 'OWNER',
+      onboardingProgress: {},
     },
   })
 

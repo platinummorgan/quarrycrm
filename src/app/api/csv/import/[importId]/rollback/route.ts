@@ -99,9 +99,10 @@ export async function POST(
 
     // Create rollback records for each affected entity
     const rollbackRecords = affectedIds.map((entityId: string) => ({
-      importId,
-      entityType: importRecord.entityType,
-      entityId,
+      importHistoryId: importId,
+      recordType: importRecord.entityType || 'UNKNOWN',
+      recordId: entityId,
+      originalData: {},
       action: 'DELETE' as const,
     }))
 

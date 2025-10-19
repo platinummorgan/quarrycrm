@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { ensureOrgForUser } from '@/lib/org/ensure'
 
 export async function getServerAuthSession() {
   return await getServerSession(authOptions)
@@ -20,16 +21,43 @@ export async function requireAuth() {
 export async function requireOrg() {
   const session = await requireAuth()
 
-  if (!session.user.currentOrg) {
-    // This shouldn't happen if auth is working correctly, but just in case
-    redirect('/auth/signin')
+  // If the session already includes currentOrg info, use it
+  if (session.user.currentOrg?.id) {
+    return {
+      session,
+      userId: session.user.id,
+      orgId: session.user.currentOrg.id,
+      orgRole: session.user.currentOrg.role,
+    }
   }
+
+  // Otherwise, try to find a membership quickly
+  try {
+    const membership = await prisma.orgMember.findFirst({
+      where: { userId: session.user.id },
+      select: { organizationId: true, role: true },
+    })
+
+    if (membership?.organizationId) {
+      return {
+        session,
+        userId: session.user.id,
+        orgId: membership.organizationId,
+        orgRole: membership.role,
+      }
+    }
+  } catch (e) {
+    // ignore and fallthrough to auto-provision
+  }
+
+  // Auto-provision a personal org for first-time users
+  const created = await ensureOrgForUser(prisma, { id: session.user.id, email: session.user.email || null })
 
   return {
     session,
     userId: session.user.id,
-    orgId: session.user.currentOrg.id,
-    orgRole: session.user.currentOrg.role,
+    orgId: created.id,
+    orgRole: 'OWNER',
   }
 }
 

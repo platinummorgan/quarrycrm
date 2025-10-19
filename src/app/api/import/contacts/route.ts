@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { withLatencyLogMiddleware } from '@/lib/server/withLatencyLog'
 import { demoGuard } from '@/lib/demo-guard'
@@ -77,14 +78,15 @@ const importHandler = async (request: NextRequest) => {
       data: {
         organizationId: orgId,
         entityType: 'CONTACT',
-        filename: 'contacts-import.csv',
+        fileName: 'contacts-import.csv',
         status: 'PROCESSING',
         totalRows: csvData.length,
         processedRows: 0,
         skippedRows: 0,
         errorRows: 0,
-        mappings: mappings,
-        ownerId,
+        importType: 'CSV',
+        totalRecords: csvData.length,
+        errors: Prisma.JsonNull,
       },
     })
 
@@ -211,9 +213,10 @@ const importHandler = async (request: NextRequest) => {
         if (createdContactRecords.length > 0) {
           await prisma.importRollback.createMany({
             data: createdContactRecords.map(contact => ({
-              importId: importHistory.id,
-              entityType: 'CONTACT',
-              entityId: contact.id,
+              importHistoryId: importHistory.id,
+              recordType: 'CONTACT',
+              recordId: contact.id,
+              originalData: {},
               action: 'CREATE',
             }))
           })

@@ -90,9 +90,6 @@ export function OverdueTasksWidget() {
                       {task.contact.firstName} {task.contact.lastName}
                     </p>
                   )}
-                  {task.company && (
-                    <p className="text-sm text-muted-foreground">{task.company.name}</p>
-                  )}
                 </div>
                 <Badge
                   variant={

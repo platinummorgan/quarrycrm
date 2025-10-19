@@ -45,6 +45,7 @@ async function main() {
         organizationId: organization.id,
         userId: users[i].id,
         role: i === 0 ? 'OWNER' : 'MEMBER',
+        onboardingProgress: {},
       },
     })
     members.push(member)

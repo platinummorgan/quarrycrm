@@ -24,12 +24,24 @@ const handler = async (request: Request) => {
     }
   }
 
-  return fetchRequestHandler({
-    endpoint: '/api/trpc',
-    req: request,
-    router: appRouter,
-    createContext: createTRPCContext,
-  })
+  try {
+    return await fetchRequestHandler({
+      endpoint: '/api/trpc',
+      req: request,
+      router: appRouter,
+      createContext: createTRPCContext,
+    })
+  } catch (error: any) {
+    // Log detailed tRPC errors in development for easier debugging
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        console.error('tRPC error at /api/trpc', error)
+      } catch (e) {
+        // ignore logging errors
+      }
+    }
+    throw error
+  }
 }
 
 export { handler as GET, handler as POST }

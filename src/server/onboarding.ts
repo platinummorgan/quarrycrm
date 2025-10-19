@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { getCurrentMember } from '@/lib/auth-helpers'
+import { getOnboardingStatus } from '@/lib/server/onboarding'
 import { revalidatePath } from 'next/cache'
 import type { OnboardingProgress, OnboardingState } from '@/lib/onboarding'
 import { calculateOnboardingState } from '@/lib/onboarding'
@@ -14,16 +15,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
     const member = await getCurrentMember()
     if (!member) return null
 
-    const orgMember = await prisma.orgMember.findUnique({
-      where: {
-        id: member.id,
-      },
-      select: {
-        onboardingDismissed: true,
-        onboardingCompleted: true,
-        onboardingProgress: true,
-      },
-    })
+    const orgMember = await getOnboardingStatus(member.id)
 
     if (!orgMember) return null
 
@@ -45,14 +37,7 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
     const member = await getCurrentMember()
     if (!member) return null
 
-    const orgMember = await prisma.orgMember.findUnique({
-      where: { id: member.id },
-      select: {
-        onboardingDismissed: true,
-        onboardingProgress: true,
-        organizationId: true,
-      },
-    })
+    const orgMember = await getOnboardingStatus(member.id)
 
     if (!orgMember) return null
 
@@ -85,7 +70,7 @@ export async function checkOnboardingProgress(): Promise<OnboardingState | null>
     // Update if changed
     const hasChanged = JSON.stringify(currentProgress) !== JSON.stringify(progress)
     if (hasChanged) {
-      await prisma.orgMember.update({
+      await (prisma.orgMember as any).update({
         where: { id: member.id },
         data: {
             onboardingProgress: (progress as unknown) as any,
@@ -111,7 +96,7 @@ export async function dismissOnboarding(): Promise<{ success: boolean }> {
       return { success: false }
     }
 
-    await prisma.orgMember.update({
+    await (prisma.orgMember as any).update({
       where: { id: member.id },
       data: { onboardingDismissed: true },
     })
@@ -136,10 +121,7 @@ export async function completeOnboardingTask(
       return { success: false }
     }
 
-    const orgMember = await prisma.orgMember.findUnique({
-      where: { id: member.id },
-      select: { onboardingProgress: true },
-    })
+    const orgMember = await getOnboardingStatus(member.id)
 
     const currentProgress = (orgMember?.onboardingProgress as Partial<OnboardingProgress>) || {}
 
@@ -153,7 +135,7 @@ export async function completeOnboardingTask(
       [taskId]: true,
     }
 
-    await prisma.orgMember.update({
+    await (prisma.orgMember as any).update({
       where: { id: member.id },
       data: {
         onboardingProgress: (updatedProgress as unknown) as any,

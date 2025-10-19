@@ -34,11 +34,12 @@ export async function seedOrgUser(client?: PrismaClient | Prisma.TransactionClie
     },
   })
 
-  const membership = await db.orgMember.create({
+  const member = await prisma.orgMember.create({
     data: {
       organizationId: org.id,
       userId: user.id,
       role: 'OWNER',
+      onboardingProgress: {},
     },
   })
 

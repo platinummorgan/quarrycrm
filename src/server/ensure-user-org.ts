@@ -16,7 +16,7 @@ export async function ensureUserOrg(userId: string): Promise<string> {
     })
 
     await tx.orgMember.create({
-      data: { userId, organizationId: org.id, role: 'OWNER' },
+      data: { userId, organizationId: org.id, role: 'OWNER', onboardingProgress: {} },
     })
 
     // If your User has currentOrganizationId, set it (ignore if column doesn’t exist)

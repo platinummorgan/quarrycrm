@@ -58,7 +58,6 @@ export function ActivityTimeline({
   const { data: activitiesData, isLoading } = trpc.activities.list.useQuery({
     contact: contactId,
     deal: dealId,
-    company: companyId,
     type: typeFilter !== 'all' ? typeFilter : undefined,
     limit,
   })
@@ -113,10 +112,6 @@ export function ActivityTimeline({
 
     if (activity.deal) {
       parts.push(activity.deal.title)
-    }
-
-    if (activity.company) {
-      parts.push(activity.company.name)
     }
 
     return parts.join(' • ')

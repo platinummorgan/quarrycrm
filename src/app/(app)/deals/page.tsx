@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Suspense } from 'react'
 import { BoardWithQueryHandler } from '@/components/deals/BoardWithQueryHandler'
 import { getDeals, getPipelines } from '@/server/deals'

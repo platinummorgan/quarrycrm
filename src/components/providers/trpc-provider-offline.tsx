@@ -23,7 +23,17 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url: '/api/trpc',
           // Ensure browser requests send cookies so server can read NextAuth session
-          fetch: (input, init) => fetch(input as RequestInfo, { ...init, credentials: 'include' }),
+          // and include selected org id (if present) to support multi-org flows.
+          fetch: (input, init) => {
+            const headers = new Headers(init?.headers as HeadersInit || undefined)
+            try {
+              const orgId = localStorage.getItem('orgId')
+              if (orgId) headers.set('x-org-id', orgId)
+            } catch (e) {
+              // ignore if localStorage is unavailable
+            }
+            return fetch(input as RequestInfo, { ...init, credentials: 'include', headers })
+          },
         }),
       ],
     })

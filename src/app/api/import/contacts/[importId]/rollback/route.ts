@@ -70,7 +70,7 @@ export async function POST(
 
     // Process rollbacks in reverse order (delete what was created)
     for (const entry of rollbackEntries.reverse()) {
-      if (entry.action === 'CREATE') {
+      if (entry.action === 'CREATE' && entry.entityId) {
         try {
           await prisma.contact.delete({
             where: { id: entry.entityId }

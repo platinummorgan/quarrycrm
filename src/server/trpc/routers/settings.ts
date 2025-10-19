@@ -445,6 +445,7 @@ export const settingsRouter = createTRPCRouter({
           expiresAt,
           organizationId: orgId,
           ownerId: member.id,
+          permissions: {},
         },
         include: {
           owner: {

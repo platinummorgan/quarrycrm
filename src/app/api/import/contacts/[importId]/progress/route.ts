@@ -62,8 +62,8 @@ export async function GET(
       )
     }
 
-    const progress = importHistory.totalRows > 0
-      ? (importHistory.processedRows / importHistory.totalRows) * 100
+    const progress = (importHistory.totalRows ?? 0) > 0
+      ? (importHistory.processedRows / (importHistory.totalRows ?? 1)) * 100
       : 0
 
     return NextResponse.json({

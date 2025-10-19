@@ -12,6 +12,12 @@ model Organization {
   name        String
   domain      String?      @unique
   description String?
+  plan        OrganizationPlan @default(FREE)
+  logo        String?
+  emailLogAddress String?
+  deletedAt   DateTime?
+  scheduledPurgeAt DateTime?
+  deletedBy   String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   activities  Activity[]
@@ -23,18 +29,26 @@ model Organization {
   pipelines   Pipeline[]
   webhooks    Webhook[]
   savedViews  SavedView[]
+  apiKeys     ApiKey[]
+  importHistories ImportHistory[]
+  workspaceJobs WorkspaceJob[]
+  importTemplates ImportTemplate[]
 
   @@map("organizations")
 }
 
 model User {
-  id          String      @id @default(cuid())
-  email       String      @unique
-  name        String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  memberships OrgMember[]
-  savedViews  SavedView[]  @relation("UserToSavedView")
+  id            String      @id @default(cuid())
+  email         String      @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  memberships   OrgMember[]
+  savedViews    SavedView[]  @relation("UserToSavedView")
+  accounts      Account[]
+  sessions      Session[]
 
   @@map("users")
 }
@@ -50,10 +64,15 @@ model OrgMember {
   companies      Company[]
   contacts       Contact[]
   deals          Deal[]
+  // Onboarding fields
+  onboardingDismissed Boolean @default(false) @map("onboarding_dismissed")
+  onboardingProgress  Json    @map("onboarding_progress")
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   pipelines      Pipeline[]
   webhooks       Webhook[]
+  apiKeys        ApiKey[]
+  savedViews     SavedView[] @relation("SavedViewOwner")
 
   @@unique([organizationId, userId])
   @@map("org_members")
@@ -185,6 +204,11 @@ model SavedView {
   ownerId        String?
   name           String
   entity         String
+  description    String?
+  viewUrl        String?
+  entityType     String?
+  sortBy         String?
+  sortOrder      String?
   filters        Json
   isPublic       Boolean  @default(false)
   isStarred      Boolean  @default(false)
@@ -193,6 +217,7 @@ model SavedView {
   updatedAt      DateTime @updatedAt
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember?   @relation("SavedViewOwner", fields: [ownerId], references: [id])
   createdBy      User?        @relation("UserToSavedView", fields: [createdById], references: [id])
 
   @@index([organizationId, entity])
@@ -204,6 +229,10 @@ model Activity {
   organizationId String
   type           ActivityType
   description    String
+  subject        String?
+  dueDate        DateTime?
+  isCompleted    Boolean      @default(false)
+  body           String?
   contactId      String?
   dealId         String?
   ownerId        String
@@ -249,6 +278,7 @@ model EventAudit {
   userId         String?
   ipAddress      String?
   userAgent      String?
+  selfHash       String?
   createdAt      DateTime     @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -258,10 +288,108 @@ model EventAudit {
   @@map("events_audit")
 }
 
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  key            String       @unique
+  permissions    Json
+  isActive       Boolean      @default(true)
+  keyPrefix      String?
+  expiresAt      DateTime?
+  lastUsedAt     DateTime?
+  ownerId        String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          OrgMember    @relation(fields: [ownerId], references: [id])
+
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+model ImportHistory {
+  id             String       @id @default(cuid())
+  organizationId String
+  importType     String
+  status         String
+  totalRecords   Int
+  processedRecords Int       @default(0)
+  errors         Json
+  fileName       String?
+  fileSize       Int?
+  entityType     String?
+  totalRows      Int?
+  processedRows  Int          @default(0)
+  skippedRows    Int          @default(0)
+  errorRows      Int          @default(0)
+  affectedIds    String[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rollbacks      ImportRollback[]
+
+  @@index([organizationId])
+  @@map("import_histories")
+}
+
+model ImportRollback {
+  id             String       @id @default(cuid())
+  importHistoryId String
+  recordType     String
+  recordId       String
+  originalData   Json
+  importId       String?
+  action         String?
+  entityId       String?
+  createdAt      DateTime     @default(now())
+  importHistory  ImportHistory @relation(fields: [importHistoryId], references: [id], onDelete: Cascade)
+
+  @@index([importHistoryId])
+  @@map("import_rollbacks")
+}
+
+model ImportTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  template       Json
+  ownerId        String?
+  isDefault      Boolean      @default(false)
+  entityType     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("import_templates")
+}
+
+model WorkspaceJob {
+  id             String       @id @default(cuid())
+  organizationId String
+  type           String
+  status         String
+  progress       Int          @default(0)
+  result         Json?
+  userId         String?
+  metadata       Json?
+  completedAt    DateTime?
+  error          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("workspace_jobs")
+}
+
 enum OrgMemberRole {
   OWNER
   ADMIN
   MEMBER
+  DEMO
 }
 
 enum ActivityType {
@@ -270,4 +398,50 @@ enum ActivityType {
   MEETING
   NOTE
   TASK
+}
+
+enum OrganizationPlan {
+  FREE
+  PRO
+  TEAM
+}
+
+// NextAuth required models for email authentication
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }

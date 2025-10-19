@@ -1,16 +1,20 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table'
 import { useCompanyColumns } from '@/hooks/use-table-columns'
 import { Plus } from 'lucide-react'
+import { CreateCompanyDialog } from '@/components/companies/CreateCompanyDialog'
 
 export default function CompaniesPage() {
   const columns = useCompanyColumns()
+  const [createOpen, setCreateOpen] = useState(false)
 
   const handleCreate = () => {
-    // TODO: Open create company dialog
-    console.log('Create company')
+    setCreateOpen(true)
   }
 
   const handleImport = () => {
@@ -40,6 +44,8 @@ export default function CompaniesPage() {
         onCreate={handleCreate}
         onImport={handleImport}
       />
+
+      <CreateCompanyDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }

@@ -1,10 +1,10 @@
-'use client'
+export const dynamic = 'force-dynamic'
 
 import { BetaBanner } from '@/components/site/BetaBanner'
 import { ReactNode, Suspense } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import SearchTriggerButton from '@/components/SearchTriggerButton'
 import { SkipLink } from '@/components/skip-link'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RouteErrorBoundary } from '@/components/route-error-boundary'
@@ -14,28 +14,10 @@ import { CommandKProvider } from '@/components/CommandK'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'
 import { OnboardingProgressServer } from '@/components/onboarding/OnboardingProgressServer'
 import { DemoPill } from '@/components/ui/DemoPill'
-import { useSession } from 'next-auth/react'
-import {
-  Users,
-  Building2,
-  Target,
-  Activity,
-  Settings,
-  Menu,
-  Search,
-} from 'lucide-react'
-
-const navigation = [
-  { name: 'Contacts', href: '/app/contacts', icon: Users },
-  { name: 'Companies', href: '/app/companies', icon: Building2 },
-  { name: 'Deals', href: '/app/deals', icon: Target },
-  { name: 'Activities', href: '/app/activities', icon: Activity },
-  { name: 'Settings', href: '/app/settings', icon: Settings },
-]
+import { Menu, Search } from 'lucide-react'
+import AppNav from '@/components/AppNav'
 
 function AppLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-
   return (
     <div className="min-h-screen bg-background">
       <BetaBanner />
@@ -60,51 +42,11 @@ function AppLayout({ children }: { children: ReactNode }) {
               <Suspense fallback={null}>
                 <OnboardingProgressServer />
               </Suspense>
-              {/* Search trigger button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-                onClick={() => {
-                  // Trigger command palette with Cmd/Ctrl+K
-                  const event = new KeyboardEvent('keydown', {
-                    key: 'k',
-                    metaKey: true,
-                    bubbles: true,
-                  })
-                  document.dispatchEvent(event)
-                }}
-              >
-                <Search className="h-4 w-4" />
-                <span className="hidden md:inline">Command...</span>
-                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex">
-                  ⌘K
-                </kbd>
-              </Button>
+              {/* Search trigger button (client) */}
+              <SearchTriggerButton />
               <OfflineIndicator />
               <nav className="hidden items-center space-x-1 md:flex">
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  const isDealsLink = item.name === 'Deals'
-                  return (
-                    <Button
-                      key={item.name}
-                      variant={isActive ? 'default' : 'ghost'}
-                      size="sm"
-                      asChild
-                      data-tour={isDealsLink ? 'deals-nav' : undefined}
-                    >
-                      <Link
-                        href={item.href}
-                        className="flex items-center space-x-2"
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </Button>
-                  )
-                })}
+                <AppNav />
               </nav>
             </div>
             {/* Mobile menu button */}

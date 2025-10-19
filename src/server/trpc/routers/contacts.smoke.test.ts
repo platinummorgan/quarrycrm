@@ -29,7 +29,7 @@ describe('Contacts Feature - Smoke Tests', () => {
     })
 
     const membership = await prisma.orgMember.create({
-      data: { organizationId: org.id, userId: user.id, role: 'OWNER' },
+      data: { organizationId: org.id, userId: user.id, role: 'OWNER', onboardingProgress: {} },
       select: { id: true },
     })
 

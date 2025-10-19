@@ -18,6 +18,7 @@ const companyCreateSchema = z.object({
   industry: z.string().optional(),
   description: z.string().optional(),
   domain: z.string().optional(),
+  ownerId: z.string().optional(), // Optional owner, defaults to current user
 })
 
 const companyUpdateSchema = z.object({
@@ -250,11 +251,12 @@ export const companiesRouter = createTRPCRouter({
   create: demoProcedure
     .input(companyCreateSchema)
     .mutation(async ({ ctx, input }) => {
+      const { ownerId, ...data } = input
       return await prisma.company.create({
         data: {
-          ...input,
+          ...data,
           organizationId: ctx.orgId,
-          ownerId: ctx.userId,
+          ownerId: ownerId || (ctx as any).membership.id,
         },
         select: {
           id: true,
@@ -335,4 +337,22 @@ export const companiesRouter = createTRPCRouter({
         },
       })
     }),
+
+  // List owner options for dropdowns
+  listOwnerOptions: orgProcedure.query(async ({ ctx }) => {
+    const members = await prisma.orgMember.findMany({
+      where: { organizationId: ctx.orgId },
+      select: {
+        id: true,
+        user: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    return members.map((m) => ({
+      id: m.id,
+      label: m.user?.name ?? m.user?.email ?? 'Member',
+      subLabel: m.user?.email ?? '',
+    }))
+  }),
 })

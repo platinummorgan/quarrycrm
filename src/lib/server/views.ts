@@ -206,6 +206,7 @@ export class ViewDatabase {
       data: {
         name: data.name,
         description: data.description,
+        entity: data.entityType,
         entityType: data.entityType,
         filters: data.config.filters,
         sortBy: data.config.sortBy,

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { getContacts } from '@/server/contacts'
 import { contactListResponseSchema, type ContactListResponse } from '@/lib/zod/contacts'
 import {
   Table,
@@ -68,8 +67,8 @@ export function ContactsTable({
           if (view) {
             setCurrentView({
               filters: view.filters as any,
-              sortBy: view.sortBy || 'updatedAt',
-              sortOrder: (view.sortOrder as 'asc' | 'desc') || 'desc',
+              sortBy: (view as any).sortBy || 'updatedAt',
+              sortOrder: ((view as any).sortOrder as 'asc' | 'desc') || 'desc',
               visibleColumns: currentView.visibleColumns,
             })
           }
@@ -98,33 +97,27 @@ export function ContactsTable({
     router.replace(newUrl, { scroll: false })
   }, [debouncedQuery, cursor, router])
 
-  // Fetch data when query, cursor, or view changes
+  // Use trpc useQuery to fetch paginated contacts (client-side)
+  const listQuery = trpc.contacts.list.useQuery(
+    {
+      q: debouncedQuery || undefined,
+      limit: 25,
+      cursor: cursor || undefined,
+      ...(currentView?.filters || {}),
+    },
+    {
+      keepPreviousData: true,
+      enabled: !(debouncedQuery === initialQuery && cursor === initialCursor && !!initialData),
+    }
+  )
+
+  // Sync trpc query results into local state for existing UI logic
   useEffect(() => {
-    if (debouncedQuery === initialQuery && cursor === initialCursor && initialData) {
-      return // Don't refetch if we already have the data
+    setIsLoading(listQuery.isLoading)
+    if (listQuery.data) {
+      setData(listQuery.data as any)
     }
-
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        const result = await getContacts({
-          q: debouncedQuery || undefined,
-          cursor: cursor,
-          // TODO: Add sortBy/sortOrder support to getContacts server action
-          // sortBy: currentView.sortBy,
-          // sortOrder: currentView.sortOrder,
-          ...currentView.filters,
-        })
-        setData(result)
-      } catch (error) {
-        console.error('Failed to fetch contacts:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [debouncedQuery, cursor, initialQuery, initialCursor, initialData, currentView])
+  }, [listQuery.data, listQuery.isLoading])
 
   const contacts = data?.items || []
   const hasNextPage = data?.hasMore ?? false

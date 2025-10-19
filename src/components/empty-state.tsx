@@ -23,6 +23,8 @@ interface EmptyStateProps {
   className?: string
   /** Accessible label for the icon container */
   iconLabel?: string
+  /** Whether to show the CTA actions */
+  showCta?: boolean
 }
 
 export function EmptyState({
@@ -31,7 +33,8 @@ export function EmptyState({
   description,
   actions,
   className,
-  iconLabel
+  iconLabel,
+  showCta = true
 }: EmptyStateProps) {
   return (
     <Card className={`border-dashed ${className || ''}`}>
@@ -66,12 +69,12 @@ export function EmptyState({
           className="text-muted-foreground max-w-sm"
           style={{ 
             fontSize: designTokens.typography.fontSize.sm,
-            marginBottom: actions && actions.length > 0 ? designTokens.spacing[6] : 0
+            marginBottom: actions && actions.length > 0 && showCta ? designTokens.spacing[6] : 0
           }}
         >
           {description}
         </p>
-        {actions && actions.length > 0 && (
+        {actions && actions.length > 0 && showCta && (
           <div className="flex flex-col sm:flex-row gap-3">
             {actions.map((action, index) => {
               const ActionIcon = action.icon

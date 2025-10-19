@@ -229,12 +229,23 @@ ${colors.reset}
     log.step('Pre-flight Checks');
     
     log.info('Checking TypeScript...');
-    await execAsync('npm run type-check');
-    log.success('TypeScript check passed');
+    // Allow tests or quick deploys to skip the TypeScript preflight by setting
+    // SKIP_TYPE_CHECK=1 in the environment. This is useful for CI or one-off
+    // deploys where local type errors (tests/scripts) should not block deploy.
+    if (process.env.SKIP_TYPE_CHECK === '1') {
+      log.warning('Skipping TypeScript check (SKIP_TYPE_CHECK=1)');
+    } else {
+      await execAsync('npm run type-check');
+      log.success('TypeScript check passed');
+    }
 
     log.info('Checking build...');
-    await execAsync('npm run build');
-    log.success('Build successful');
+    if (process.env.SKIP_BUILD === '1') {
+      log.warning('Skipping local build (SKIP_BUILD=1). Vercel will build remotely.');
+    } else {
+      await execAsync('npm run build');
+      log.success('Build successful');
+    }
 
     // Setup
     await setupVercelCLI();

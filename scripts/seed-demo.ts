@@ -422,6 +422,7 @@ async function main() {
           organizationId: org.id,
           userId: user.id,
           role: 'DEMO',
+          onboardingProgress: {},
         },
       })
       console.log('✓ Created org member with DEMO role\n')
