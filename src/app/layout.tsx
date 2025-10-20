@@ -8,29 +8,10 @@ import { SessionProvider } from '@/components/providers/session-provider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { PreviewBanner } from '@/components/PreviewBanner'
 import { DebugHeaderPill } from '@/components/DebugHeaderPill'
-import dynamic from 'next/dynamic'
+import { DemoBanner } from '@/components/DemoBanner'
+import { DemoTour } from '@/components/demo/Tour'
 
 const inter = Inter({ subsets: ['latin'] })
-
-// Dynamically import DemoBanner to avoid SSR issues
-const DemoBanner = dynamic(
-  () =>
-    import('@/components/DemoBanner').then((mod) => ({
-      default: mod.DemoBanner,
-    })),
-  {
-    ssr: false,
-  }
-)
-
-// Dynamically import DemoTour to avoid SSR issues
-const DemoTour = dynamic(
-  () =>
-    import('@/components/demo/Tour').then((mod) => ({ default: mod.DemoTour })),
-  {
-    ssr: false,
-  }
-)
 
 export async function generateMetadata(): Promise<Metadata> {
   const isPreview = process.env.NEXT_PUBLIC_APP_ENV === 'preview'
