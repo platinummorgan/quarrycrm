@@ -8,8 +8,11 @@ import { SessionProvider } from '@/components/providers/session-provider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { PreviewBanner } from '@/components/PreviewBanner'
 import { DebugHeaderPill } from '@/components/DebugHeaderPill'
-import { DemoBanner } from '@/components/DemoBanner'
-import { DemoTour } from '@/components/demo/Tour'
+import dynamic from 'next/dynamic'
+
+// Dynamically import components that use useSession to avoid SSR issues
+const DemoBanner = dynamic(() => import('@/components/DemoBanner').then(m => ({ default: m.DemoBanner })), { ssr: false })
+const DemoTour = dynamic(() => import('@/components/demo/Tour').then(m => ({ default: m.DemoTour })), { ssr: false })
 
 const inter = Inter({ subsets: ['latin'] })
 
