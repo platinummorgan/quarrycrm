@@ -37,11 +37,10 @@ function AppLayout({ children }: { children: ReactNode }) {
               {/* Small pill in header for redundancy */}
               <DemoPill variant="default" />
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Onboarding Progress */}
-              <Suspense fallback={null}>
+            <div className="flex items-center space-x-4">              {/* Onboarding Progress - TEMPORARILY DISABLED FOR DEBUGGING */}
+              {/* <Suspense fallback={null}>
                 <OnboardingProgressServer />
-              </Suspense>
+              </Suspense> */}
               {/* Search trigger button (client) */}
               <SearchTriggerButton />
               <OfflineIndicator />
