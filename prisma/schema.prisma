@@ -66,7 +66,8 @@ model OrgMember {
   deals          Deal[]
   // Onboarding fields
   onboardingDismissed Boolean @default(false) @map("onboarding_dismissed")
-  onboardingProgress  Json    @map("onboarding_progress")
+  onboardingProgress  Json?   @map("onboarding_progress")
+  onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   pipelines      Pipeline[]
@@ -445,3 +446,4 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
+
