@@ -7,7 +7,9 @@ import { toast } from '@/lib/toast'
 export const DEFAULT_LOADING_TIMEOUT = 2000
 
 interface UseLoadingStateOptions {
-  timeout?: number // Default DEFAULT_LOADING_TIMEOUT
+  // timeout: number -> milliseconds to wait before showing empty state
+  // Pass `null` to disable the timeout entirely (keep skeleton until loading finishes)
+  timeout?: number | null // Default DEFAULT_LOADING_TIMEOUT when undefined
   showToast?: boolean
   toastMessage?: string
   onTimeout?: () => void
@@ -22,11 +24,14 @@ export function useLoadingState(
   options: UseLoadingStateOptions = {}
 ) {
   const {
-    timeout = DEFAULT_LOADING_TIMEOUT,
+    timeout: timeoutOption = DEFAULT_LOADING_TIMEOUT,
     showToast = true,
     toastMessage = 'Taking longer than expected. Please wait...',
     onTimeout,
   } = options
+
+  // Allow callers to pass `timeout: null` to disable the timeout behavior.
+  const timeout = timeoutOption === null ? null : timeoutOption
 
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [hasTimedOut, setHasTimedOut] = useState(false)
@@ -35,6 +40,12 @@ export function useLoadingState(
     if (isLoading) {
       setShowSkeleton(true)
       setHasTimedOut(false)
+
+      // If timeout is explicitly null, do not start a timer - keep skeleton until
+      // the loading flag resolves.
+      if (timeout === null) {
+        return
+      }
 
       const timer = setTimeout(() => {
         setShowSkeleton(false)

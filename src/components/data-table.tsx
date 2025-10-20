@@ -171,7 +171,8 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
     listQuery.isLoading && data.length === 0,
     {
       // No timeout - data will load as long as it takes
-      timeout: undefined,
+      // Passing `null` disables the timeout and keeps the skeleton until loading finishes
+      timeout: null,
     }
   )
 

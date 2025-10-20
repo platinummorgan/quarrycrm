@@ -64,8 +64,9 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
   const updateDealMutation = trpc.deals.update.useMutation()
   const { showSkeleton, showEmptyState } = useLoadingState(isLoading, {
     // Disabled timeout for production to accommodate cold starts (can take 15-20s)
-    // and demo mode for unauthenticated users
-    timeout: undefined,
+    // and demo mode for unauthenticated users. Passing `null` tells the hook
+    // to keep showing the skeleton until loading completes.
+    timeout: null,
   })
 
   const sensors = useSensors(
