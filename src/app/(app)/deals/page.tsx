@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { BoardWithQueryHandler } from '@/components/deals/BoardWithQueryHandler'
 import { getDeals, getPipelines } from '@/server/deals'
 import { Skeleton } from '@/components/ui/skeleton'
+import ClientErrorBoundary from '@/components/ClientErrorBoundary'
 
 async function BoardWrapper() {
   // Fetch initial data on server
@@ -13,10 +14,12 @@ async function BoardWrapper() {
   ])
 
   return (
-    <BoardWithQueryHandler
-      initialDeals={dealsData}
-      initialPipelines={pipelinesData}
-    />
+    <ClientErrorBoundary>
+      <BoardWithQueryHandler
+        initialDeals={dealsData}
+        initialPipelines={pipelinesData}
+      />
+    </ClientErrorBoundary>
   )
 }
 
