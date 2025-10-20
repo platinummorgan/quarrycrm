@@ -74,9 +74,9 @@ type Deal = {
     user: {
       id: string
       name: string | null
-      email: string
-    }
-  }
+      email: string | null
+    } | null
+  } | null
   updatedAt: Date
   createdAt: Date
 }
@@ -166,6 +166,16 @@ function DealCard({
 
   const companyName = deal.company?.name || null
   const primaryEntity = contactName || companyName || 'No contact/company'
+  const ownerUser = deal.owner?.user
+  const ownerInitials =
+    ownerUser?.name
+      ?.split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase() ||
+    ownerUser?.email?.[0]?.toUpperCase() ||
+    '?'
 
   return (
     <Card
@@ -210,13 +220,7 @@ function DealCard({
 
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs">
-                {deal.owner.user.name
-                  ? deal.owner.user.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .toUpperCase()
-                  : deal.owner.user.email[0].toUpperCase()}
+                {ownerInitials}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -455,7 +459,7 @@ export function Board({
   const pipelineDeals = useMemo(() => {
     if (!selectedPipeline) return []
     return dealsData.items.filter(
-      (deal) => deal.pipeline.id === selectedPipeline
+      (deal) => deal.pipeline?.id === selectedPipeline
     )
   }, [dealsData.items, selectedPipeline])
 
