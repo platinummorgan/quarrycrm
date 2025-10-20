@@ -63,14 +63,9 @@ export function KanbanBoard({ pipelineId }: KanbanBoardProps) {
   // Update deal mutation
   const updateDealMutation = trpc.deals.update.useMutation()
   const { showSkeleton, showEmptyState } = useLoadingState(isLoading, {
-    // Increased timeout to 5s for production environments where API calls and database
-    // connections can take longer, especially on cold starts or slower connections
-    timeout: 5000,
-    showToast: true,
-    toastMessage: 'Loading kanban board is taking longer than expected...',
-    onTimeout: () => {
-      console.error('Failed to load kanban board within timeout')
-    },
+    // Disabled timeout for production to accommodate cold starts (can take 15-20s)
+    // and demo mode for unauthenticated users
+    timeout: undefined,
   })
 
   const sensors = useSensors(

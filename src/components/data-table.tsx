@@ -170,12 +170,8 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   const { showSkeleton, showEmptyState } = useLoadingState(
     listQuery.isLoading && data.length === 0,
     {
-      timeout: 5000, // Increased to 5s for slower server/database connections
-      showToast: true,
-      toastMessage: `Loading ${entity} is taking longer than expected...`,
-      onTimeout: () => {
-        console.error(`Failed to load ${entity} within timeout`)
-      },
+      // No timeout - data will load as long as it takes
+      timeout: undefined,
     }
   )
 
