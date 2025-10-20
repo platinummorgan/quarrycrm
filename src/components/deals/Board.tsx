@@ -99,6 +99,23 @@ type Pipeline = {
   stages: Stage[]
 }
 
+// Ensure date fields survive serialization from server actions
+function deserializeDealsResponse(
+  data: DealsListResponse
+): DealsListResponse {
+  return {
+    ...data,
+    items: data.items.map((deal) => ({
+      ...deal,
+      createdAt: new Date(deal.createdAt),
+      updatedAt: new Date(deal.updatedAt),
+      expectedClose: deal.expectedClose
+        ? new Date(deal.expectedClose)
+        : null,
+    })),
+  }
+}
+
 // Deal Card Component
 function DealCard({
   deal,
@@ -400,7 +417,9 @@ export function Board({
   const isDemo =
     session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [selectedPipeline, setSelectedPipeline] = useState<string>('')
-  const [dealsData, setDealsData] = useState<DealsListResponse>(initialDeals)
+  const [dealsData, setDealsData] = useState<DealsListResponse>(() =>
+    deserializeDealsResponse(initialDeals)
+  )
   const [pipelinesData, setPipelinesData] =
     useState<PipelinesListResponse>(initialPipelines)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -499,7 +518,7 @@ export function Board({
         pipeline: selectedPipeline,
         limit: 100,
       })
-      setDealsData(result)
+      setDealsData(deserializeDealsResponse(result))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load deals')
       toast.error('Failed to load deals')
