@@ -1,0 +1,15 @@
+{
+  // Treat the project globals as PostCSS so @tailwind/@apply are recognized
+  "files.associations": {
+    "src/app/globals.css": "postcss"
+  },
+
+  // Turn off the built-in CSS validator (it doesn't understand Tailwind at-rules)
+  "css.validate": false,
+
+  // Help Tailwind IntelliSense know about PostCSS/CSS files
+  "tailwindCSS.includeLanguages": {
+    "postcss": "postcss",
+    "css": "css"
+  }
+}

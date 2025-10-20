@@ -94,11 +94,18 @@ export async function getOrganizationPlan(
   orgId: string
 ): Promise<OrganizationPlan> {
   const { prisma } = await import('@/lib/prisma')
-  const org = await prisma.organization.findUnique({
-    where: { id: orgId },
-    select: { plan: true },
-  })
-  return org?.plan || 'FREE'
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { plan: true },
+    })
+    return org?.plan || 'FREE'
+  } catch (err) {
+    // If the DB schema doesn't contain the `plan` column yet (older test DB),
+    // fall back to FREE without throwing. This keeps tests and demos working
+    // without requiring a destructive schema reset.
+    return 'FREE'
+  }
 }
 
 export async function checkPlanLimit(

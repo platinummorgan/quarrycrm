@@ -192,9 +192,10 @@ export const settingsRouter = createTRPCRouter({
         })
       }
 
-      // Import plan limits
-      const { PLAN_LIMITS } = await import('@/lib/plans')
-      const limit = PLAN_LIMITS[org.plan].users
+  // Import plan limits and resolve plan defensively
+  const { PLAN_LIMITS, getOrganizationPlan } = await import('@/lib/plans')
+  const plan = await getOrganizationPlan(orgId)
+  const limit = PLAN_LIMITS[plan].users
       if (limit !== -1 && org._count.members >= limit) {
         throw new TRPCError({
           code: 'FORBIDDEN',
@@ -430,8 +431,9 @@ export const settingsRouter = createTRPCRouter({
         })
       }
 
-      const { PLAN_LIMITS } = await import('@/lib/plans')
-      const limit = PLAN_LIMITS[org.plan].apiKeys
+  const { PLAN_LIMITS, getOrganizationPlan } = await import('@/lib/plans')
+  const plan = await getOrganizationPlan(orgId)
+  const limit = PLAN_LIMITS[plan].apiKeys
       if (limit !== -1 && org._count.apiKeys >= limit) {
         throw new TRPCError({
           code: 'FORBIDDEN',
@@ -593,8 +595,9 @@ export const settingsRouter = createTRPCRouter({
         })
       }
 
-      const { PLAN_LIMITS } = await import('@/lib/plans')
-      const limit = PLAN_LIMITS[org.plan].webhooks
+  const { PLAN_LIMITS, getOrganizationPlan } = await import('@/lib/plans')
+  const plan = await getOrganizationPlan(orgId)
+  const limit = PLAN_LIMITS[plan].webhooks
       if (limit !== -1 && org._count.webhooks >= limit) {
         throw new TRPCError({
           code: 'FORBIDDEN',
@@ -776,13 +779,15 @@ export const settingsRouter = createTRPCRouter({
       })
     }
 
-    const { PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES } = await import('@/lib/plans')
-    const limits = PLAN_LIMITS[org.plan]
+    const { PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES, getOrganizationPlan } =
+      await import('@/lib/plans')
+    const plan = await getOrganizationPlan(orgId)
+    const limits = PLAN_LIMITS[plan]
 
     return {
-      plan: org.plan,
-      planName: PLAN_NAMES[org.plan],
-      pricing: PLAN_PRICES[org.plan],
+      plan,
+      planName: PLAN_NAMES[plan],
+      pricing: PLAN_PRICES[plan],
       usage: {
         contacts: org._count.contacts,
         companies: org._count.companies,

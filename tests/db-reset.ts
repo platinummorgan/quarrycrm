@@ -49,7 +49,7 @@ const globalLock = (() => {
  */
 export async function resetPostgresDb(
   client?: PrismaClient | Prisma.TransactionClient
-) {
+): Promise<void> {
   // Safety check: Refuse to TRUNCATE unless DATABASE_URL points to a test DB
   // or ALLOW_UNSAFE_TEST_DB=1 was set in test setup
   const databaseUrl = process.env.DATABASE_URL || ''
@@ -74,20 +74,20 @@ export async function resetPostgresDb(
     const resetPromise = (async () => {
       // Query tables only on first call, then reuse cached list
       if (cachedTables === null) {
-        const tables = await db.$queryRaw<Array<{ tablename: string }>>`
+        const tableRows = await db.$queryRaw<Array<{ tablename: string }>>`
           SELECT tablename
           FROM pg_tables
           WHERE schemaname = 'public'
             AND tablename <> '_prisma_migrations'
         `
-        cachedTables = tables.map((t) => String(t.tablename))
+        cachedTables = tableRows.map((row) => String(row.tablename))
       }
 
       // Skip TRUNCATE if no tables to reset
       if (cachedTables.length === 0) return
 
       const qualified = cachedTables
-        .map((t) => `"public"."${t.replace(/"/g, '""')}"`)
+        .map((tableName) => `"public"."${tableName.replace(/"/g, '""')}"`)
         .join(', ')
 
       // TRUNCATE with RESTART IDENTITY and CASCADE to reset sequences and respect FKs
@@ -192,9 +192,13 @@ export async function withAdvisoryLock<T>(
   }
 
   try {
-    return await client.$transaction(async (tx: Prisma.TransactionClient) => {
-      return await fn(tx)
-    })
+    // Run the provided function while holding the advisory lock, but do NOT
+    // wrap it inside `client.$transaction(...)` because long-running work
+    // (inspecting information_schema, multiple inserts) can exceed Prisma's
+    // interactive transaction timeout (defaults to ~5s) and cause P2028.
+    // The advisory lock serializes access across connections, so running the
+    // callback on the client connection directly is safe and avoids txn timeouts.
+    return await fn(client)
   } finally {
     try {
       await client.$executeRawUnsafe(`SELECT pg_advisory_unlock(${LOCK_ID})`)

@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { toast } from '@/lib/toast'
 
+// Expose default timeout so it's testable and configurable in one place
+export const DEFAULT_LOADING_TIMEOUT = 2000
+
 interface UseLoadingStateOptions {
-  timeout?: number // Default 400ms
+  timeout?: number // Default DEFAULT_LOADING_TIMEOUT
   showToast?: boolean
   toastMessage?: string
   onTimeout?: () => void
@@ -19,7 +22,7 @@ export function useLoadingState(
   options: UseLoadingStateOptions = {}
 ) {
   const {
-    timeout = 400,
+    timeout = DEFAULT_LOADING_TIMEOUT,
     showToast = true,
     toastMessage = 'Taking longer than expected. Please wait...',
     onTimeout,
