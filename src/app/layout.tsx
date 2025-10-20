@@ -78,7 +78,6 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <PreviewBanner />
-        <DemoBanner />
         <DebugHeaderPill />
         <ThemeProvider
           attribute="class"
@@ -89,6 +88,7 @@ export default function RootLayout({
           <SessionProvider>
             <TRPCProvider>
               <ToastProvider>
+                <DemoBanner />
                 {children}
                 <DemoTour />
               </ToastProvider>
