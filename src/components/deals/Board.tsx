@@ -420,7 +420,9 @@ export function Board({
   const session = sessionResult?.data
   const isDemo =
     session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
-  const [selectedPipeline, setSelectedPipeline] = useState<string>('')
+  const [selectedPipeline, setSelectedPipeline] = useState<string>(() => {
+    return initialPipelines[0]?.id ?? ''
+  })
   const [dealsData, setDealsData] = useState<DealsListResponse>(() =>
     deserializeDealsResponse(initialDeals)
   )
@@ -434,9 +436,17 @@ export function Board({
 
   const pipelines = pipelinesData || []
 
-  // Auto-select first pipeline if none selected
+  // Ensure the selected pipeline always points at an existing pipeline
   useEffect(() => {
-    if (!selectedPipeline && pipelines.length > 0) {
+    if (pipelines.length === 0) {
+      if (selectedPipeline !== '') {
+        setSelectedPipeline('')
+      }
+      return
+    }
+
+    const pipelineExists = pipelines.some((pipeline) => pipeline.id === selectedPipeline)
+    if (!pipelineExists) {
       setSelectedPipeline(pipelines[0].id)
     }
   }, [pipelines, selectedPipeline])
