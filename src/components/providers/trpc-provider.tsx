@@ -1,7 +1,7 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { httpBatchLink } from '@trpc/client'
+import { httpBatchLink, loggerLink } from '@trpc/client'
 import React, { useState } from 'react'
 import superjson from 'superjson'
 import { trpc } from '@/lib/trpc'
@@ -12,6 +12,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       transformer: superjson,
       links: [
+        loggerLink({
+          enabled: (opts) =>
+            process.env.NODE_ENV === 'development' ||
+            (opts.direction === 'down' && opts.result instanceof Error),
+        }),
         httpBatchLink({
           url: '/api/trpc',
           // Ensure browser requests send cookies so server can read NextAuth session
@@ -38,8 +43,10 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </trpc.Provider>
+    <QueryClientProvider client={queryClient}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        {children}
+      </trpc.Provider>
+    </QueryClientProvider>
   )
 }
