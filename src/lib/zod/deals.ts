@@ -1,49 +1,43 @@
+// src/lib/zod/deals.ts
 import { z } from 'zod'
 
-// Helpers
-const zDate = z.union([
-  z.date(),
-  z.string().datetime().transform((s) => new Date(s)),
-  z.string().transform((s) => new Date(s)), // tolerate plain strings
-  z.number().transform((n) => new Date(n)), // tolerate epoch
-])
+// helpers
+const CoercedDate = z
+  .union([z.date(), z.string(), z.number()])
+  .transform((v) => (v instanceof Date ? v : new Date(v)))
+  .refine((d) => !Number.isNaN(d.getTime()), { message: 'Invalid date' })
 
-// If your deal.value might ever be a string (Decimal/JSON), coerce it:
-const zNumberish = z.preprocess((v) => (v === null || v === '' ? null : v), z.union([
-  z.number(),
-  z.string().transform((s) => Number(s)),
-])).nullable()
-
-// Base schemas
+// ----- Pipeline / Stage -----
 export const pipelineSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().nullable().optional(),
-  isDefault: z.boolean().optional().default(false),
+  description: z.string().nullable().optional(),       // often nullable/omitted
+  isDefault: z.boolean().optional().default(false),     // some APIs omit this
   stages: z.array(
     z.object({
       id: z.string(),
       name: z.string(),
       order: z.number(),
       color: z.string().nullable().optional(),
-      // Make _count optional and default deals to 0 if omitted
       _count: z
         .object({
-          deals: z.number(),
+          deals: z.number().optional().default(0),
         })
-        .partial()
         .optional()
-        .transform((c) => ({ deals: c?.deals ?? 0 })),
+        .default({ deals: 0 }),
     })
   ),
 })
 
+export const pipelinesListResponseSchema = z.array(pipelineSchema)
+
+// ----- Deal -----
 export const dealSchema = z.object({
   id: z.string(),
-  title: z.string().nullable().optional(),
-  value: zNumberish, // was z.number().nullable()
-  probability: zNumberish, // tolerant; if you truly never send it, make it .nullable().optional()
-  expectedClose: zDate.nullable().optional(),
+  title: z.string(),
+  value: z.number().nullable().optional(),
+  probability: z.number().nullable().optional(),        // tolerate missing
+  expectedClose: z.union([CoercedDate, z.null()]).optional().nullable(),
   stage: z
     .object({
       id: z.string(),
@@ -52,10 +46,12 @@ export const dealSchema = z.object({
     })
     .nullable()
     .optional(),
-  pipeline: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
+  pipeline: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .optional(),                                        // many list endpoints omit nested pipeline
   contact: z
     .object({
       id: z.string(),
@@ -68,30 +64,33 @@ export const dealSchema = z.object({
   company: z
     .object({
       id: z.string(),
-      name: z.string().nullable().optional(),
+      name: z.string(),
     })
     .nullable()
     .optional(),
-  owner: z.object({
-    id: z.string(),
-    user: z.object({
+  owner: z
+    .object({
       id: z.string(),
-      name: z.string().nullable().optional(),
-      email: z.string().nullable().optional(), // be lenient; some seeds don’t set email
-    }),
-  }),
-  updatedAt: zDate,
-  createdAt: zDate,
+      user: z.object({
+        id: z.string(),
+        name: z.string().nullable().optional(),
+        email: z.string().nullable().optional(),         // can be null in seed/dev
+      }),
+    })
+    .optional(),
+  updatedAt: CoercedDate,
+  createdAt: CoercedDate,
 })
 
-// Form schemas
+// ----- Forms / Filters -----
 export const dealFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  value: zNumberish.optional(),
-  probability: zNumberish.refine((v) => v == null || (v >= 0 && v <= 100), {
-    message: 'Probability must be between 0 and 100',
-  }).optional(),
-  expectedClose: zDate.optional(),
+  value: z.coerce.number().min(0).optional(),
+  probability: z.coerce.number().min(0).max(100).optional(),
+  expectedClose: z
+    .union([z.coerce.date(), z.string(), z.null()])
+    .optional()
+    .nullable(),
   stageId: z.string().optional(),
   pipelineId: z.string(),
   contactId: z.string().optional(),
@@ -103,25 +102,21 @@ export const moveDealSchema = z.object({
   stageId: z.string(),
 })
 
-// Filter schemas
 export const dealsFiltersSchema = z.object({
   pipeline: z.string().optional(),
   q: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).default(25),
+  limit: z.coerce.number().min(1).max(100).default(25),  // coerce from querystring
   cursor: z.string().optional(),
 })
 
-// Response schemas
+// ----- Responses / Types -----
 export const dealsListResponseSchema = z.object({
   items: z.array(dealSchema),
-  nextCursor: z.string().nullable(),
-  hasMore: z.boolean(),
-  total: z.number(),
+  nextCursor: z.string().nullable().optional().default(null),
+  hasMore: z.boolean().optional().default(false),
+  total: z.number().optional().default(0),
 })
 
-export const pipelinesListResponseSchema = z.array(pipelineSchema)
-
-// Type exports
 export type Deal = z.infer<typeof dealSchema>
 export type Pipeline = z.infer<typeof pipelineSchema>
 export type DealFormData = z.infer<typeof dealFormSchema>
