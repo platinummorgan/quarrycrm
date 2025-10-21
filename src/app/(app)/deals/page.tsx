@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { BoardWithQueryHandler } from '@/components/deals/BoardWithQueryHandler'
 import { getDeals, getPipelines } from '@/server/deals'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,10 +28,12 @@ async function BoardWrapper() {
 
     return (
       <ClientErrorBoundary>
-        <BoardWithQueryHandler
-          initialDeals={dealsData}
-          initialPipelines={pipelinesData}
-        />
+        <React.Suspense fallback={<BoardSkeleton />}>
+          <BoardWithQueryHandler
+            initialDeals={dealsData}
+            initialPipelines={pipelinesData}
+          />
+        </React.Suspense>
       </ClientErrorBoundary>
     )
   } catch (error) {
