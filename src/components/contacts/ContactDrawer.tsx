@@ -305,7 +305,7 @@ export function ContactDrawer({
         email: contact.email || '',
         phone: contact.phone || '',
         notes: contact.notes || '',
-        ownerId: contact.owner.id,
+        ownerId: contact.owner?.id || undefined,
       })
       setCompanyId(contact.companyId || undefined)
       setIsLoadingContact(false)
