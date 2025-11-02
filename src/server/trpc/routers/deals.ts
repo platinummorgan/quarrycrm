@@ -50,6 +50,11 @@ const dealUpdateSchema = z.object({
   jobType: z.string().nullable().optional(),
   estimatedValue: z.number().positive().nullable().optional(),
   leadSource: z.enum(['GOOGLE', 'REFERRAL', 'YARD_SIGN', 'FACEBOOK', 'REPEAT_CUSTOMER', 'OTHER']).nullable().optional(),
+  jobAddress: z.string().nullable().optional(),
+  scheduledStart: z.date().nullable().optional(),
+  scheduledEnd: z.date().nullable().optional(),
+  crewAssigned: z.string().nullable().optional(),
+  paymentStatus: z.enum(['NOT_PAID', 'DEPOSIT_PAID', 'PAID_IN_FULL']).nullable().optional(),
 })
 
 const dealListResponseSchema = z.object({

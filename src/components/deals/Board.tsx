@@ -43,6 +43,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { DealStatusDialog } from './DealStatusDialog'
+import Link from 'next/link'
 
 // Types
 type Deal = {
@@ -222,19 +223,18 @@ function DealCard({
             </Badge>
 
             <div className="flex items-center gap-2">
-              {onStatusClick && (
+              <Link href={`/app/deals/${deal.id}`}>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onStatusClick(deal)
                   }}
                 >
-                  Details
+                  View Job
                 </Button>
-              )}
+              </Link>
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs">
                   {ownerInitials}

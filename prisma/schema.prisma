@@ -185,6 +185,11 @@ model Deal {
   jobType        String?
   estimatedValue Decimal?     @db.Decimal(10, 2)
   leadSource     LeadSource?
+  jobAddress     String?
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  crewAssigned   String?
+  paymentStatus  PaymentStatus? @default(NOT_PAID)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
@@ -467,5 +472,11 @@ enum LeadSource {
   FACEBOOK
   REPEAT_CUSTOMER
   OTHER
+}
+
+enum PaymentStatus {
+  NOT_PAID
+  DEPOSIT_PAID
+  PAID_IN_FULL
 }
 
