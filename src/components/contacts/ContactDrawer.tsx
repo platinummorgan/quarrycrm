@@ -23,7 +23,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, User, Mail, Phone } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Loader2, User, Mail, Phone, Trash2 } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { useRouter } from 'next/navigation'
 import { CompanySelect } from './CompanySelect'
@@ -44,6 +54,7 @@ export function ContactDrawer({
   )
   const [isCreating, setIsCreating] = useState(false)
   const [isLoadingContact, setIsLoadingContact] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const isEditMode = !!selectedContactId
 
@@ -151,6 +162,18 @@ export function ContactDrawer({
     },
     onError: (err) => {
       toast.error(err?.message ?? 'Failed to update contact')
+    },
+  })
+
+  const deleteMutation = trpc.contacts.delete.useMutation({
+    onSuccess: async () => {
+      await utils.contacts.list.invalidate()
+      handleOpenChange(false)
+      toast.success('Contact deleted successfully')
+      router.refresh()
+    },
+    onError: (err) => {
+      toast.error(err?.message ?? 'Failed to delete contact')
     },
   })
 
@@ -486,9 +509,52 @@ export function ContactDrawer({
                 )}
               </Button>
             </div>
+
+            {/* Delete Button - Only show in edit mode */}
+            {isEditMode && (
+              <div className="border-t pt-4">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Contact
+                </Button>
+              </div>
+            )}
           </form>
         )}
       </SheetContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this contact and all associated data.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedContactId) {
+                  deleteMutation.mutate({ id: selectedContactId })
+                  setDeleteDialogOpen(false)
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   )
 }
