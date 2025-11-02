@@ -3,6 +3,132 @@ import { createTRPCRouter, orgProcedure } from '@/server/trpc/trpc'
 import { prisma } from '@/lib/prisma'
 
 export const searchRouter = createTRPCRouter({
+  quick: orgProcedure
+    .input(
+      z.object({
+        query: z.string().min(1),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { query } = input
+      const organizationId = ctx.orgId
+
+      // Check if query is a phone number (3+ digits)
+      const isPhoneNumber = /^\d{3,}/.test(query.replace(/\D/g, ''))
+      const phoneDigits = query.replace(/\D/g, '')
+
+      // Search contacts
+      const contacts = await prisma.contact.findMany({
+        where: {
+          organizationId,
+          deletedAt: null,
+          OR: [
+            {
+              firstName: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              lastName: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            // Phone number search
+            ...(isPhoneNumber
+              ? [
+                  {
+                    phone: {
+                      contains: phoneDigits,
+                    },
+                  },
+                ]
+              : []),
+          ],
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          company: {
+            select: { name: true },
+          },
+        },
+        take: 10,
+        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      })
+
+      // Search deals
+      const deals = await prisma.deal.findMany({
+        where: {
+          organizationId,
+          deletedAt: null,
+          OR: [
+            {
+              title: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              contact: {
+                OR: [
+                  {
+                    firstName: {
+                      contains: query,
+                      mode: 'insensitive',
+                    },
+                  },
+                  {
+                    lastName: {
+                      contains: query,
+                      mode: 'insensitive',
+                    },
+                  },
+                  ...(isPhoneNumber
+                    ? [
+                        {
+                          phone: {
+                            contains: phoneDigits,
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          value: true,
+          contact: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+      })
+
+      return {
+        contacts,
+        deals,
+      }
+    }),
+
   global: orgProcedure
     .input(
       z.object({
