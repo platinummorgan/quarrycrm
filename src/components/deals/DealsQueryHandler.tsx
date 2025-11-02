@@ -9,21 +9,21 @@ export interface DealsQueryParams {
 }
 
 /**
- * Client component that handles ?pipeline=<id>&focus=<dealId> query parameters
- * to automatically select a pipeline and focus a specific deal card
+ * Client component that handles ?pipeline=<id>&focus=<leadId> query parameters
+ * to automatically select a pipeline and focus a specific lead card
  */
 export function DealsQueryHandler({
   onPipelineChange,
   onDealFocus,
 }: {
   onPipelineChange?: (pipelineId: string) => void
-  onDealFocus?: (dealId: string) => void
+  onDealFocus?: (leadId: string) => void
 }) {
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const pipelineId = searchParams?.get('pipeline')
-    const dealId = searchParams?.get('focus')
+    const leadId = searchParams?.get('focus')
 
     // Small delay to ensure board component is mounted and data is loaded
     setTimeout(() => {
@@ -31,18 +31,18 @@ export function DealsQueryHandler({
         onPipelineChange(pipelineId)
       }
 
-      if (dealId && onDealFocus) {
+      if (leadId && onDealFocus) {
         // Additional delay for focus to ensure pipeline is selected first
         setTimeout(
           () => {
-            onDealFocus(dealId)
+            onDealFocus(leadId)
 
-            // Scroll the deal card into view
-            const dealElement = document.querySelector(
-              `[data-deal-id="${dealId}"]`
+            // Scroll the lead card into view
+            const leadElement = document.querySelector(
+              `[data-deal-id="${leadId}"]`
             )
-            if (dealElement) {
-              dealElement.scrollIntoView({
+            if (leadElement) {
+              leadElement.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center',
               })

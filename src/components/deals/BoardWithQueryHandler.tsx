@@ -16,7 +16,7 @@ export function BoardWithQueryHandler({
   initialPipelines: PipelinesListResponse
 }) {
   const pipelineChangeRef = useRef<((pipelineId: string) => void) | undefined>()
-  const dealFocusRef = useRef<((dealId: string) => void) | undefined>()
+  const leadFocusRef = useRef<((leadId: string) => void) | undefined>()
 
   return (
     <>
@@ -24,11 +24,11 @@ export function BoardWithQueryHandler({
         initialDeals={initialDeals}
         initialPipelines={initialPipelines}
         onPipelineChangeRef={pipelineChangeRef}
-        onDealFocusRef={dealFocusRef}
+        onDealFocusRef={leadFocusRef}
       />
       <DealsQueryHandler
         onPipelineChange={(id) => pipelineChangeRef.current?.(id)}
-        onDealFocus={(id) => dealFocusRef.current?.(id)}
+        onDealFocus={(id) => leadFocusRef.current?.(id)}
       />
     </>
   )

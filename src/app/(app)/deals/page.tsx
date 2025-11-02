@@ -11,7 +11,7 @@ async function BoardWrapper() {
   // Fetch initial data on server with error handling
   try {
     console.log('[BoardWrapper] Starting data fetch...')
-    const [dealsData, pipelinesData] = await Promise.all([
+    const [leadsData, pipelinesData] = await Promise.all([
       getDeals({ limit: 100 }).catch(err => {
         console.error('[BoardWrapper] getDeals error:', err)
         throw err
@@ -22,7 +22,7 @@ async function BoardWrapper() {
       }),
     ])
     console.log('[BoardWrapper] Data fetched successfully', { 
-      deals: dealsData.items.length, 
+      leads: leadsData.items.length, 
       pipelines: pipelinesData.length 
     })
 
@@ -30,7 +30,7 @@ async function BoardWrapper() {
       <ClientErrorBoundary>
         <React.Suspense fallback={<BoardSkeleton />}>
           <BoardWithQueryHandler
-            initialDeals={dealsData}
+            initialDeals={leadsData}
             initialPipelines={pipelinesData}
           />
         </React.Suspense>
@@ -40,9 +40,9 @@ async function BoardWrapper() {
     console.error('[BoardWrapper] Fatal error:', error)
     return (
       <div className="rounded-lg border-2 border-destructive bg-destructive/10 p-8">
-        <h2 className="text-2xl font-semibold text-destructive">Failed to Load Deals</h2>
+        <h2 className="text-2xl font-semibold text-destructive">Failed to Load Leads</h2>
         <p className="mt-3 text-muted-foreground">
-          An error occurred while fetching deals data from the server.
+          An error occurred while fetching leads data from the server.
         </p>
         <pre className="mt-4 max-h-64 overflow-auto rounded bg-slate-900 p-4 text-sm text-white">
           {error instanceof Error ? error.stack : String(error)}
@@ -79,14 +79,14 @@ function BoardSkeleton() {
       </div>
       <div className="mt-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Loading deals... This may take up to 20 seconds on first load.
+          Loading leads... This may take up to 20 seconds on first load.
         </p>
       </div>
     </div>
   )
 }
 
-export default function DealsPage() {
+export default function LeadsPage() {
   return (
     <div className="container mx-auto py-8">
       <Suspense fallback={<BoardSkeleton />}>

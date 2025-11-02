@@ -25,15 +25,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Quarry CRM - Modern CRM for the Browser Era',
     description:
-      'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
     manifest: '/manifest.json',
     keywords:
-      'CRM,customer relationship management,contacts,companies,deals,sales,business,offline,PWA,progressive web app',
+      'CRM,customer relationship management,contacts,companies,leads,sales,business,offline,PWA,progressive web app',
     robots: isPreview ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
       title: 'Quarry CRM - Modern CRM for the Browser Era',
       description:
-        'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+        'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
       url: 'http://localhost:3000',
       siteName: 'Quarry CRM',
       locale: 'en_US',
@@ -52,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       creator: '@quarrycrm',
       title: 'Quarry CRM - Modern CRM for the Browser Era',
       description:
-        'Manage your contacts, companies, and deals with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+        'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
       images: ['http://localhost:3000/og-image.png'],
     },
     alternates: {

@@ -8,7 +8,7 @@ import { Users, Building2, Target, Activity, Settings } from 'lucide-react'
 const navigation = [
   { name: 'Contacts', href: '/app/contacts', icon: Users },
   { name: 'Companies', href: '/app/companies', icon: Building2 },
-  { name: 'Deals', href: '/app/deals', icon: Target },
+  { name: 'Leads', href: '/app/deals', icon: Target },
   { name: 'Activities', href: '/app/activities', icon: Activity },
   { name: 'Settings', href: '/app/settings', icon: Settings },
 ]
