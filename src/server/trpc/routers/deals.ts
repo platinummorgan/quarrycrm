@@ -31,6 +31,10 @@ const dealCreateSchema = z.object({
   contactId: z.string().optional(),
   companyId: z.string().optional(),
   expectedClose: z.date().optional(),
+  status: z.enum(['NEW', 'CONTACTED', 'QUOTED', 'WON', 'LOST']).optional(),
+  jobType: z.string().optional(),
+  estimatedValue: z.number().positive().optional(),
+  leadSource: z.enum(['GOOGLE', 'REFERRAL', 'YARD_SIGN', 'FACEBOOK', 'REPEAT_CUSTOMER', 'OTHER']).optional(),
 })
 
 const dealUpdateSchema = z.object({

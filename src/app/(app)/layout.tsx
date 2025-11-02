@@ -14,6 +14,7 @@ import { CommandKProvider } from '@/components/CommandK'
 import { ContactDrawer } from '@/components/contacts/ContactDrawer'
 import { OnboardingProgressServer } from '@/components/onboarding/OnboardingProgressServer'
 import { DemoPill } from '@/components/ui/DemoPill'
+import { QuickAddLeadFAB } from '@/components/contacts/QuickAddLeadFAB'
 import { Menu, Search } from 'lucide-react'
 import AppNav from '@/components/AppNav'
 
@@ -77,6 +78,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <CommandKProvider>
       <AppLayout>{children}</AppLayout>
       <ContactDrawer />
+      <QuickAddLeadFAB />
     </CommandKProvider>
   )
 }
