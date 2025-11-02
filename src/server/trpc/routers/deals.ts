@@ -200,6 +200,19 @@ export const dealsRouter = createTRPCRouter({
     .use(demoProcedure._def.middlewares[0])
     .input(dealCreateSchema)
     .mutation(async ({ ctx, input }) => {
+      // Get the current user's membership ID
+      const membership = await ctx.prisma.orgMember.findFirst({
+        where: {
+          organizationId: ctx.orgId,
+          userId: ctx.userId,
+        },
+        select: { id: true },
+      })
+
+      if (!membership) {
+        throw new Error('User is not a member of this organization')
+      }
+
       return await ctx.prisma.deal.create({
         data: {
           title: input.title,
@@ -210,8 +223,12 @@ export const dealsRouter = createTRPCRouter({
           contactId: input.contactId ?? null,
           companyId: input.companyId ?? null,
           expectedClose: input.expectedClose ?? null,
+          status: input.status ?? 'NEW',
+          jobType: input.jobType ?? null,
+          estimatedValue: input.estimatedValue ?? null,
+          leadSource: input.leadSource ?? null,
           organizationId: ctx.orgId,
-          ownerId: ctx.userId,
+          ownerId: membership.id,
         },
         select: {
           id: true,
