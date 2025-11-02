@@ -56,12 +56,13 @@ function generateApiKey(): {
   keyPrefix: string
   hashedKey: string
 } {
+  if (!process.env.API_KEY_SECRET) {
+    throw new Error('API_KEY_SECRET environment variable is required')
+  }
+  
   const key = `qcrm_${nanoid(32)}`
   const keyPrefix = key.substring(0, 12)
-  const hashedKey = createHmac(
-    'sha256',
-    process.env.API_KEY_SECRET || 'default-secret'
-  )
+  const hashedKey = createHmac('sha256', process.env.API_KEY_SECRET)
     .update(key)
     .digest('hex')
 
