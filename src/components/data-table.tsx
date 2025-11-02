@@ -30,6 +30,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -132,6 +140,8 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   const [savedViews, setSavedViews] = useState<
     Array<{ id: string; name: string; columns: string[] }>
   >([])
+  const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false)
+  const [newViewName, setNewViewName] = useState('')
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false)
@@ -361,9 +371,16 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
         columns: Array.from(visibleColumns),
       }
       setSavedViews((prev) => [...prev, view])
+      setSaveViewDialogOpen(false)
+      setNewViewName('')
     },
     [visibleColumns]
   )
+
+  const openSaveViewDialog = useCallback(() => {
+    setNewViewName(`View ${savedViews.length + 1}`)
+    setSaveViewDialogOpen(true)
+  }, [savedViews.length])
 
   // Load view
   const loadView = useCallback(
@@ -591,9 +608,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => saveView(`View ${savedViews.length + 1}`)}
-              >
+              <DropdownMenuItem onClick={openSaveViewDialog}>
                 Save current view
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -848,6 +863,45 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
       />
+
+      {/* Save View Dialog */}
+      <Dialog open={saveViewDialogOpen} onOpenChange={setSaveViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save View</DialogTitle>
+            <DialogDescription>
+              Give your view a name to save your current column selection.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="View name"
+              value={newViewName}
+              onChange={(e) => setNewViewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newViewName.trim()) {
+                  saveView(newViewName.trim())
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSaveViewDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => saveView(newViewName.trim())}
+              disabled={!newViewName.trim()}
+            >
+              Save View
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
