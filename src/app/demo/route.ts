@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import { generateDemoToken } from '@/lib/demo-auth'
 
