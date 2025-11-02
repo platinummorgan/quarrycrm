@@ -26,8 +26,8 @@ interface KanbanCardProps {
     }
     contact: {
       id: string
-      firstName: string
-      lastName: string
+      firstName: string | null
+      lastName: string | null
       email: string | null
     } | null
     company: {
@@ -39,9 +39,9 @@ interface KanbanCardProps {
       user: {
         id: string
         name: string | null
-        email: string
-      }
-    }
+        email: string | null
+      } | null
+    } | null
     updatedAt: Date
     createdAt: Date
   }
@@ -149,13 +149,13 @@ export function KanbanCard({
 
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="text-xs">
-                  {deal.owner.user.name
+                  {deal.owner?.user?.name
                     ? deal.owner.user.name
                         .split(' ')
                         .map((n) => n[0])
                         .join('')
                         .toUpperCase()
-                    : deal.owner.user.email[0].toUpperCase()}
+                    : deal.owner?.user?.email?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
             </div>

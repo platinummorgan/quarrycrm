@@ -76,8 +76,8 @@ const dealListResponseSchema = z.object({
       contact: z
         .object({
           id: z.string(),
-          firstName: z.string(),
-          lastName: z.string(),
+          firstName: z.string().nullable(),
+          lastName: z.string().nullable(),
           email: z.string().nullable(),
         })
         .nullable(),
@@ -89,9 +89,9 @@ const dealListResponseSchema = z.object({
         user: z.object({
           id: z.string(),
           name: z.string().nullable(),
-          email: z.string(),
-        }),
-      }),
+          email: z.string().nullable(),
+        }).nullable(),
+      }).nullable(),
       updatedAt: z.date(),
       createdAt: z.date(),
     })

@@ -29,8 +29,8 @@ interface KanbanColumnProps {
     }
     contact: {
       id: string
-      firstName: string
-      lastName: string
+      firstName: string | null
+      lastName: string | null
       email: string | null
     } | null
     company: {
@@ -42,9 +42,9 @@ interface KanbanColumnProps {
       user: {
         id: string
         name: string | null
-        email: string
-      }
-    }
+        email: string | null
+      } | null
+    } | null
     updatedAt: Date
     createdAt: Date
   }>
