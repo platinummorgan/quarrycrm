@@ -28,10 +28,8 @@ export async function GET(request: NextRequest) {
     // Generate demo token with host pinning
     const token = await generateDemoToken(demoOrg.id, host)
 
-    // Create redirect URL with canonical base origin
-    const { getBaseUrl } = await import('@/lib/baseUrl')
-    const baseUrl = getBaseUrl()
-    const redirectUrl = new URL('/api/auth/demo', baseUrl)
+    // Create redirect URL using the same origin as the request
+    const redirectUrl = new URL('/api/auth/demo', requestUrl.origin)
     redirectUrl.searchParams.set('token', token)
 
     return NextResponse.redirect(redirectUrl)
