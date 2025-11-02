@@ -25,6 +25,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -532,33 +537,39 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Column chooser */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Column chooser - Popover with checkboxes */}
+          <Popover>
+            <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="mr-2 h-4 w-4" />
                 Columns
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Visible Columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {initialColumns.map((column) => (
-                <DropdownMenuItem
-                  key={column.id}
-                  onClick={() => toggleColumnVisibility(column.id)}
-                  className="flex items-center space-x-2"
-                >
-                  {visibleColumns.has(column.id) ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                  <span>{column.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-sm mb-3">Visible Columns</h4>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {initialColumns.map((column) => (
+                      <div key={column.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`column-${column.id}`}
+                          checked={visibleColumns.has(column.id)}
+                          onCheckedChange={() => toggleColumnVisibility(column.id)}
+                        />
+                        <label
+                          htmlFor={`column-${column.id}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {column.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Saved views */}
           <DropdownMenu>
