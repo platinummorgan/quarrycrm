@@ -32,6 +32,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   User,
   Building2,
   Mail,
@@ -44,6 +54,7 @@ import {
   Plus,
   Activity as ActivityIcon,
   FileText,
+  Trash2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { maskPII } from '@/lib/mask-pii'
@@ -68,6 +79,7 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
     session?.user?.isDemo || session?.user?.currentOrg?.role === 'DEMO'
   const [editingField, setEditingField] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   // tRPC hooks
   const detailQuery = (trpc as any)[entity].getById.useQuery(
@@ -106,6 +118,25 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
     onError: (error: any) => {
       toast({
         title: 'Failed to add activity',
+        description: error.message,
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const deleteMutation = (trpc as any)[entity].delete.useMutation({
+    onSuccess: () => {
+      toast({
+        title: 'Deleted successfully',
+        description: `The ${entity.slice(0, -1)} has been deleted.`,
+      })
+      onOpenChange(false)
+      // Refresh the parent list
+      window.location.reload()
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Delete failed',
         description: error.message,
         variant: 'destructive',
       })
@@ -567,7 +598,48 @@ export function DetailDrawer<T extends { id: string; updatedAt: string }>({
             <p className="text-muted-foreground">Failed to load details</p>
           </div>
         )}
+
+        {/* Delete Button - Fixed at bottom */}
+        {detail && (
+          <div className="mt-8 border-t pt-4">
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={isDemo || deleteMutation.isLoading}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete {entity === 'contacts' ? 'Contact' : 'Company'}
+            </Button>
+          </div>
+        )}
       </SheetContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this {entity.slice(0, -1)} and all
+              associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (detail) {
+                  deleteMutation.mutate({ id: detail.id })
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   )
 }
