@@ -113,7 +113,7 @@ export function ContactDrawer({
       setOwnerId((me as any).membershipId)
       form.setValue('ownerId', (me as any).membershipId)
     }
-  }, [me?.membershipId, ownerId])
+  }, [me?.membershipId, ownerId, form])
 
   // If only one owner option is present, set it on the form
   useEffect(() => {
@@ -122,7 +122,7 @@ export function ContactDrawer({
       setOwnerId(only)
       form.setValue('ownerId', only)
     }
-  }, [ownerOptions])
+  }, [ownerOptions, form])
 
   const utils = trpc.useContext()
 
@@ -224,7 +224,8 @@ export function ContactDrawer({
         handleSelectContact as EventListener
       )
     }
-  }, [form, getContactQuery.data])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Handle controlled open state
   useEffect(() => {
@@ -315,7 +316,7 @@ export function ContactDrawer({
       setIsOpen(false)
       setIsLoadingContact(false)
     }
-  }, [getContactQuery.data, getContactQuery.isError, isEditMode])
+  }, [getContactQuery.data, getContactQuery.isError, isEditMode, form])
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
