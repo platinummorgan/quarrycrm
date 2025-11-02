@@ -39,6 +39,7 @@ import { trpc } from '@/lib/trpc'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { TextTemplatesDialog } from './TextTemplatesDialog'
 
 const STATUS_COLORS = {
   NEW: 'bg-blue-500',
@@ -72,6 +73,7 @@ export function JobDetailView({ job }: JobDetailViewProps) {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({})
   const [newNote, setNewNote] = useState('')
+  const [textDialogOpen, setTextDialogOpen] = useState(false)
 
   const utils = trpc.useUtils()
   const updateDeal = trpc.deals.update.useMutation({
@@ -113,6 +115,37 @@ export function JobDetailView({ job }: JobDetailViewProps) {
       description: newNote,
       dealId: job.id,
       subject: `Note on ${job.title}`,
+    })
+  }
+
+  const handleCall = () => {
+    // Log call activity
+    createActivity.mutate({
+      type: 'CALL',
+      description: `Called ${contactName} at ${contactPhone}`,
+      dealId: job.id,
+      subject: 'Phone call',
+    })
+  }
+
+  const handleSendText = (message: string) => {
+    // Log text activity
+    createActivity.mutate({
+      type: 'MESSAGE',
+      description: message,
+      dealId: job.id,
+      subject: `Text message to ${contactName}`,
+    })
+    toast({ title: 'Communication logged' })
+  }
+
+  const handleEmail = () => {
+    // Log email activity
+    createActivity.mutate({
+      type: 'EMAIL',
+      description: `Sent email to ${contactEmail}`,
+      dealId: job.id,
+      subject: 'Email sent',
     })
   }
 
@@ -181,7 +214,7 @@ export function JobDetailView({ job }: JobDetailViewProps) {
                 </Button>
               </Link>
               {contactPhone && (
-                <Button size="lg" asChild>
+                <Button size="lg" asChild onClick={handleCall}>
                   <a href={`tel:${contactPhone}`}>
                     <Phone className="mr-2 h-4 w-4" />
                     {contactPhone}
@@ -189,19 +222,17 @@ export function JobDetailView({ job }: JobDetailViewProps) {
                 </Button>
               )}
               {contactPhone && (
-                <Button size="lg" variant="secondary" asChild>
-                  <a
-                    href={`sms:${contactPhone}?body=${encodeURIComponent(
-                      `Hi ${job.contact?.firstName}, checking in about your ${job.jobType} project.`
-                    )}`}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Text
-                  </a>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => setTextDialogOpen(true)}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Text
                 </Button>
               )}
               {contactEmail && (
-                <Button size="lg" variant="outline" asChild>
+                <Button size="lg" variant="outline" asChild onClick={handleEmail}>
                   <a href={`mailto:${contactEmail}`}>
                     <Mail className="mr-2 h-4 w-4" />
                     Email
@@ -539,6 +570,15 @@ export function JobDetailView({ job }: JobDetailViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Text Templates Dialog */}
+      <TextTemplatesDialog
+        open={textDialogOpen}
+        onOpenChange={setTextDialogOpen}
+        phoneNumber={contactPhone}
+        contactName={contactName}
+        onSendText={handleSendText}
+      />
     </div>
   )
 }

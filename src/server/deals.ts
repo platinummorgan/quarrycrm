@@ -137,6 +137,21 @@ export async function getDeals(
               },
             },
           },
+          activities: {
+            where: {
+              type: {
+                in: ['CALL', 'MESSAGE', 'EMAIL'],
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+            select: {
+              createdAt: true,
+              type: true,
+            },
+          },
         },
         orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
         take: limit + 1, // Get one extra to check if there are more

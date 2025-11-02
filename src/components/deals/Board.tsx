@@ -79,6 +79,10 @@ type Deal = {
       email: string | null
     } | null
   } | null
+  activities?: Array<{
+    createdAt: Date
+    type: string
+  }>
   updatedAt: Date
   createdAt: Date
 }
@@ -212,6 +216,14 @@ function DealCard({
 
           <div className="text-sm text-muted-foreground">
             <div className="truncate">{primaryEntity}</div>
+            {deal.activities && deal.activities.length > 0 && (
+              <div className="mt-1 text-xs">
+                Last contacted:{' '}
+                {formatDistanceToNow(new Date(deal.activities[0].createdAt), {
+                  addSuffix: true,
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
