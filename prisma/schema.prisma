@@ -209,6 +209,11 @@ model Deal {
   @@index([pipelineId])
   @@index([stageId])
   @@index([organizationId, title])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, updatedAt])
+  @@index([organizationId, leadSource])
+  @@index([organizationId, deletedAt])
   @@map("deals")
 }
 
@@ -281,6 +286,8 @@ model Activity {
   @@index([ownerId])
   @@index([contactId])
   @@index([dealId])
+  @@index([dealId, type])
+  @@index([dealId, createdAt])
   @@map("activities")
 }
 
