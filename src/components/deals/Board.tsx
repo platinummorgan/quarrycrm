@@ -63,8 +63,8 @@ type Deal = {
   }
   contact: {
     id: string
-    firstName: string
-    lastName: string
+    firstName: string | null
+    lastName: string | null
     email: string | null
   } | null
   company: {
@@ -117,6 +117,30 @@ function deserializeDealsResponse(
       updatedAt: new Date(deal.updatedAt),
       expectedClose: deal.expectedClose
         ? new Date(deal.expectedClose)
+        : null,
+      value: deal.value ?? null,
+      probability: deal.probability ?? null,
+      stage: deal.stage ?? null,
+      contact: deal.contact
+        ? {
+            ...deal.contact,
+            firstName: deal.contact.firstName ?? null,
+            lastName: deal.contact.lastName ?? null,
+            email: deal.contact.email ?? null,
+          }
+        : null,
+      company: deal.company ?? null,
+      owner: deal.owner
+        ? {
+            ...deal.owner,
+            user: deal.owner.user
+              ? {
+                  ...deal.owner.user,
+                  name: deal.owner.user.name ?? null,
+                  email: deal.owner.user.email ?? null,
+                }
+              : null,
+          }
         : null,
     })),
   }
@@ -498,7 +522,10 @@ export function Board({
 
   // Find selected pipeline
   const selectedPipelineData = pipelines.find((p) => p.id === selectedPipeline)
-  const stages = selectedPipelineData?.stages || []
+  const stages = (selectedPipelineData?.stages || []).map(s => ({
+    ...s,
+    color: s.color ?? null
+  }))
 
   // Get deals for selected pipeline
   const pipelineDeals = useMemo(() => {
@@ -602,7 +629,7 @@ export function Board({
             stage: {
               id: stageId,
               name: stage.name,
-              color: stage.color,
+              color: stage.color ?? null,
             },
           }
           setDealsData((prev) => ({ ...prev, items: updatedDeals }))
@@ -658,7 +685,7 @@ export function Board({
       const stageDeals = dealsByStage[stage.id] || []
       const count = stageDeals.length
       const weightedTotal = stageDeals.reduce((sum, deal) => {
-        return sum + ((deal.value || 0) * (deal.probability || 0)) / 100
+        return sum + ((deal.value ?? 0) * (deal.probability ?? 0)) / 100
       }, 0)
 
       totals[stage.id] = { count, weightedTotal }

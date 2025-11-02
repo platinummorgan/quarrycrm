@@ -154,7 +154,9 @@ export function QuickAddLeadDialog({
 
     try {
       // Get default pipeline
-      const pipelines = pipelinesQuery.data || []
+      const pipelinesData = pipelinesQuery.data
+      const pipelines = pipelinesData && 'items' in pipelinesData ? pipelinesData.items : []
+      
       if (pipelines.length === 0) {
         toast({
           title: 'No pipeline found',
@@ -172,7 +174,6 @@ export function QuickAddLeadDialog({
         lastName: lastName || '(no last name)',
         phone: phone.replace(/\D/g, ''),
         email: email || undefined,
-        address: address || undefined,
       })
 
       // Create deal with job details

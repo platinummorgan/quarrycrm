@@ -35,49 +35,45 @@ export const pipelinesListResponseSchema = z.array(pipelineSchema)
 export const dealSchema = z.object({
   id: z.string(),
   title: z.string(),
-  value: z.number().nullable().optional(),
-  probability: z.number().nullable().optional(),        // tolerate missing
-  expectedClose: z.union([CoercedDate, z.null()]).optional().nullable(),
+  value: z.number().nullable(),
+  probability: z.number().nullable(),
+  expectedClose: z.union([CoercedDate, z.null()]).nullable(),
   stage: z
     .object({
       id: z.string(),
       name: z.string(),
-      color: z.string().nullable().optional(),
+      color: z.string().nullable(),
     })
-    .nullable()
-    .optional(),
+    .nullable(),
   pipeline: z
     .object({
       id: z.string(),
       name: z.string(),
-    })
-    .optional(),                                        // many list endpoints omit nested pipeline
+    }),
   contact: z
     .object({
       id: z.string(),
-      firstName: z.string().nullable().optional(),
-      lastName: z.string().nullable().optional(),
-      email: z.string().nullable().optional(),
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
+      email: z.string().nullable(),
     })
-    .nullable()
-    .optional(),
+    .nullable(),
   company: z
     .object({
       id: z.string(),
       name: z.string(),
     })
-    .nullable()
-    .optional(),
+    .nullable(),
   owner: z
     .object({
       id: z.string(),
       user: z.object({
         id: z.string(),
-        name: z.string().nullable().optional(),
-        email: z.string().nullable().optional(),         // can be null in seed/dev
-      }),
+        name: z.string().nullable(),
+        email: z.string().nullable(),
+      }).nullable(),
     })
-    .optional(),
+    .nullable(),
   updatedAt: CoercedDate,
   createdAt: CoercedDate,
 })

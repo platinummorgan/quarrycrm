@@ -26,6 +26,16 @@ async function getReportsData(orgId: string) {
       paymentStatus: true,
       createdAt: true,
       updatedAt: true,
+      organizationId: true,
+      deletedAt: true,
+      stageId: true,
+      pipelineId: true,
+      contactId: true,
+      companyId: true,
+      ownerId: true,
+      probability: true,
+      expectedClose: true,
+      nextFollowupDate: true,
       activities: {
         select: {
           type: true,

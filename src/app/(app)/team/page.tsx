@@ -61,10 +61,10 @@ async function getTeamMembers(orgId: string) {
 }
 
 export default async function TeamPage() {
-  const { orgId, membership } = await requireOrg()
+  const { orgId, orgRole } = await requireOrg()
 
   // Check if user is admin/owner
-  const isAdmin = membership.role === 'ADMIN' || membership.role === 'OWNER'
+  const isAdmin = orgRole === 'ADMIN' || orgRole === 'OWNER'
 
   const members = await getTeamMembers(orgId)
 

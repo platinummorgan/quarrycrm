@@ -133,7 +133,7 @@ export const dealsRouter = createTRPCRouter({
         if (updatedSince) where.updatedAt = { gte: updatedSince }
 
         const take = limit + 1
-        const items = await ctx.prisma.deal.findMany({
+        const rawItems = await ctx.prisma.deal.findMany({
           where,
           select: {
             id: true,
@@ -159,6 +159,14 @@ export const dealsRouter = createTRPCRouter({
           orderBy: { updatedAt: 'desc' },
           take,
         })
+
+        // Normalize undefined to null for type safety
+        const items = rawItems.map(item => ({
+          ...item,
+          value: item.value ?? null,
+          probability: item.probability ?? null,
+          expectedClose: item.expectedClose ?? null,
+        }))
 
         const hasMore = items.length > limit
         const actualItems = hasMore ? items.slice(0, limit) : items
