@@ -470,7 +470,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
               <Checkbox
                 checked={selectedRows.has(item.id)}
                 onCheckedChange={(checked: boolean | 'indeterminate') =>
-                  handleRowSelect(item.id, !!checked)
+                  handleRowSelect(item.id, !!checked, false)
                 }
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 aria-label={`Select ${entity.slice(0, -1)}`}
@@ -778,7 +778,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                     <Checkbox
                       checked={selectedRows.has(item.id)}
                       onCheckedChange={(checked: boolean | 'indeterminate') =>
-                        handleRowSelect(item.id, !!checked)
+                        handleRowSelect(item.id, !!checked, false)
                       }
                       onClick={(e: React.MouseEvent) => e.stopPropagation()}
                     />
