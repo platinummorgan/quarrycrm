@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { usePathname } from 'next/navigation'
-import { Users, Target, Activity, Settings, BarChart3 } from 'lucide-react'
+import { Users, Target, Activity, Settings, BarChart3, Users2 } from 'lucide-react'
 
 const navigation = [
   { name: 'Leads', href: '/app/contacts', icon: Users },
   { name: 'Jobs', href: '/app/deals', icon: Target },
   { name: 'Follow-ups', href: '/app/activities', icon: Activity },
   { name: 'Reports', href: '/app/reports', icon: BarChart3 },
+  { name: 'Team', href: '/app/team', icon: Users2 },
   { name: 'Settings', href: '/app/settings', icon: Settings },
 ]
 

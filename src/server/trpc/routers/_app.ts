@@ -11,6 +11,7 @@ import { savedViewsRouter } from './saved-views'
 import { settingsRouter } from './settings'
 import { dashboardRouter } from './dashboard'
 import { photosRouter } from './photos'
+import { teamRouter } from './team'
 
 export const appRouter = createTRPCRouter({
   example: exampleRouter,
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   settings: settingsRouter,
   dashboard: dashboardRouter,
   photos: photosRouter,
+  team: teamRouter,
 })
 
 export type AppRouter = typeof appRouter
