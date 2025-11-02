@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
 import { checkDemoRateLimit } from '@/lib/rate-limit'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { session, orgId } = await requireOrg()
