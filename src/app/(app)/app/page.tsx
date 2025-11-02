@@ -7,341 +7,448 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Users, Building2, Target, Activity, TrendingUp } from 'lucide-react'
-import {
-  OverdueTasksWidget,
-  DealsAtRiskWidget,
-} from '@/components/dashboard/widgets'
-import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import { 
+  Phone, 
+  Plus, 
+  Clock, 
+  DollarSign, 
+  Briefcase, 
+  AlertTriangle,
+  CheckCircle2
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
-import { checkOnboardingProgress } from '@/server/onboarding'
-import { formatDistanceToNow } from 'date-fns'
-import { Badge } from '@/components/ui/badge'
+import { formatDistanceToNow, startOfWeek, startOfToday, endOfDay } from 'date-fns'
 import Link from 'next/link'
 
-async function getDashboardData(orgId: string) {
+async function getContractorDashboardData(orgId: string) {
+  const now = new Date()
+  const todayStart = startOfToday()
+  const todayEnd = endOfDay(now)
+  const weekStart = startOfWeek(now)
+
   const [
-    contactsCount,
-    companiesCount,
-    dealsCount,
-    activitiesCount,
-    recentActivities,
+    todaysFollowUps,
+    overdueFollowUps,
+    newLeadsThisWeek,
+    quotesThisWeek,
+    jobsWonThisWeek,
+    quotesGoingCold,
+    activeJobs,
   ] = await Promise.all([
-    prisma.contact.count({
+    // Today's follow-ups
+    prisma.deal.findMany({
       where: {
         organizationId: orgId,
         deletedAt: null,
-      },
-    }),
-    prisma.company.count({
-      where: {
-        organizationId: orgId,
-        deletedAt: null,
-      },
-    }),
-    prisma.deal.count({
-      where: {
-        organizationId: orgId,
-        deletedAt: null,
-      },
-    }),
-    prisma.activity.count({
-      where: {
-        organizationId: orgId,
-        deletedAt: null,
-      },
-    }),
-    prisma.activity.findMany({
-      where: {
-        organizationId: orgId,
-        deletedAt: null,
+        nextFollowupDate: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
       },
       select: {
         id: true,
-        type: true,
-        description: true,
-        createdAt: true,
+        title: true,
+        value: true,
+        nextFollowupDate: true,
         contact: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
+            phone: true,
           },
         },
-        deal: {
+        activities: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
           select: {
-            id: true,
-            title: true,
-          },
-        },
-        owner: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
+            description: true,
+            createdAt: true,
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
+      orderBy: { nextFollowupDate: 'asc' },
+    }),
+
+    // Overdue follow-ups
+    prisma.deal.count({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        nextFollowupDate: {
+          lt: todayStart,
+        },
+      },
+    }),
+
+    // New leads this week
+    prisma.contact.count({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        createdAt: {
+          gte: weekStart,
+        },
+      },
+    }),
+
+    // Quotes sent this week (assuming "Proposal Sent" stage)
+    prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        updatedAt: {
+          gte: weekStart,
+        },
+        stage: {
+          name: {
+            contains: 'Proposal',
+            mode: 'insensitive',
+          },
+        },
+      },
+      select: {
+        value: true,
+      },
+    }),
+
+    // Jobs won this week
+    prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        updatedAt: {
+          gte: weekStart,
+        },
+        stage: {
+          name: {
+            contains: 'Won',
+            mode: 'insensitive',
+          },
+        },
+      },
+      select: {
+        value: true,
+      },
+    }),
+
+    // Quotes going cold (7+ days without activity)
+    prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        stage: {
+          name: {
+            contains: 'Proposal',
+            mode: 'insensitive',
+          },
+        },
+        OR: [
+          {
+            nextFollowupDate: {
+              lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+          {
+            nextFollowupDate: null,
+            updatedAt: {
+              lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        value: true,
+        updatedAt: true,
+        contact: {
+          select: {
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
       },
       take: 5,
     }),
+
+    // Active jobs in progress
+    prisma.deal.count({
+      where: {
+        organizationId: orgId,
+        deletedAt: null,
+        stage: {
+          name: {
+            notIn: ['Won', 'Lost'],
+          },
+        },
+      },
+    }),
   ])
 
-  // Compute a UI-safe `subject` for each activity instead of selecting a
-  // non-existent `subject` field from Prisma. This prevents Prisma validation
-  // errors in production while still providing a subject string for the UI.
-  const recentActivitiesForUi = (recentActivities as any[]).map((a: any) => ({
-    ...a,
-    subject:
-      a.deal?.title ??
-      (a.description ? a.description.slice(0, 120) : 'Activity'),
-  }))
+  const quotesTotal = quotesThisWeek.reduce((sum, deal) => sum + (deal.value || 0), 0)
+  const revenueTotal = jobsWonThisWeek.reduce((sum, deal) => sum + (deal.value || 0), 0)
 
   return {
-    stats: {
-      contacts: contactsCount,
-      companies: companiesCount,
-      deals: dealsCount,
-      activities: activitiesCount,
+    todaysFollowUps,
+    overdueCount: overdueFollowUps,
+    weekStats: {
+      newLeads: newLeadsThisWeek,
+      quotesCount: quotesThisWeek.length,
+      quotesTotal,
+      jobsWonCount: jobsWonThisWeek.length,
+      revenueTotal,
+      activeJobs,
     },
-    recentActivities: recentActivitiesForUi,
+    quotesGoingCold,
   }
 }
 
-export default async function AppDashboard() {
+export default async function ContractorDashboard() {
   const { orgId } = await requireOrg()
 
-  // Run dashboard data and onboarding checks separately and guard them with
-  // try/catch so a single failing server-side dependency (missing DB columns,
-  // transient DB errors, etc.) won't cause the entire Server Component render
-  // to fail in production (which shows an opaque digest-only error).
-  let stats = { contacts: 0, companies: 0, deals: 0, activities: 0 }
-  let recentActivities: any[] = []
-  let onboardingState = null
-
-  try {
-    const data = await getDashboardData(orgId)
-    stats = data.stats
-    recentActivities = data.recentActivities
-  } catch (err) {
-    // Log the error server-side (visible in Vercel logs). Avoid re-throwing
-    // so the UI can still render a best-effort dashboard.
-    console.error('getDashboardData failed on dashboard render:', err)
+  let data = {
+    todaysFollowUps: [],
+    overdueCount: 0,
+    weekStats: {
+      newLeads: 0,
+      quotesCount: 0,
+      quotesTotal: 0,
+      jobsWonCount: 0,
+      revenueTotal: 0,
+      activeJobs: 0,
+    },
+    quotesGoingCold: [],
   }
 
   try {
-    onboardingState = await checkOnboardingProgress()
+    data = await getContractorDashboardData(orgId) as any
   } catch (err) {
-    console.error('checkOnboardingProgress failed on dashboard render:', err)
-    onboardingState = null
+    console.error('Contractor dashboard data fetch failed:', err)
   }
 
-  const statsConfig = [
-    {
-      title: 'Total Contacts',
-      key: 'contacts' as keyof typeof stats,
-      description: 'Active contacts in your CRM',
-      icon: Users,
-      trend: '+0%',
-      href: '/app/contacts',
-    },
-    {
-      title: 'Companies',
-      key: 'companies' as keyof typeof stats,
-      description: 'Business relationships',
-      icon: Building2,
-      trend: '+0%',
-      href: '/app/companies',
-    },
-    {
-      title: 'Active Deals',
-      key: 'deals' as keyof typeof stats,
-      description: 'Current opportunities',
-      icon: Target,
-      trend: '+0%',
-      href: '/app/deals',
-    },
-    {
-      title: 'Activities',
-      key: 'activities' as keyof typeof stats,
-      description: 'Recent interactions',
-      icon: Activity,
-      trend: '+0%',
-      href: '/app/activities',
-    },
-  ]
+  const formatCurrency = (value: number) => 
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold">Today's Work</h1>
         <p className="text-muted-foreground">
-          Welcome to Quarry-CRM. Here&apos;s an overview of your business.
+          {new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
         </p>
       </div>
 
-      {/* Onboarding Checklist */}
-      {onboardingState &&
-        !onboardingState.dismissed &&
-        !onboardingState.completed && (
-          <OnboardingChecklist initialState={onboardingState} />
-        )}
-
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statsConfig.map((stat) => {
-          const Icon = stat.icon
-          const value = stats[stat.key]
-          return (
-            <Link key={stat.title} href={stat.href}>
-              <Card className="cursor-pointer transition-colors hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {value.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.description}
-                  </p>
-                  <div className="flex items-center pt-1">
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                    <span className="text-xs text-green-500">{stat.trend}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Widgets Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <OverdueTasksWidget />
-        <DealsAtRiskWidget />
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
+      {/* TODAY'S FOLLOW-UPS - Most Prominent */}
+      <Card className="border-2 border-primary">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Your latest interactions and updates
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Phone className="h-6 w-6" />
+                Today's Follow-ups
+              </CardTitle>
+              <CardDescription className="text-base">
+                People to call today
+              </CardDescription>
+            </div>
+            {data.overdueCount > 0 && (
+              <Badge variant="destructive" className="text-lg px-4 py-2">
+                {data.overdueCount} Overdue
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {recentActivities.length > 0 ? (
+          {data.todaysFollowUps.length > 0 ? (
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <Activity className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      {activity.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="text-xs">
-                        {activity.type}
-                      </Badge>
-                      {activity.subject && (
-                        <span className="max-w-xs truncate">
-                          {activity.subject}
-                        </span>
-                      )}
-                      <span>
-                        {formatDistanceToNow(new Date(activity.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                      {activity.owner.user.name && (
-                        <span>by {activity.owner.user.name}</span>
-                      )}
-                    </div>
-                    {(activity.contact || activity.deal) && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {activity.contact && (
-                          <Link
-                            href={`/app/contacts/${activity.contact.id}`}
-                            className="hover:underline"
-                          >
-                            {activity.contact.firstName}{' '}
-                            {activity.contact.lastName}
-                          </Link>
-                        )}
-                        {activity.deal && (
-                          <Link
-                            href={`/app/deals/${activity.deal.id}`}
-                            className="hover:underline"
-                          >
-                            {activity.deal.title}
-                          </Link>
-                        )}
-                      </div>
+              {data.todaysFollowUps.map((lead: any) => (
+                <div 
+                  key={lead.id} 
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">
+                      {lead.contact?.firstName} {lead.contact?.lastName}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{lead.title}</p>
+                    {lead.activities[0] && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                        Last: {lead.activities[0].description}
+                      </p>
                     )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {lead.contact?.phone && (
+                      <Button size="lg" asChild>
+                        <a href={`tel:${lead.contact.phone}`} className="text-lg">
+                          <Phone className="h-5 w-5 mr-2" />
+                          {lead.contact.phone}
+                        </a>
+                      </Button>
+                    )}
+                    <Button variant="outline" size="lg">
+                      <CheckCircle2 className="h-5 w-5 mr-2" />
+                      Mark Contacted
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              <Activity className="mx-auto mb-4 h-12 w-12 opacity-50" />
-              <p>No recent activity yet.</p>
-              <p className="text-sm">
-                Start by adding your first contact or company.
-              </p>
+            <div className="py-12 text-center text-muted-foreground">
+              <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-green-500" />
+              <p className="text-xl font-semibold">All caught up!</p>
+              <p>No follow-ups scheduled for today</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
+      {/* THIS WEEK STATS */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>New Leads</CardDescription>
+            <CardTitle className="text-3xl">
+              {data.weekStats.newLeads}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">This week</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Quotes Sent</CardDescription>
+            <CardTitle className="text-3xl flex items-baseline gap-2">
+              {data.weekStats.quotesCount}
+              <span className="text-lg font-normal text-muted-foreground">
+                {formatCurrency(data.weekStats.quotesTotal)}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Total value</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Jobs Won</CardDescription>
+            <CardTitle className="text-3xl flex items-baseline gap-2">
+              {data.weekStats.jobsWonCount}
+              <span className="text-lg font-normal text-green-600">
+                {formatCurrency(data.weekStats.revenueTotal)}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Revenue</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Active Jobs</CardDescription>
+            <CardTitle className="text-3xl">
+              {data.weekStats.activeJobs}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">In progress</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* QUOTES GOING COLD */}
+      {data.quotesGoingCold.length > 0 && (
+        <Card className="border-orange-500/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Quotes Going Cold
+            </CardTitle>
+            <CardDescription>
+              No contact in 7+ days - follow up now!
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.quotesGoingCold.map((quote: any) => {
+                const daysSince = Math.floor(
+                  (Date.now() - new Date(quote.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+                )
+                return (
+                  <div 
+                    key={quote.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div>
+                      <h4 className="font-medium">
+                        {quote.contact?.firstName} {quote.contact?.lastName} - {quote.title}
+                      </h4>
+                      <p className="text-sm text-orange-600">
+                        {daysSince} days since last contact
+                      </p>
+                    </div>
+                    <Button size="lg">
+                      <Phone className="h-4 w-4 mr-2" />
+                      Follow up now
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* QUICK ACTIONS */}
       <Card>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks to get you started</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <Link href="/app/contacts/new">
-              <div className="cursor-pointer rounded-lg border p-4 text-center transition-colors hover:bg-muted/50">
-                <Users className="mx-auto mb-2 h-8 w-8 text-primary" />
-                <h3 className="font-medium">Add Contact</h3>
-                <p className="text-sm text-muted-foreground">
-                  Create a new contact
-                </p>
-              </div>
-            </Link>
-            <Link href="/app/companies/new">
-              <div className="cursor-pointer rounded-lg border p-4 text-center transition-colors hover:bg-muted/50">
-                <Building2 className="mx-auto mb-2 h-8 w-8 text-primary" />
-                <h3 className="font-medium">Add Company</h3>
-                <p className="text-sm text-muted-foreground">
-                  Create a new company
-                </p>
-              </div>
+              <Button size="lg" className="w-full h-24" variant="outline">
+                <div className="text-center">
+                  <Plus className="mx-auto mb-2 h-8 w-8" />
+                  <div className="font-semibold">Add New Lead</div>
+                </div>
+              </Button>
             </Link>
             <Link href="/app/deals/new">
-              <div className="cursor-pointer rounded-lg border p-4 text-center transition-colors hover:bg-muted/50">
-                <Target className="mx-auto mb-2 h-8 w-8 text-primary" />
-                <h3 className="font-medium">Create Deal</h3>
-                <p className="text-sm text-muted-foreground">
-                  Start a new opportunity
-                </p>
-              </div>
+              <Button size="lg" className="w-full h-24" variant="outline">
+                <div className="text-center">
+                  <Briefcase className="mx-auto mb-2 h-8 w-8" />
+                  <div className="font-semibold">Create Job</div>
+                </div>
+              </Button>
+            </Link>
+            <Link href="/app/activities/new">
+              <Button size="lg" className="w-full h-24" variant="outline">
+                <div className="text-center">
+                  <Clock className="mx-auto mb-2 h-8 w-8" />
+                  <div className="font-semibold">Log Follow-up</div>
+                </div>
+              </Button>
             </Link>
           </div>
         </CardContent>
