@@ -72,6 +72,24 @@ async function getJobDetail(jobId: string, orgId: string) {
           },
         },
       },
+      photos: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   })
 

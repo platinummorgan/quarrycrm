@@ -40,6 +40,7 @@ import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { TextTemplatesDialog } from './TextTemplatesDialog'
+import { PhotoGallery } from './PhotoGallery'
 
 const STATUS_COLORS = {
   NEW: 'bg-blue-500',
@@ -553,23 +554,8 @@ export function JobDetailView({ job }: JobDetailViewProps) {
         </CardContent>
       </Card>
 
-      {/* PHOTOS - Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Photos</CardTitle>
-          <CardDescription>Before, after, and progress photos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed">
-            <div className="text-center">
-              <Camera className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Photo upload coming soon
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* PHOTOS */}
+      <PhotoGallery dealId={job.id} photos={job.photos || []} />
 
       {/* Text Templates Dialog */}
       <TextTemplatesDialog

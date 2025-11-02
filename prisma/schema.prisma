@@ -33,6 +33,7 @@ model Organization {
   importHistories ImportHistory[]
   workspaceJobs WorkspaceJob[]
   importTemplates ImportTemplate[]
+  photos      Photo[]
 
   @@map("organizations")
 }
@@ -74,6 +75,7 @@ model OrgMember {
   webhooks       Webhook[]
   apiKeys        ApiKey[]
   savedViews     SavedView[] @relation("SavedViewOwner")
+  photos         Photo[]
 
   @@unique([organizationId, userId])
   @@map("org_members")
@@ -200,6 +202,7 @@ model Deal {
   owner          OrgMember    @relation(fields: [ownerId], references: [id])
   pipeline       Pipeline     @relation(fields: [pipelineId], references: [id])
   stage          Stage?       @relation(fields: [stageId], references: [id])
+  photos         Photo[]
 
   @@index([organizationId])
   @@index([ownerId])
@@ -207,6 +210,25 @@ model Deal {
   @@index([stageId])
   @@index([organizationId, title])
   @@map("deals")
+}
+
+model Photo {
+  id             String       @id @default(cuid())
+  organizationId String
+  dealId         String
+  url            String
+  thumbnailUrl   String?
+  label          String?
+  uploadedById   String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deal           Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploadedBy     OrgMember    @relation(fields: [uploadedById], references: [id])
+
+  @@index([organizationId])
+  @@index([dealId])
+  @@map("photos")
 }
 
 model SavedView {
