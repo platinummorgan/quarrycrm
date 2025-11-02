@@ -23,17 +23,17 @@ export async function generateMetadata(): Promise<Metadata> {
   // This ensures proper SEO exclusion regardless of metadata cache
 
   return {
-    title: 'Quarry CRM - Modern CRM for the Browser Era',
+    title: 'Quarry CRM - Modern CRM for Contractors',
     description:
-      'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+      'Manage your leads, jobs, and follow-ups with a fast CRM built for contractors. Works offline in your truck.',
     manifest: '/manifest.json',
     keywords:
-      'CRM,customer relationship management,contacts,companies,leads,sales,business,offline,PWA,progressive web app',
+      'CRM,contractor CRM,leads,jobs,follow-ups,mobile CRM,offline,PWA,construction',
     robots: isPreview ? 'noindex, nofollow' : 'index, follow',
     openGraph: {
-      title: 'Quarry CRM - Modern CRM for the Browser Era',
+      title: 'Quarry CRM - Modern CRM for Contractors',
       description:
-        'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+        'Manage your leads, jobs, and follow-ups with a fast CRM built for contractors. Works offline in your truck.',
       url: 'http://localhost:3000',
       siteName: 'Quarry CRM',
       locale: 'en_US',
@@ -50,9 +50,9 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       creator: '@quarrycrm',
-      title: 'Quarry CRM - Modern CRM for the Browser Era',
+      title: 'Quarry CRM - Modern CRM for Contractors',
       description:
-        'Manage your contacts, companies, and leads with a fast, offline-capable CRM that works seamlessly across all your devices. Progressive Web App with offline support.',
+        'Manage your leads, jobs, and follow-ups with a fast CRM built for contractors. Works offline in your truck.',
       images: ['http://localhost:3000/og-image.png'],
     },
     alternates: {
