@@ -180,6 +180,7 @@ model Deal {
   companyId      String?
   ownerId        String
   expectedClose  DateTime?
+  nextFollowupDate DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
