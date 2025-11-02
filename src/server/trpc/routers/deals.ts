@@ -42,6 +42,10 @@ const dealUpdateSchema = z.object({
   contactId: z.string().nullable().optional(),
   companyId: z.string().nullable().optional(),
   expectedClose: z.date().optional(),
+  status: z.enum(['NEW', 'CONTACTED', 'QUOTED', 'WON', 'LOST']).optional(),
+  jobType: z.string().nullable().optional(),
+  estimatedValue: z.number().positive().nullable().optional(),
+  leadSource: z.enum(['GOOGLE', 'REFERRAL', 'YARD_SIGN', 'FACEBOOK', 'REPEAT_CUSTOMER', 'OTHER']).nullable().optional(),
 })
 
 const dealListResponseSchema = z.object({

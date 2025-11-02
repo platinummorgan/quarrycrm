@@ -181,6 +181,10 @@ model Deal {
   ownerId        String
   expectedClose  DateTime?
   nextFollowupDate DateTime?
+  status         LeadStatus?  @default(NEW)
+  jobType        String?
+  estimatedValue Decimal?     @db.Decimal(10, 2)
+  leadSource     LeadSource?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
@@ -446,5 +450,22 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+}
+
+enum LeadSource {
+  GOOGLE
+  REFERRAL
+  YARD_SIGN
+  FACEBOOK
+  REPEAT_CUSTOMER
+  OTHER
 }
 

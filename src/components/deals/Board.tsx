@@ -42,6 +42,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { DealStatusDialog } from './DealStatusDialog'
 
 // Types
 type Deal = {
@@ -122,11 +123,13 @@ function DealCard({
   isDragging = false,
   isFocused = false,
   onFocus,
+  onStatusClick,
 }: {
   deal: Deal
   isDragging?: boolean
   isFocused?: boolean
   onFocus?: () => void
+  onStatusClick?: (deal: Deal) => void
 }) {
   const {
     attributes,
@@ -218,11 +221,26 @@ function DealCard({
               {formatDistanceToNow(deal.createdAt, { addSuffix: true })}
             </Badge>
 
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">
-                {ownerInitials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="flex items-center gap-2">
+              {onStatusClick && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onStatusClick(deal)
+                  }}
+                >
+                  Details
+                </Button>
+              )}
+              <Avatar className="h-6 w-6">
+                <AvatarFallback className="text-xs">
+                  {ownerInitials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -237,6 +255,7 @@ function StageColumn({
   total,
   focusedDealId,
   onDealFocus,
+  onStatusClick,
 }: {
   stage: Stage
   deals: Deal[]
@@ -246,6 +265,7 @@ function StageColumn({
   }
   focusedDealId: string | null
   onDealFocus: (dealId: string | null) => void
+  onStatusClick?: (deal: Deal) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
@@ -303,6 +323,7 @@ function StageColumn({
               deal={deal}
               isFocused={focusedDealId === deal.id}
               onFocus={() => onDealFocus(deal.id)}
+              onStatusClick={onStatusClick}
             />
           ))}
           {deals.length === 0 && (
@@ -433,6 +454,8 @@ export function Board({
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [selectedDealForStatus, setSelectedDealForStatus] = useState<Deal | null>(null)
 
   const pipelines = pipelinesData || []
 
@@ -862,6 +885,10 @@ export function Board({
                 total={stageTotals[stage.id] || { count: 0, weightedTotal: 0 }}
                 focusedDealId={focusedDealId}
                 onDealFocus={setFocusedDealId}
+                onStatusClick={(deal) => {
+                  setSelectedDealForStatus(deal)
+                  setStatusDialogOpen(true)
+                }}
               />
             ))}
           </div>
@@ -887,6 +914,19 @@ export function Board({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Status Dialog */}
+      {selectedDealForStatus && (
+        <DealStatusDialog
+          dealId={selectedDealForStatus.id}
+          open={statusDialogOpen}
+          onOpenChange={setStatusDialogOpen}
+          currentStatus={(selectedDealForStatus as any).status}
+          currentJobType={(selectedDealForStatus as any).jobType}
+          currentEstimatedValue={(selectedDealForStatus as any).estimatedValue}
+          currentLeadSource={(selectedDealForStatus as any).leadSource}
+        />
       )}
     </div>
   )
