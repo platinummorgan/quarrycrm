@@ -304,11 +304,26 @@ export const activitiesRouter = createTRPCRouter({
   create: demoProcedure
     .input(activityCreateSchema)
     .mutation(async ({ ctx, input }) => {
+      // Get org member ID for the current user
+      const orgMember = await prisma.orgMember.findFirst({
+        where: {
+          organizationId: ctx.orgId,
+          userId: ctx.userId,
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      if (!orgMember) {
+        throw new Error('Organization membership not found')
+      }
+
       return await prisma.activity.create({
         data: {
           ...input,
           organizationId: ctx.orgId,
-          ownerId: ctx.userId,
+          ownerId: orgMember.id,
         },
         select: {
           id: true,
