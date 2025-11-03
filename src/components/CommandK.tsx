@@ -211,8 +211,8 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
 
                 <Command.Group heading="Navigation" className="mb-2">
                   <Command.Item
-                    value="leads"
-                    keywords={['leads', 'contacts', 'customers']}
+                    value="contacts"
+                    keywords={['contacts', 'leads', 'customers']}
                     onSelect={() =>
                       executeAction(() => {
                         router.push('/app/contacts')
@@ -224,9 +224,9 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                       <Users className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium">Leads</div>
+                      <div className="font-medium">Contacts</div>
                       <div className="text-xs text-muted-foreground">
-                        View all leads
+                        View all contacts
                       </div>
                     </div>
                   </Command.Item>

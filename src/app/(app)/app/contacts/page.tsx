@@ -53,6 +53,7 @@ export default function ContactsPage() {
         searchPlaceholder="Search contacts..."
         onCreate={handleCreate}
         onImport={handleImport}
+        showCheckboxes={false}
       />
     </div>
   )

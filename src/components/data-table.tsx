@@ -96,6 +96,7 @@ export interface DataTableProps<T = any> {
   onCreate?: () => void
   onImport?: () => void
   className?: string
+  showCheckboxes?: boolean // Whether to show row selection checkboxes
 }
 
 export interface DetailDrawerProps<T = any> {
@@ -113,6 +114,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   onCreate,
   onImport,
   className,
+  showCheckboxes = false, // Default to false - hide checkboxes
 }: DataTableProps<T>) {
   const sessionResult = useSession()
   const session = sessionResult?.data
@@ -673,22 +675,24 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
           tabIndex={0}
         >
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-background">
+            <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={
-                      selectedRows.size === data.length && data.length > 0
-                    }
-                    onCheckedChange={(checked: boolean | 'indeterminate') => {
-                      if (checked) {
-                        setSelectedRows(new Set(data.map((item) => item.id)))
-                      } else {
-                        setSelectedRows(new Set())
+                {showCheckboxes && (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={
+                        selectedRows.size === data.length && data.length > 0
                       }
-                    }}
-                  />
-                </TableHead>
+                      onCheckedChange={(checked: boolean | 'indeterminate') => {
+                        if (checked) {
+                          setSelectedRows(new Set(data.map((item) => item.id)))
+                        } else {
+                          setSelectedRows(new Set())
+                        }
+                      }}
+                    />
+                  </TableHead>
+                )}
                 {visibleCols.map((column) => (
                   <TableHead
                     key={column.id}
@@ -783,15 +787,17 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                     }
                   }}
                 >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRows.has(item.id)}
-                      onCheckedChange={(checked: boolean | 'indeterminate') =>
-                        handleRowSelect(item.id, !!checked, false)
-                      }
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    />
-                  </TableCell>
+                  {showCheckboxes && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRows.has(item.id)}
+                        onCheckedChange={(checked: boolean | 'indeterminate') =>
+                          handleRowSelect(item.id, !!checked, false)
+                        }
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      />
+                    </TableCell>
+                  )}
                   {visibleCols.map((column, cellIndex) => (
                     <TableCell
                       key={column.id}
