@@ -4,9 +4,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Phone, Mail, ExternalLink, Calendar } from 'lucide-react'
+import { Phone, Mail, ExternalLink, Calendar, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { formatPhoneNumber, getTelLink, getSmsLink } from '@/lib/format-phone'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
