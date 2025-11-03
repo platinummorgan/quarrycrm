@@ -3,8 +3,27 @@
 import { useMemo } from 'react'
 import { JobCard } from './JobCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertTriangle } from 'lucide-react'
-import { isToday, isPast, parseISO } from 'date-fns'
+import { AlertTriangle, CheckSquare, Calendar } from 'lucide-react'
+import { isToday, isPast, parseISO, formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
+
+interface Activity {
+  id: string
+  type: string
+  description: string
+  dueDate: Date | null
+  isCompleted: boolean
+  contact: {
+    id: string
+    firstName: string
+    lastName: string
+  } | null
+  deal: {
+    id: string
+    title: string
+  } | null
+}
 
 interface TodayViewProps {
   deals: {
@@ -36,9 +55,10 @@ interface TodayViewProps {
       }>
     }>
   }
+  activities: Activity[]
 }
 
-export function TodayView({ deals }: TodayViewProps) {
+export function TodayView({ deals, activities }: TodayViewProps) {
   const { overdue, dueToday, startingToday, inProgress } = useMemo(() => {
     const now = new Date()
     
@@ -81,8 +101,89 @@ export function TodayView({ deals }: TodayViewProps) {
     }
   }, [deals.items])
 
+  // Filter tasks due today or overdue
+  const { tasksDueToday, tasksOverdue } = useMemo(() => {
+    const now = new Date()
+    return {
+      tasksDueToday: activities.filter(activity => {
+        if (!activity.dueDate) return false
+        const dueDate = typeof activity.dueDate === 'string' 
+          ? parseISO(activity.dueDate) 
+          : activity.dueDate
+        return isToday(dueDate)
+      }),
+      tasksOverdue: activities.filter(activity => {
+        if (!activity.dueDate) return false
+        const dueDate = typeof activity.dueDate === 'string' 
+          ? parseISO(activity.dueDate) 
+          : activity.dueDate
+        return isPast(dueDate) && !isToday(dueDate)
+      })
+    }
+  }, [activities])
+
   return (
     <div className="space-y-6">
+      {/* Tasks Due Today/Overdue */}
+      {(tasksDueToday.length > 0 || tasksOverdue.length > 0) && (
+        <Alert variant={tasksOverdue.length > 0 ? "destructive" : "default"}>
+          <CheckSquare className="h-4 w-4" />
+          <AlertTitle>Tasks Due</AlertTitle>
+          <AlertDescription>
+            <div className="mt-2 space-y-2">
+              {tasksOverdue.map(task => (
+                <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-background/50 p-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-destructive">
+                      {task.description}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2 text-xs">
+                      {task.deal && (
+                        <Link href={`/app/deals/${task.deal.id}`} className="hover:underline">
+                          💼 {task.deal.title}
+                        </Link>
+                      )}
+                      {task.contact && (
+                        <span>
+                          👤 {task.contact.firstName} {task.contact.lastName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="destructive" className="text-xs">
+                    {task.dueDate && formatDistanceToNow(new Date(task.dueDate), { addSuffix: true })}
+                  </Badge>
+                </div>
+              ))}
+              {tasksDueToday.map(task => (
+                <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-background/50 p-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {task.description}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      {task.deal && (
+                        <Link href={`/app/deals/${task.deal.id}`} className="hover:underline">
+                          💼 {task.deal.title}
+                        </Link>
+                      )}
+                      {task.contact && (
+                        <span>
+                          👤 {task.contact.firstName} {task.contact.lastName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    Due today
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Overdue Follow-ups - Red Alert Section */}
       {overdue.length > 0 && (
         <div className="space-y-4">

@@ -130,6 +130,13 @@ export function JobCard({ job, showDaysSinceContact = true }: JobCardProps) {
                 </Badge>
               )}
 
+              {/* Activity Count */}
+              {job.activities && job.activities.length > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {job.activities.length} {job.activities.length === 1 ? 'activity' : 'activities'}
+                </Badge>
+              )}
+
               {/* Next Follow-up */}
               {job.nextFollowupDate && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
