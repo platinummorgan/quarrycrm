@@ -13,18 +13,21 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ActivityComposer } from '@/components/activities/activity-composer'
+import { QuickCreateDeal } from '@/components/kanban/quick-create-deal'
 
 export function QuickAddLeadFAB() {
   const [leadDialogOpen, setLeadDialogOpen] = useState(false)
   const [activityDialogOpen, setActivityDialogOpen] = useState(false)
+  const [jobDialogOpen, setJobDialogOpen] = useState(false)
   const pathname = usePathname()
 
   // Determine which page we're on
   const isContactsPage = pathname?.includes('/contacts')
   const isActivitiesPage = pathname?.includes('/activities')
+  const isJobsPage = pathname?.includes('/deals')
 
   // Don't show on other pages
-  if (!isContactsPage && !isActivitiesPage) {
+  if (!isContactsPage && !isActivitiesPage && !isJobsPage) {
     return null
   }
 
@@ -33,6 +36,31 @@ export function QuickAddLeadFAB() {
     window.location.reload()
   }
 
+  const handleJobCreated = () => {
+    setJobDialogOpen(false)
+    window.location.reload()
+  }
+
+  // Jobs page
+  if (isJobsPage) {
+    return (
+      <QuickCreateDeal
+        onSuccess={handleJobCreated}
+        trigger={
+          <Button
+            size="lg"
+            className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg md:h-14 md:w-auto md:rounded-md md:px-6 z-50"
+            aria-label="Add new job"
+          >
+            <Plus className="h-6 w-6 md:mr-2" />
+            <span className="hidden md:inline">New Job</span>
+          </Button>
+        }
+      />
+    )
+  }
+
+  // Activities page
   if (isActivitiesPage) {
     return (
       <>
@@ -64,6 +92,7 @@ export function QuickAddLeadFAB() {
     )
   }
 
+  // Contacts page (default)
   return (
     <>
       <Button
