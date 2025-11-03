@@ -5,7 +5,7 @@ import { trpc } from '@/lib/trpc'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { QuickCreateDeal } from '@/components/kanban/quick-create-deal'
 import { Plus } from 'lucide-react'
-import { TodayView } from './TodayViewSimple'
+import { TodayCommandCenter } from './TodayCommandCenter'
 import { ThisWeekView } from './ThisWeekView'
 import { AllJobsView } from './AllJobsView'
 import { Button } from '@/components/ui/button'
@@ -52,7 +52,7 @@ export function JobsView({ initialDeals, initialPipelines }: JobsViewProps) {
         </TabsList>
 
         <TabsContent value="today" className="space-y-6">
-          <TodayView deals={initialDeals} activities={activities?.items || []} />
+          <TodayCommandCenter deals={initialDeals} activities={activities?.items || []} />
         </TabsContent>
 
         <TabsContent value="week" className="space-y-6">
