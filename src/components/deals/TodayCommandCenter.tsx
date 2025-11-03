@@ -83,7 +83,7 @@ const formatCurrency = (amount: number) => {
 function PriorityJobCard({ 
   job, 
   daysOverdue, 
-  variant = 'default' 
+  variant = 'today' 
 }: { 
   job: Deal
   daysOverdue?: number

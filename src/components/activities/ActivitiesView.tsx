@@ -37,6 +37,7 @@ const activityIcons = {
   [ActivityType.MEETING]: Calendar,
   [ActivityType.EMAIL]: Mail,
   [ActivityType.TASK]: CheckSquare,
+  [ActivityType.MESSAGE]: MessageSquare,
 }
 
 const activityColors = {
@@ -45,6 +46,7 @@ const activityColors = {
   [ActivityType.MEETING]: 'text-purple-600 bg-purple-50',
   [ActivityType.EMAIL]: 'text-orange-600 bg-orange-50',
   [ActivityType.TASK]: 'text-red-600 bg-red-50',
+  [ActivityType.MESSAGE]: 'text-indigo-600 bg-indigo-50',
 }
 
 export function ActivitiesView() {
