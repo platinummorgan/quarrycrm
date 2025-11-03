@@ -198,14 +198,15 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
 
   // Sync savedViews state with database (only name for now, columns not persisted)
   useEffect(() => {
+    console.log('📊 Saved views query data:', savedViewsQuery.data)
     if (savedViewsQuery.data) {
-      setSavedViews(
-        savedViewsQuery.data.map((v) => ({
-          id: v.id,
-          name: v.name,
-          columns: initialColumns.map((c) => c.id), // Use default columns
-        }))
-      )
+      const views = savedViewsQuery.data.map((v) => ({
+        id: v.id,
+        name: v.name,
+        columns: initialColumns.map((c) => c.id), // Use default columns
+      }))
+      console.log('📊 Setting saved views to state:', views)
+      setSavedViews(views)
     }
   }, [savedViewsQuery.data, initialColumns])
 
@@ -643,7 +644,11 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
           {/* Saved views */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => console.log('📋 Current savedViews state:', savedViews)}
+              >
                 <Save className="mr-2 h-4 w-4" />
                 Views
               </Button>
