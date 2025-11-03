@@ -770,8 +770,17 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
                     focusedRowIndex === rowIndex && 'ring-2 ring-primary'
                   )}
                   onClick={() => {
-                    setSelectedItem(item)
-                    setDrawerOpen(true)
+                    // For contacts, use CustomEvent to trigger ContactDrawer
+                    if (entity === 'contacts') {
+                      window.dispatchEvent(
+                        new CustomEvent('contact:select', {
+                          detail: { contactId: item.id },
+                        })
+                      )
+                    } else {
+                      setSelectedItem(item)
+                      setDrawerOpen(true)
+                    }
                   }}
                 >
                   <TableCell>
