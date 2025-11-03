@@ -187,9 +187,12 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
     onSuccess: (data) => {
       console.log('✅ View saved successfully:', data)
       savedViewsQuery.refetch()
+      setSaveViewDialogOpen(false)
+      setNewViewName('')
     },
     onError: (error) => {
       console.error('❌ Failed to save view:', error)
+      alert(`Failed to save view: ${error.message}`)
     },
   })
 

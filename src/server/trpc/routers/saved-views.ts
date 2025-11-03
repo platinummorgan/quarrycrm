@@ -131,6 +131,21 @@ export const savedViewsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { orgId, userId } = ctx
 
+      // Get the membership ID (not user ID) for the foreign key
+      const membership = await prisma.orgMember.findUnique({
+        where: {
+          organizationId_userId: { organizationId: orgId, userId },
+        },
+        select: { id: true },
+      })
+
+      if (!membership) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Organization membership not found',
+        })
+      }
+
       // Generate unique URL for public views
       const viewUrl = input.isPublic ? nanoid(10) : null
 
@@ -140,7 +155,7 @@ export const savedViewsRouter = createTRPCRouter({
           entity: input.entityType,
           viewUrl,
           organizationId: orgId,
-          ownerId: userId,
+          ownerId: membership.id, // Use membership ID, not user ID
         },
         include: {
           owner: {
