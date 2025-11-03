@@ -364,7 +364,7 @@ function StageColumn({
           ))}
           {deals.length === 0 && (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              No deals
+              No jobs
             </div>
           )}
         </SortableContext>
@@ -418,9 +418,9 @@ function EmptyPipelineState({
   return (
     <div className="flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
       <div className="text-center">
-        <h3 className="mb-2 text-lg font-semibold">No deals yet</h3>
+        <h3 className="mb-2 text-lg font-semibold">No jobs yet</h3>
         <p className="mb-4 text-sm text-muted-foreground">
-          Get started by creating your first deal
+          Get started by creating your first job
         </p>
         <Button
           onClick={onCreateDeal}
@@ -428,7 +428,7 @@ function EmptyPipelineState({
           title={isDemo ? 'Demo is read-only' : undefined}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Create first deal
+          Create first job
         </Button>
       </div>
     </div>
@@ -777,7 +777,7 @@ export function Board({
 
   const handleCreateDeal = () => {
     // TODO: Open create deal dialog
-    toast.info('Create deal feature coming soon')
+    toast.info('Create job feature coming soon')
   }
 
   // Handle errors
@@ -785,7 +785,7 @@ export function Board({
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Deals</h1>
+          <h1 className="text-3xl font-bold">Jobs</h1>
         </div>
         <ErrorState
           message={error}
@@ -803,7 +803,7 @@ export function Board({
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Deals</h1>
+          <h1 className="text-3xl font-bold">Jobs</h1>
         </div>
         <BoardSkeleton />
       </div>
@@ -815,7 +815,7 @@ export function Board({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Deals</h1>
+          <h1 className="text-3xl font-bold">Jobs</h1>
 
           {/* Pipeline Selector */}
           {pipelines.length > 0 && (
@@ -849,7 +849,7 @@ export function Board({
             title={isDemo ? 'Demo is read-only' : undefined}
           >
             <Plus className="mr-2 h-4 w-4" />
-            New Deal
+            New Job
           </Button>
         </div>
       </div>
@@ -861,9 +861,9 @@ export function Board({
         <BoardSkeleton />
       ) : !selectedPipeline ? (
         // Show columns with CTA when no pipeline selected
-        <div className="flex gap-6 overflow-x-auto pb-6">
+        <div className="grid auto-cols-fr grid-flow-col gap-6">
           {displayStages.map((stage) => (
-            <div key={stage.id} className="flex w-80 flex-shrink-0 flex-col">
+            <div key={stage.id} className="flex flex-col">
               <div className="mb-4 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -887,9 +887,9 @@ export function Board({
               >
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
-                    <h4 className="mb-2 text-sm font-medium">No deals yet</h4>
+                    <h4 className="mb-2 text-sm font-medium">No jobs yet</h4>
                     <p className="mb-4 text-xs text-muted-foreground">
-                      Select a pipeline or create your first deal
+                      Select a pipeline or create your first job
                     </p>
                     <Button
                       size="sm"
@@ -898,7 +898,7 @@ export function Board({
                       title={isDemo ? 'Demo is read-only' : undefined}
                     >
                       <Plus className="mr-2 h-3 w-3" />
-                      Create first deal
+                      Create first job
                     </Button>
                   </div>
                 </div>
@@ -915,7 +915,7 @@ export function Board({
           onDragEnd={handleDragEnd}
           collisionDetection={closestCorners}
         >
-          <div className="flex gap-6 overflow-x-auto pb-6">
+          <div className="grid auto-cols-fr grid-flow-col gap-6">
             {displayStages.map((stage) => (
               <StageColumn
                 key={stage.id}
