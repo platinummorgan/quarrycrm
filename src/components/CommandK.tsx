@@ -20,7 +20,7 @@ import {
   Zap,
   BarChart3,
   Users2,
-, MessageSquare
+  MessageSquare,
 } from 'lucide-react'
 import { trpc } from '@/lib/trpc'
 import { startOfWeek } from 'date-fns'
