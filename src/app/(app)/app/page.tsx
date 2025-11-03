@@ -14,7 +14,8 @@ import {
   DollarSign, 
   Briefcase, 
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +23,7 @@ import { prisma } from '@/lib/prisma'
 import { requireOrg } from '@/lib/auth-helpers'
 import { formatDistanceToNow, startOfWeek, startOfToday, endOfDay } from 'date-fns'
 import Link from 'next/link'
+import { formatPhoneNumber, getTelLink, getSmsLink } from '@/lib/format-phone'
 
 async function getContractorDashboardData(orgId: string) {
   const now = new Date()
@@ -295,9 +297,9 @@ export default async function ContractorDashboard() {
                   <div className="flex items-center gap-3">
                     {lead.contact?.phone && (
                       <Button size="lg" asChild>
-                        <a href={`tel:${lead.contact.phone}`} className="text-lg">
+                        <a href={getTelLink(lead.contact.phone)} className="text-lg">
                           <Phone className="h-5 w-5 mr-2" />
-                          {lead.contact.phone}
+                          {formatPhoneNumber(lead.contact.phone)}
                         </a>
                       </Button>
                     )}
