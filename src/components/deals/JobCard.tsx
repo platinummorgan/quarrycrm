@@ -150,17 +150,31 @@ export function JobCard({ job, showDaysSinceContact = true }: JobCardProps) {
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
               {job.contact?.phone && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8"
-                  asChild
-                >
-                  <a href={`tel:${job.contact.phone}`}>
-                    <Phone className="h-3.5 w-3.5 mr-1.5" />
-                    Call
-                  </a>
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                    asChild
+                  >
+                    <a href={getTelLink(job.contact.phone)}>
+                      <Phone className="h-3.5 w-3.5 mr-1.5" />
+                      Call
+                    </a>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                    asChild
+                  >
+                    <a href={getSmsLink(job.contact.phone)}>
+                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                      Text
+                    </a>
+                  </Button>
+                </>
               )}
               
               {job.contact?.email && (

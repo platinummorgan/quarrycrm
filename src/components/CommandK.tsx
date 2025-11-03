@@ -20,9 +20,11 @@ import {
   Zap,
   BarChart3,
   Users2,
+, MessageSquare
 } from 'lucide-react'
 import { trpc } from '@/lib/trpc'
 import { startOfWeek } from 'date-fns'
+import { getTelLink, getSmsLink } from '@/lib/format-phone'
 
 // Props for controlling the command palette
 interface CommandKProps {
@@ -308,7 +310,7 @@ export function CommandK({ open, onOpenChange, onNewContact }: CommandKProps) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              window.location.href = `tel:${contact.phone}`
+                              window.location.href = getTelLink(contact.phone!)
                               onOpenChange(false)
                             }}
                             className="rounded-md border bg-background p-2 hover:bg-accent"
