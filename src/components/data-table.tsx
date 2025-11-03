@@ -184,8 +184,12 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   
   // Create view mutation
   const createViewMutation = trpc.savedViews.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ View saved successfully:', data)
       savedViewsQuery.refetch()
+    },
+    onError: (error) => {
+      console.error('❌ Failed to save view:', error)
     },
   })
 
@@ -400,6 +404,14 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   // Save view
   const saveView = useCallback(
     (name: string) => {
+      const entityTypeMap: Record<string, 'CONTACT' | 'COMPANY' | 'DEAL'> = {
+        contacts: 'CONTACT',
+        companies: 'COMPANY',
+        deals: 'DEAL',
+      }
+      
+      console.log('💾 Saving view:', { name, entity, entityType: entityTypeMap[entity] })
+      
       // Save to database via tRPC (only filters/sorting for now, columns not persisted)
       createViewMutation.mutate({
         name,
