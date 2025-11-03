@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
+import { QuickCreateDeal } from '@/components/kanban/quick-create-deal'
 import { Plus } from 'lucide-react'
 import { TodayView } from './TodayView'
 import { ThisWeekView } from './ThisWeekView'
 import { AllJobsView } from './AllJobsView'
+import { Button } from '@/components/ui/button'
 
 interface JobsViewProps {
   initialDeals: any
@@ -15,10 +16,15 @@ interface JobsViewProps {
 
 export function JobsView({ initialDeals, initialPipelines }: JobsViewProps) {
   const [activeTab, setActiveTab] = useState('today')
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
-  const handleCreateJob = () => {
-    // TODO: Open create job dialog
-    console.log('Create job clicked')
+  // Get default pipeline for creating jobs
+  const defaultPipeline = initialPipelines.find((p: any) => p.isDefault) || initialPipelines[0]
+
+  const handleJobCreated = () => {
+    setCreateDialogOpen(false)
+    // Refresh the page to show new job
+    window.location.reload()
   }
 
   return (
@@ -26,10 +32,16 @@ export function JobsView({ initialDeals, initialPipelines }: JobsViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Jobs</h1>
-        <Button onClick={handleCreateJob}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Job
-        </Button>
+        <QuickCreateDeal
+          pipelineId={defaultPipeline?.id}
+          onSuccess={handleJobCreated}
+          trigger={
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Job
+            </Button>
+          }
+        />
       </div>
 
       {/* Time-based Tabs */}
