@@ -34,7 +34,16 @@ const dealCreateSchema = z.object({
   status: z.enum(['NEW', 'CONTACTED', 'QUOTED', 'WON', 'LOST']).optional(),
   jobType: z.string().optional(),
   estimatedValue: z.number().positive().optional(),
+  actualValue: z.number().positive().optional(),
+  nextFollowupDate: z.date().optional(),
+  jobStatus: z.enum(['QUOTED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETE', 'PAID']).optional(),
   leadSource: z.enum(['GOOGLE', 'REFERRAL', 'YARD_SIGN', 'FACEBOOK', 'REPEAT_CUSTOMER', 'OTHER']).optional(),
+  jobAddress: z.string().optional(),
+  scheduledStart: z.date().optional(),
+  scheduledEnd: z.date().optional(),
+  completionDate: z.date().optional(),
+  crewAssigned: z.string().optional(),
+  paymentStatus: z.enum(['NOT_PAID', 'DEPOSIT_PAID', 'PAID_IN_FULL']).optional(),
 })
 
 const dealUpdateSchema = z.object({
@@ -54,6 +63,10 @@ const dealUpdateSchema = z.object({
   scheduledStart: z.date().nullable().optional(),
   scheduledEnd: z.date().nullable().optional(),
   crewAssigned: z.string().nullable().optional(),
+  nextFollowupDate: z.date().nullable().optional(),
+  jobStatus: z.enum(['QUOTED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETE', 'PAID']).nullable().optional(),
+  actualValue: z.number().positive().nullable().optional(),
+  completionDate: z.date().nullable().optional(),
   paymentStatus: z.enum(['NOT_PAID', 'DEPOSIT_PAID', 'PAID_IN_FULL']).nullable().optional(),
 })
 
@@ -227,6 +240,15 @@ export const dealsRouter = createTRPCRouter({
           jobType: input.jobType ?? null,
           estimatedValue: input.estimatedValue ?? null,
           leadSource: input.leadSource ?? null,
+          jobAddress: input.jobAddress ?? null,
+          nextFollowupDate: input.nextFollowupDate ?? null,
+          jobStatus: input.jobStatus ?? null,
+          actualValue: input.actualValue ?? null,
+          scheduledStart: input.scheduledStart ?? null,
+          scheduledEnd: input.scheduledEnd ?? null,
+          completionDate: input.completionDate ?? null,
+          crewAssigned: input.crewAssigned ?? null,
+          paymentStatus: input.paymentStatus ?? 'NOT_PAID',
           organizationId: ctx.orgId,
           ownerId: membership.id,
         },
@@ -332,3 +354,7 @@ export const dealsRouter = createTRPCRouter({
 })
 
 export type DealsRouter = typeof dealsRouter
+
+
+
+

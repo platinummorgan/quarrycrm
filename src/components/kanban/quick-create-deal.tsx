@@ -26,9 +26,22 @@ import { Plus } from 'lucide-react'
 
 const createDealSchema = z.object({
   title: z.string().min(1, 'Title is required'),
+  jobType: z.string().min(1, 'Job type is required'),
+  estimatedValue: z.number().positive('Estimated value must be positive'),
+  nextFollowupDate: z.string().min(1, 'Follow-up date is required'),
+  leadSource: z.enum(['GOOGLE', 'REFERRAL', 'YARD_SIGN', 'FACEBOOK', 'REPEAT_CUSTOMER', 'OTHER']).optional(),
+  status: z.enum(['NEW', 'CONTACTED', 'QUOTED', 'WON', 'LOST']).optional(),
+  jobStatus: z.enum(['QUOTED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETE', 'PAID']).optional(),
+  jobAddress: z.string().optional(),
   value: z.number().positive().optional(),
+  actualValue: z.number().positive().optional(),
   probability: z.number().min(0).max(100).default(0),
   expectedClose: z.string().optional(),
+  scheduledStart: z.string().optional(),
+  scheduledEnd: z.string().optional(),
+  completionDate: z.string().optional(),
+  crewAssigned: z.string().optional(),
+  paymentStatus: z.enum(['NOT_PAID', 'DEPOSIT_PAID', 'PAID_IN_FULL']).optional(),
   contactId: z.string().optional(),
   companyId: z.string().optional(),
 })
@@ -54,6 +67,8 @@ export function QuickCreateDeal({
     resolver: zodResolver(createDealSchema),
     defaultValues: {
       probability: 0,
+      status: 'NEW',
+      paymentStatus: 'NOT_PAID',
     },
   })
 
@@ -251,3 +266,5 @@ export function QuickCreateDeal({
     </Dialog>
   )
 }
+
+
