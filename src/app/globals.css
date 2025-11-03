@@ -56,6 +56,17 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Prevent black selection boxes - use theme colors */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: inherit;
+  }
+  
+  ::-moz-selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: inherit;
+  }
 }
 
 @layer components {
