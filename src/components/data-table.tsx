@@ -163,13 +163,46 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   const listQuery = (trpc as any)[entity].list.useQuery(
     {
       q: searchQuery || undefined,
-      limit: 50,
       cursor: cursor || undefined,
+      sortBy: sortBy || undefined,
+      sortOrder,
     },
     {
       keepPreviousData: true,
     }
   )
+  
+  // Load saved views from database
+  const entityTypeMap: Record<string, 'CONTACT' | 'COMPANY' | 'DEAL'> = {
+    contacts: 'CONTACT',
+    companies: 'COMPANY',
+    deals: 'DEAL',
+  }
+  const savedViewsQuery = trpc.savedViews.list.useQuery({
+    entityType: entityTypeMap[entity],
+  })
+  
+  // Create view mutation
+  const createViewMutation = trpc.savedViews.create.useMutation({
+    onSuccess: () => {
+      savedViewsQuery.refetch()
+    },
+  })
+
+  // Sync savedViews state with database (only name for now, columns not persisted)
+  useEffect(() => {
+    if (savedViewsQuery.data) {
+      setSavedViews(
+        savedViewsQuery.data.map((v) => ({
+          id: v.id,
+          name: v.name,
+          columns: initialColumns.map((c) => c.id), // Use default columns
+        }))
+      )
+    }
+  }, [savedViewsQuery.data, initialColumns])
+
+  const { data: listData, isLoading: listLoading } = listQuery
 
   const updateMutation = (trpc as any)[entity].update.useMutation({
     onSuccess: () => {
@@ -367,16 +400,18 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   // Save view
   const saveView = useCallback(
     (name: string) => {
-      const view = {
-        id: Date.now().toString(),
+      // Save to database via tRPC (only filters/sorting for now, columns not persisted)
+      createViewMutation.mutate({
         name,
-        columns: Array.from(visibleColumns),
-      }
-      setSavedViews((prev) => [...prev, view])
+        entityType: entityTypeMap[entity],
+        filters: {},
+        sortBy: sortBy || 'updatedAt',
+        sortOrder,
+      })
       setSaveViewDialogOpen(false)
       setNewViewName('')
     },
-    [visibleColumns]
+    [entity, sortBy, sortOrder, createViewMutation]
   )
 
   const openSaveViewDialog = useCallback(() => {
