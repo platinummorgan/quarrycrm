@@ -90,7 +90,6 @@ export function ActivityComposer({
   onCancel,
   defaultType = ActivityType.NOTE,
 }: ActivityComposerProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const [selectedEntities, setSelectedEntities] = useState<
     Array<{ id: string; type: 'contact' | 'deal' | 'company'; name: string }>
   >([])
@@ -105,12 +104,12 @@ export function ActivityComposer({
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Auto-focus textarea when expanded
+  // Auto-focus textarea when component mounts
   useEffect(() => {
-    if (isExpanded && textareaRef.current) {
+    if (textareaRef.current) {
       textareaRef.current.focus()
     }
-  }, [isExpanded])
+  }, [])
 
   // Pre-populate selected entities based on props
   useEffect(() => {
@@ -134,8 +133,13 @@ export function ActivityComposer({
 
   const createActivityMutation = trpc.activities.create.useMutation({
     onSuccess: () => {
-      form.reset()
-      setIsExpanded(false)
+      form.reset({
+        type: defaultType,
+        description: '',
+        subject: '',
+        body: '',
+        dueDate: '',
+      })
       setSelectedEntities([])
       onSuccess?.()
     },
@@ -161,28 +165,19 @@ export function ActivityComposer({
   }
 
   const handleCancel = () => {
-    form.reset()
-    setIsExpanded(false)
+    form.reset({
+      type: defaultType,
+      description: '',
+      subject: '',
+      body: '',
+      dueDate: '',
+    })
     setSelectedEntities([])
     onCancel?.()
   }
 
   const currentType = activityTypes.find((t) => t.value === form.watch('type'))
   const Icon = currentType?.icon || MessageSquare
-
-  if (!isExpanded) {
-    return (
-      <div className="rounded-lg border p-3 transition-colors hover:bg-muted/50">
-        <button
-          onClick={() => setIsExpanded(true)}
-          className="flex w-full items-center space-x-2 text-left text-muted-foreground hover:text-foreground"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add activity...</span>
-        </button>
-      </div>
-    )
-  }
 
   return (
     <div className="rounded-lg border bg-background p-4">
