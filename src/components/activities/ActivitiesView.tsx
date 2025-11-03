@@ -27,7 +27,7 @@ import {
   Mail,
   CheckSquare,
 } from 'lucide-react'
-import { ActivityComposer } from './activity-composer'
+import { ActivityComposerWithLink } from './ActivityComposerWithLink'
 import { ActivityType } from '@prisma/client'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -169,7 +169,7 @@ export function ActivitiesView() {
               Log a note, call, meeting, email, or task
             </DialogDescription>
           </DialogHeader>
-          <ActivityComposer
+          <ActivityComposerWithLink
             onSuccess={handleActivityCreated}
             onCancel={() => setIsDialogOpen(false)}
           />

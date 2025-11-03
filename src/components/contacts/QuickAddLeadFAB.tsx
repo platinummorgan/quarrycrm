@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ActivityComposer } from '@/components/activities/activity-composer'
+import { ActivityComposerWithLink } from '@/components/activities/ActivityComposerWithLink'
 import { QuickCreateDeal } from '@/components/kanban/quick-create-deal'
 
 export function QuickAddLeadFAB() {
@@ -82,7 +82,7 @@ export function QuickAddLeadFAB() {
                 Log a note, call, meeting, email, or task
               </DialogDescription>
             </DialogHeader>
-            <ActivityComposer
+            <ActivityComposerWithLink
               onSuccess={handleActivityCreated}
               onCancel={() => setActivityDialogOpen(false)}
             />
