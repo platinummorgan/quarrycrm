@@ -1,12 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { QuickAddLeadDialog } from '@/components/contacts/QuickAddLeadDialog'
 
 export function QuickAddLeadFAB() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Only show on the contacts/leads page
+  if (!pathname?.includes('/contacts')) {
+    return null
+  }
 
   return (
     <>
