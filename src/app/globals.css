@@ -57,15 +57,22 @@
     @apply bg-background text-foreground;
   }
   
-  /* Prevent black selection boxes - use theme colors */
+  /* Custom text selection styling - subtle highlight */
   ::selection {
-    background-color: hsl(var(--primary) / 0.2);
-    color: inherit;
+    background-color: hsl(var(--primary) / 0.15);
+    color: hsl(var(--foreground));
   }
   
   ::-moz-selection {
-    background-color: hsl(var(--primary) / 0.2);
-    color: inherit;
+    background-color: hsl(var(--primary) / 0.15);
+    color: hsl(var(--foreground));
+  }
+  
+  /* Prevent table cells from having black backgrounds on click/active */
+  td:active,
+  td:focus,
+  td:focus-within {
+    background-color: transparent !important;
   }
 }
 
