@@ -221,7 +221,7 @@ export function ActivityComposer({
           <input
             type="text"
             placeholder="Email subject..."
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground"
             {...form.register('subject')}
           />
         )}
@@ -251,7 +251,7 @@ export function ActivityComposer({
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <input
               type="date"
-              className="rounded-md border px-3 py-2 text-sm"
+              className="rounded-md border bg-background px-3 py-2 text-sm text-foreground"
               {...form.register('dueDate')}
             />
           </div>
