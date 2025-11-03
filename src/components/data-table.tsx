@@ -616,16 +616,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Actions */}
-          <Button
-            onClick={onCreate}
-            size="sm"
-            disabled={isDemo}
-            title={isDemo ? 'Demo is read-only' : undefined}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add {entity.slice(0, -1)}
-          </Button>
+          {/* Actions - Don't show Add button if onCreate is provided, use FAB instead */}
         </div>
       </div>
 
