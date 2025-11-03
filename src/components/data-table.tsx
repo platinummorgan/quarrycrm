@@ -185,28 +185,25 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
   // Create view mutation
   const createViewMutation = trpc.savedViews.create.useMutation({
     onSuccess: (data) => {
-      console.log('✅ View saved successfully:', data)
       savedViewsQuery.refetch()
       setSaveViewDialogOpen(false)
       setNewViewName('')
     },
     onError: (error) => {
-      console.error('❌ Failed to save view:', error)
       alert(`Failed to save view: ${error.message}`)
     },
   })
 
   // Sync savedViews state with database (only name for now, columns not persisted)
   useEffect(() => {
-    console.log('📊 Saved views query data:', savedViewsQuery.data)
     if (savedViewsQuery.data) {
-      const views = savedViewsQuery.data.map((v) => ({
-        id: v.id,
-        name: v.name,
-        columns: initialColumns.map((c) => c.id), // Use default columns
-      }))
-      console.log('📊 Setting saved views to state:', views)
-      setSavedViews(views)
+      setSavedViews(
+        savedViewsQuery.data.map((v) => ({
+          id: v.id,
+          name: v.name,
+          columns: initialColumns.map((c) => c.id), // Use default columns
+        }))
+      )
     }
   }, [savedViewsQuery.data, initialColumns])
 
@@ -413,8 +410,6 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
         companies: 'COMPANY',
         deals: 'DEAL',
       }
-      
-      console.log('💾 Saving view:', { name, entity, entityType: entityTypeMap[entity] })
       
       // Save to database via tRPC (only filters/sorting for now, columns not persisted)
       createViewMutation.mutate({
@@ -644,11 +639,7 @@ export function DataTable<T extends { id: string; updatedAt: string }>({
           {/* Saved views */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => console.log('📋 Current savedViews state:', savedViews)}
-              >
+              <Button variant="outline" size="sm">
                 <Save className="mr-2 h-4 w-4" />
                 Views
               </Button>
