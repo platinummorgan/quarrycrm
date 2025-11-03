@@ -33,24 +33,18 @@ export default function ContactsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Contacts</h1>
+          <h1 className="text-3xl font-bold">Leads</h1>
           <p className="text-muted-foreground">
-            Manage your customer and prospect contacts
+            Manage your leads and prospects
           </p>
         </div>
-        {/* Primary CTA in the top-right. Keep empty-state CTA handled by DataTable */}
-        {showTopCTA && (
-          <Button onClick={handleCreate} data-testid="add-contact-button">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Contact
-          </Button>
-        )}
+        {/* No top button - use FAB at bottom-right instead */}
       </div>
 
       <DataTable
         entity="contacts"
         columns={columns}
-        searchPlaceholder="Search contacts..."
+        searchPlaceholder="Search leads..."
         onCreate={handleCreate}
         onImport={handleImport}
         showCheckboxes={false}
